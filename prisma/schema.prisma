@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Client {
+  id         String      @id @default(cuid())
+  name       String      @unique
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  operations Operation[]
+}
+
+model Investor {
+  id           String                  @id @default(cuid())
+  name         String                  @unique
+  rate         Float?
+  type         String                  @default("RETIRADA")
+  startDate    DateTime?               // Data de início / Onboarding
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  transactions InvestmentTransaction[]
+}
+
+model InvestmentTransaction {
+  id         String   @id @default(cuid())
+  investorId String
+  investor   Investor @relation(fields: [investorId], references: [id])
+  type       String   // APORTE, RETIRADA
+  amount     Float
+  date       DateTime
+  prazo      Int?
+  parentId   String?  // ID do Aporte de onde está sendo resgatado
+  modalidade String?  // RETIRADA ou REINVESTIMENTO (específico para este aporte)
+  rate       Float?   // Taxa de rendimento específica para este aporte
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Cost {
+  id        String   @id @default(cuid())
+  name      String
+  amount    Float
+  date      DateTime
+  type      String
+  category  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Operation {
+  id                  String   @id @default(cuid())
+  clientId            String
+  date                DateTime
+  valorBruto          Float
+  fator               Float
+  percentual          Float
+  percentualPrazo     Float
+  dias                Float
+  tarifas             Float
+  percentualTarifas   Float?
+  adValorem           Float
+  percentualAdValorem Float?
+  irpj                Float?
+  iof                 Float?
+  iofAdicional        Float?
+  valorLiquido        Float
+  recompra            Float?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  client              Client   @relation(fields: [clientId], references: [id])
+}

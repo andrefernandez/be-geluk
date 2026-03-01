@@ -1,0 +1,5 @@
+const fs = require('fs');
+const r = [null, null, null, 1568.79, 3629.29, null, 53800, null, 36038.5, null, null, null, null, 10677.37, 5130, null, null, null, 10860.22, null, null, 1592.52, null, 2111.65, null, null, null, 1010.29, 933.2, 10410.84, null, null, 336.45, null, null, null, 4407.38, null, null, 337.91, 1036.19, null, 1405.32, null, null, null, 13570.38, 665.86, 2.5579, 6392.9, 151.43, null, null, 135.53, 45.06, null, null, null, null, 4080, 1137.72, null, null, null, null, null, 1670.51, null, 7418.43, null, null, null, 5000, null, null, 1489.56, null, 106.42, null, 18713.33, null, null, null, null, null, null, null, null, null, null, 10344.36, 8.87, 26.07, 6666.73, null, null, null, null, 964.11, null, null, 850, null, null, null, null, null, null, null, 868.48, 10.81948];
+const newSum = r.reduce((sum, o) => sum + Math.round((o || 0) * 100), 0) / 100;
+const oldSum = r.reduce((sum, o) => sum + (o || 0), 0);
+fs.writeFileSync('sum-output.txt', `NEW: ${newSum}\nOLD: ${oldSum}\n`);
