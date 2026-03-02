@@ -20,7 +20,7 @@ export const authOptions: AuthOptions = {
 
                 const user = await prisma.user.findUnique({
                     where: { email: credentials.email }
-                });
+                }) as any;
 
                 if (!user) {
                     console.log("Usuário não encontrado:", credentials.email);
@@ -39,6 +39,7 @@ export const authOptions: AuthOptions = {
                     name: user.name,
                     email: user.email,
                     role: user.role,
+                    investorId: user.investorId,
                 };
             }
         })
@@ -49,8 +50,9 @@ export const authOptions: AuthOptions = {
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
-                token.role = user.role;
+                token.role = (user as any).role;
                 token.id = user.id;
+                token.investorId = (user as any).investorId;
             }
             return token;
         },
@@ -58,6 +60,7 @@ export const authOptions: AuthOptions = {
             if (session?.user) {
                 (session.user as any).role = token.role;
                 (session.user as any).id = token.id;
+                (session.user as any).investorId = token.investorId;
             }
             return session;
         }

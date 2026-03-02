@@ -10,13 +10,16 @@ export function Navigation() {
 
     if (!session) return null;
 
-    const navItems = [
+    const isAdminOrManager = (session.user as any).role === "ADMIN" || (session.user as any).role === "MANAGER";
+    const isInvestor = (session.user as any).role === "INVESTOR";
+
+    const navItems = isInvestor ? [] : [
         { name: "Dashboard", path: "/" },
         { name: "Operações", path: "/operacoes" },
         { name: "Clientes", path: "/clientes" },
         { name: "Investidores", path: "/investidores" },
         { name: "Custos", path: "/custos" },
-        { name: "Usuários", path: "/usuarios" },
+        ...(isAdminOrManager ? [{ name: "Usuários", path: "/usuarios" }] : []),
     ];
 
     return (

@@ -11,7 +11,11 @@ export default async function InvestidoresPage() {
         redirect("/login");
     }
 
+    const userRole = (session.user as any).role;
+    const userInvestorId = (session.user as any).investorId;
+
     const investors = await prisma.investor.findMany({
+        where: userRole === "INVESTOR" && userInvestorId ? { id: userInvestorId } : {},
         include: {
             transactions: {
                 orderBy: { date: "asc" }

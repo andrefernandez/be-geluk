@@ -3,18 +3,19 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      String   @default("USER")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  name       String
+  email      String   @unique
+  password   String
+  role       String   @default("USER")
+  investorId String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Client {
@@ -31,6 +32,7 @@ model Investor {
   rate         Float?
   type         String                  @default("RETIRADA")
   startDate    DateTime?               // Data de início / Onboarding
+  userId       String?                 @unique
   createdAt    DateTime                @default(now())
   updatedAt    DateTime                @updatedAt
   transactions InvestmentTransaction[]

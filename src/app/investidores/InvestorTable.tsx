@@ -498,13 +498,15 @@ export default function InvestorTable({ initialInvestors, currentUserRole }: { i
                                             </td>
                                             <td style={{ padding: "1rem", textAlign: "right" }}>
                                                 <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                                                    <button
-                                                        className="btn-secondary"
-                                                        style={{ padding: "0.4rem 0.6rem", fontSize: "0.75rem" }}
-                                                        onClick={(e) => { e.stopPropagation(); handleOpenTxModal(inv); }}
-                                                    >
-                                                        Movimentar
-                                                    </button>
+                                                    {isAdminOrManager && (
+                                                        <button
+                                                            className="btn-secondary"
+                                                            style={{ padding: "0.4rem 0.6rem", fontSize: "0.75rem" }}
+                                                            onClick={(e) => { e.stopPropagation(); handleOpenTxModal(inv); }}
+                                                        >
+                                                            Movimentar
+                                                        </button>
+                                                    )}
                                                     {isAdminOrManager && (
                                                         <button
                                                             className="btn-secondary"
