@@ -286,7 +286,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                 </div>
                             </div>
 
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "1rem" }}>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Ad Valorem (R$)</label>
                                     <NumericFormat required className="glass-input" value={formData.adValorem} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, adValorem: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
@@ -298,6 +298,10 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IOF (Opcional)</label>
                                     <NumericFormat className="glass-input" value={formData.iof} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, iof: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IOF Adicional (Opcional)</label>
+                                    <NumericFormat className="glass-input" value={formData.iofAdicional} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, iofAdicional: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
                                 </div>
                             </div>
 
