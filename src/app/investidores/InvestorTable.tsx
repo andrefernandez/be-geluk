@@ -62,59 +62,63 @@ export default function InvestorTable({ initialInvestors, currentUserRole }: { i
     const isAdminOrManager = currentUserRole === "ADMIN" || currentUserRole === "MANAGER";
 
     // --- Calculations ---
-    // Função simplificada baseada na planilha "1WOisi8I-vuBCYajBmHy4mNhOzYxrh60Fyk0dJsFKmmA" (Juros Simples)
-    // Valor Atual = Valor Aplicado + (Valor Aplicado * Tempo * Taxa%)
+    // Função unificada para cálculo de saldo e rendimentos
+    // Regra: Juros Compostos (para REINVESTIMENTO) calculados mês a mês com arredondamento de centavos
     const calculateTotal = (investor: Investor) => {
         let totalAplicado = 0;
-        let runningBalance = 0;
+        let principalBalance = 0;
+        let accInterest = 0;
 
-        // Ordenar transações por data para o cálculo cronológico
         const sortedTransactions = [...investor.transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
         if (sortedTransactions.length === 0) return { totalAplicado: 0, totalAtual: 0 };
 
         let lastCalcDate = new Date(sortedTransactions[0].date);
-        let currentMode = investor.type; // Começa com a regra global do investidor
+        let currentMode = investor.type;
         let currentRate = investor.rate ?? 0;
 
         sortedTransactions.forEach((tx) => {
             const txDate = new Date(tx.date);
 
-            // 1. Calcula juros apenas nos aniversários que passaram
             let monthsPassed = (txDate.getUTCFullYear() - lastCalcDate.getUTCFullYear()) * 12 + (txDate.getUTCMonth() - lastCalcDate.getUTCMonth());
             if (txDate.getUTCDate() < lastCalcDate.getUTCDate()) {
                 monthsPassed--;
             }
             monthsPassed = Math.max(0, monthsPassed);
 
-            if (monthsPassed > 0 && runningBalance > 0) {
+            if (monthsPassed > 0 && principalBalance > 0) {
                 const i = currentRate / 100;
                 if (currentMode === "REINVESTIMENTO") {
-                    // Capitaliza (Reinveste)
-                    runningBalance *= Math.pow(1 + i, monthsPassed);
+                    let currentFullBalance = principalBalance + accInterest;
+                    for (let m = 0; m < monthsPassed; m++) {
+                        const mInterest = Math.round(currentFullBalance * i * 100) / 100;
+                        currentFullBalance += mInterest;
+                        accInterest += mInterest;
+                    }
                 } else {
-                    // Retirada Mensal: O rendimento sai, o saldo não cresce
-                    // Não somamos ao runningBalance
+                    const interest = Math.round((principalBalance * i * monthsPassed) * 100) / 100;
+                    accInterest += interest;
                 }
                 lastCalcDate.setUTCMonth(lastCalcDate.getUTCMonth() + monthsPassed);
             }
 
-            // 2. Aplica a transação
             if (tx.type === "APORTE") {
-                totalAplicado += tx.amount;
-                runningBalance += tx.amount;
+                principalBalance += tx.amount;
                 if (tx.modalidade) currentMode = tx.modalidade;
                 if (tx.rate !== null && tx.rate !== undefined) currentRate = tx.rate;
             } else if (tx.type === "RETIRADA") {
-                totalAplicado -= tx.amount;
-                runningBalance -= tx.amount;
+                if (tx.amount <= accInterest) {
+                    accInterest -= tx.amount;
+                } else {
+                    const remainingToDeduct = tx.amount - accInterest;
+                    accInterest = 0;
+                    principalBalance -= remainingToDeduct;
+                }
             } else if (tx.type === "MUDANCA_REGRA") {
                 if (tx.modalidade) currentMode = tx.modalidade;
                 if (tx.rate !== null && tx.rate !== undefined) currentRate = tx.rate;
             }
         });
 
-        // 4. Calcula juros remanescentes do último lançamento até HOJE
         const now = new Date();
         const nowUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
@@ -124,14 +128,25 @@ export default function InvestorTable({ initialInvestors, currentUserRole }: { i
         }
         finalMonths = Math.max(0, finalMonths);
 
-        if (finalMonths > 0 && runningBalance > 0) {
+        if (finalMonths > 0 && principalBalance > 0) {
             const i = currentRate / 100;
             if (currentMode === "REINVESTIMENTO") {
-                runningBalance *= Math.pow(1 + i, finalMonths);
+                let currentFullBalance = principalBalance + accInterest;
+                for (let m = 0; m < finalMonths; m++) {
+                    const mInterest = Math.round(currentFullBalance * i * 100) / 100;
+                    currentFullBalance += mInterest;
+                    accInterest += mInterest;
+                }
+            } else {
+                const interest = Math.round((principalBalance * i * finalMonths) * 100) / 100;
+                accInterest += interest;
             }
         }
 
-        return { totalAplicado, totalAtual: runningBalance };
+        return {
+            totalAplicado: principalBalance,
+            totalAtual: principalBalance + accInterest
+        };
     };
 
     // --- Sumários ---
@@ -182,17 +197,19 @@ export default function InvestorTable({ initialInvestors, currentUserRole }: { i
                 const oldBalance = runningBalance;
 
                 if (currentMode === "REINVESTIMENTO") {
-                    // Juros compostos: Capitaliza no saldo
-                    runningBalance *= Math.pow(1 + i, monthsPassed);
+                    // Juros compostos: Capitaliza no saldo mês a mês com arredondamento
+                    for (let m = 0; m < monthsPassed; m++) {
+                        const mInterest = Math.round(runningBalance * i * 100) / 100;
+                        runningBalance += mInterest;
+                    }
                     interestEarned = runningBalance - oldBalance;
                 } else {
-                    // Juros simples (RETIRADA): O rendimento sai, não capitaliza
-                    interestEarned = (runningBalance * i * monthsPassed);
-                    // runningBalance não muda
+                    // Juros simples (RETIRADA): O rendimento sai, arredondamos o total
+                    interestEarned = Math.round((runningBalance * i * monthsPassed) * 100) / 100;
+                    // runningBalance não muda (o rendimento é "pago" fora do saldo)
                 }
 
                 accInterest += interestEarned;
-                // Move a base apenas pelos meses cheios
                 lastCalcDate.setUTCMonth(lastCalcDate.getUTCMonth() + monthsPassed);
             }
 
@@ -218,37 +235,46 @@ export default function InvestorTable({ initialInvestors, currentUserRole }: { i
             };
         });
 
-        // 3. Adiciona rendimentos automáticos até hoje se estiver em modo RETIRADA
+        // 3. Adiciona rendimentos automáticos (PROVISÓRIOS) até hoje
         const now = new Date();
-        const nowUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+        const nowUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
-        if (currentMode === "RETIRADA") {
-            let monthsToNow = (nowUTC.getUTCFullYear() - lastCalcDate.getUTCFullYear()) * 12 + (nowUTC.getUTCMonth() - lastCalcDate.getUTCMonth());
-            if (nowUTC.getUTCDate() < lastCalcDate.getUTCDate()) {
-                monthsToNow--;
-            }
-            monthsToNow = Math.max(0, monthsToNow);
+        let monthsToNow = (nowUTC.getUTCFullYear() - lastCalcDate.getUTCFullYear()) * 12 + (nowUTC.getUTCMonth() - lastCalcDate.getUTCMonth());
+        if (nowUTC.getUTCDate() < lastCalcDate.getUTCDate()) {
+            monthsToNow--;
+        }
+        monthsToNow = Math.max(0, monthsToNow);
 
+        if (monthsToNow > 0 && runningBalance > 0) {
+            const i = currentRate / 100;
             for (let m = 1; m <= monthsToNow; m++) {
                 const monthDate = new Date(lastCalcDate);
                 monthDate.setUTCMonth(monthDate.getUTCMonth() + 1);
-                const interest = runningBalance * (currentRate / 100);
+
+                let interest = 0;
+                if (currentMode === "REINVESTIMENTO") {
+                    interest = Math.round(runningBalance * i * 100) / 100;
+                    runningBalance += interest;
+                } else {
+                    interest = Math.round(runningBalance * i * 100) / 100;
+                }
+
                 accInterest += interest;
 
                 statement.push({
                     id: `auto-yield-${monthDate.getTime()}`,
                     date: monthDate,
-                    type: 'RETIRADA AUTOMÁTICA (RENDIMENTO)',
-                    amount: interest,
+                    type: currentMode === "REINVESTIMENTO" ? 'RENDIMENTO AUTOMÁTICO' : 'RETIRADA AUTOMÁTICA',
+                    amount: 0,
                     interestEarned: interest,
                     accInterest,
-                    runningBalance, // Fica estável
+                    runningBalance,
                     monthsInterval: 1,
                     prazo: null,
                     parentId: null,
                     modalidade: currentMode,
                     rate: currentRate,
-                    monthlyRetirada: interest
+                    monthlyRetirada: (currentMode === "RETIRADA") ? interest : 0
                 } as any);
 
                 lastCalcDate = monthDate;
