@@ -348,15 +348,36 @@ export default function OperationTable({ initialOperations, clients, currentUser
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Bruto Operação (R$)</label>
-                                    <NumericFormat required className="glass-input" value={formData.valorBruto} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, valorBruto: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
+                                    <NumericFormat required className="glass-input" value={formData.valorBruto} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
+                                        const bruto = v.floatValue || 0;
+                                        const fator = parseFloat(formData.fator) || 0;
+                                        const tarifas = parseFloat(formData.tarifas) || 0;
+                                        const adValorem = parseFloat(formData.adValorem) || 0;
+
+                                        setFormData({
+                                            ...formData,
+                                            valorBruto: v.floatValue !== undefined ? String(v.floatValue) : "",
+                                            percentual: bruto > 0 ? ((fator / bruto) * 100).toFixed(2) : "",
+                                            percentualTarifas: bruto > 0 ? ((tarifas / bruto) * 100).toFixed(2) : "",
+                                            percentualAdValorem: bruto > 0 ? ((adValorem / bruto) * 100).toFixed(2) : ""
+                                        });
+                                    }} />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Fator (R$)</label>
-                                    <NumericFormat required className="glass-input" value={formData.fator} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, fator: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
+                                    <NumericFormat required className="glass-input" value={formData.fator} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
+                                        const fator = v.floatValue || 0;
+                                        const bruto = parseFloat(formData.valorBruto) || 0;
+                                        setFormData({
+                                            ...formData,
+                                            fator: v.floatValue !== undefined ? String(v.floatValue) : "",
+                                            percentual: bruto > 0 ? ((fator / bruto) * 100).toFixed(2) : ""
+                                        });
+                                    }} />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>% Fator</label>
-                                    <input type="number" step="0.01" className="glass-input" value={formData.percentual} onChange={e => setFormData({ ...formData, percentual: e.target.value })} />
+                                    <input readOnly type="number" step="0.01" className="glass-input" style={{ opacity: 0.7, cursor: "not-allowed" }} value={formData.percentual} />
                                 </div>
                             </div>
 
@@ -367,22 +388,38 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Tarifas (R$)</label>
-                                    <NumericFormat required className="glass-input" value={formData.tarifas} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, tarifas: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
+                                    <NumericFormat required className="glass-input" value={formData.tarifas} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
+                                        const tarifas = v.floatValue || 0;
+                                        const bruto = parseFloat(formData.valorBruto) || 0;
+                                        setFormData({
+                                            ...formData,
+                                            tarifas: v.floatValue !== undefined ? String(v.floatValue) : "",
+                                            percentualTarifas: bruto > 0 ? ((tarifas / bruto) * 100).toFixed(2) : ""
+                                        });
+                                    }} />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>% Tarifas</label>
-                                    <input type="number" step="0.01" className="glass-input" value={formData.percentualTarifas} onChange={e => setFormData({ ...formData, percentualTarifas: e.target.value })} />
+                                    <input readOnly type="number" step="0.01" className="glass-input" style={{ opacity: 0.7, cursor: "not-allowed" }} value={formData.percentualTarifas} />
                                 </div>
                             </div>
 
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "1rem" }}>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Ad Valorem (R$)</label>
-                                    <NumericFormat required className="glass-input" value={formData.adValorem} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, adValorem: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
+                                    <NumericFormat required className="glass-input" value={formData.adValorem} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
+                                        const adValorem = v.floatValue || 0;
+                                        const bruto = parseFloat(formData.valorBruto) || 0;
+                                        setFormData({
+                                            ...formData,
+                                            adValorem: v.floatValue !== undefined ? String(v.floatValue) : "",
+                                            percentualAdValorem: bruto > 0 ? ((adValorem / bruto) * 100).toFixed(2) : ""
+                                        });
+                                    }} />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>% AdValorem</label>
-                                    <input type="number" step="0.01" className="glass-input" value={formData.percentualAdValorem} onChange={e => setFormData({ ...formData, percentualAdValorem: e.target.value })} />
+                                    <input readOnly type="number" step="0.01" className="glass-input" style={{ opacity: 0.7, cursor: "not-allowed" }} value={formData.percentualAdValorem} />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IRPJ (Opcional)</label>
