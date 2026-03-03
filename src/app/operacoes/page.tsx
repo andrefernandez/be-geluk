@@ -58,8 +58,7 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
         <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", padding: "2rem" }}>
             <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3rem" }}>
                 <div>
-                    <h1 className="text-gradient" style={{ fontSize: "2rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Operações Diárias</h1>
-                    <p style={{ color: "var(--text-secondary)", marginTop: "0.25rem" }}>Fomento, antecipações e lançamentos</p>
+                    <h1 className="text-gradient" style={{ fontSize: "2rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Operações</h1>
                 </div>
                 <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
                     <MonthFilter />

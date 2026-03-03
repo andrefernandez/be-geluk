@@ -173,10 +173,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
 
     return (
         <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                <h2 style={{ fontSize: "1.25rem", fontWeight: 600 }}>
-                    Registro de Operações <span style={{ color: "var(--text-tertiary)", fontSize: "1rem", fontWeight: 400 }}>({operations.length})</span>
-                </h2>
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: "1.5rem" }}>
                 {isAdminOrManager && (
                     <button className="btn-primary" onClick={handleOpenModal} style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }}>
                         + Nova Operação
@@ -185,6 +182,10 @@ export default function OperationTable({ initialOperations, clients, currentUser
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+                <div className="glass-card" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Nº de Operações</span>
+                    <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>{operations.length}</span>
+                </div>
                 <div className="glass-card" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Total Bruto</span>
                     <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>{formatCurrency(sumColumn("valorBruto"))}</span>
@@ -195,11 +196,11 @@ export default function OperationTable({ initialOperations, clients, currentUser
                 </div>
                 <div className="glass-card" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Taxa Média</span>
-                    <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>{formatPercent(calculateWeightedAveragePercent("percentual"))} <span style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-tertiary)' }}>AM (Pond.)</span></span>
+                    <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>{formatPercent(calculateWeightedAveragePercent("percentual"))}</span>
                 </div>
                 <div className="glass-card" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Custo Total (%)</span>
-                    <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--accent-red)" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Taxa Total Média</span>
+                    <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>
                         {formatPercent(
                             calculateWeightedAveragePercent("percentual") +
                             calculateWeightedAveragePercent("percentualTarifas") +
@@ -221,12 +222,9 @@ export default function OperationTable({ initialOperations, clients, currentUser
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Cliente</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, borderLeft: "1px dashed var(--glass-border)" }}>Bruto Operação</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Fator</th>
-                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>% Fat.</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Dias</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, borderLeft: "1px dashed var(--glass-border)" }}>Tarifas</th>
-                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>% Tar.</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Ad Valorem</th>
-                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>% AdV.</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>IOF</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>IOF Adic.</th>
                             <th style={{ padding: "1rem", color: "var(--accent-primary)", fontWeight: 500, borderLeft: "1px dashed var(--glass-border)" }}>Valor Líquido</th>
@@ -242,13 +240,10 @@ export default function OperationTable({ initialOperations, clients, currentUser
 
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(op.valorBruto)}</td>
                                 <td style={{ padding: "0.75rem 1rem", color: "var(--text-tertiary)" }}>{formatCurrency(op.fator)}</td>
-                                <td style={{ padding: "0.75rem 1rem", color: "var(--text-tertiary)", fontSize: "0.75rem" }}>{formatPercent(op.percentual)}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{op.dias}</td>
 
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(op.tarifas)}</td>
-                                <td style={{ padding: "0.75rem 1rem", color: "var(--text-tertiary)", fontSize: "0.75rem" }}>{formatPercent(op.percentualTarifas)}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(op.adValorem)}</td>
-                                <td style={{ padding: "0.75rem 1rem", color: "var(--text-tertiary)", fontSize: "0.75rem" }}>{formatPercent(op.percentualAdValorem)}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(op.iof)}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(op.iofAdicional)}</td>
 
@@ -282,20 +277,9 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                 <td style={{ padding: "0.75rem 1rem" }} colSpan={2}>Total</td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(sumColumn("valorBruto"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("fator"))}</td>
-                                <td style={{ padding: "0.75rem 1rem", fontSize: "0.7rem", color: "var(--text-tertiary)" }}>
-                                    M.P. {formatPercent(calculateWeightedAveragePercent("percentual"))}
-                                </td>
-                                <td style={{ padding: "0.75rem 1rem", fontSize: "0.7rem", color: "var(--text-tertiary)" }}>
-                                    P.M. {calculateAverageDays().toFixed(1)} d
-                                </td>
+                                <td style={{ padding: "0.75rem 1rem" }}>{calculateAverageDays().toFixed(1)} d</td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(sumColumn("tarifas"))}</td>
-                                <td style={{ padding: "0.75rem 1rem", fontSize: "0.7rem", color: "var(--text-tertiary)" }}>
-                                    M.P. {formatPercent(calculateWeightedAveragePercent("percentualTarifas"))}
-                                </td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("adValorem"))}</td>
-                                <td style={{ padding: "0.75rem 1rem", fontSize: "0.7rem", color: "var(--text-tertiary)" }}>
-                                    M.P. {formatPercent(calculateWeightedAveragePercent("percentualAdValorem"))}
-                                </td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("iof"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("iofAdicional"))}</td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("valorLiquido"))}</td>
@@ -307,20 +291,9 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }} colSpan={2}>Sel. ({selectedIds.size} itens)</td>
                                     <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("valorBruto", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("fator", true))}</td>
-                                    <td style={{ padding: "0.75rem 1rem", fontSize: "0.7rem", color: "var(--accent-primary)" }}>
-                                        M.P. {formatPercent(calculateWeightedAveragePercent("percentual", true))}
-                                    </td>
-                                    <td style={{ padding: "0.75rem 1rem", fontSize: "0.7rem", color: "var(--accent-primary)" }}>
-                                        P.M. {calculateAverageDays(true).toFixed(1)} d
-                                    </td>
+                                    <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{calculateAverageDays(true).toFixed(1)} d</td>
                                     <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("tarifas", true))}</td>
-                                    <td style={{ padding: "0.75rem 1rem", fontSize: "0.7rem", color: "var(--accent-primary)" }}>
-                                        M.P. {formatPercent(calculateWeightedAveragePercent("percentualTarifas", true))}
-                                    </td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("adValorem", true))}</td>
-                                    <td style={{ padding: "0.75rem 1rem", fontSize: "0.7rem", color: "var(--accent-primary)" }}>
-                                        M.P. {formatPercent(calculateWeightedAveragePercent("percentualAdValorem", true))}
-                                    </td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("iof", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("iofAdicional", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--text-primary)" }}>{formatCurrency(sumColumn("valorLiquido", true))}</td>
