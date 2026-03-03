@@ -175,9 +175,12 @@ export default function OperationTable({ initialOperations, clients, currentUser
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Cliente</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, borderLeft: "1px dashed var(--glass-border)" }}>Bruto Operação</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Fator</th>
+                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>% Fat.</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Dias</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, borderLeft: "1px dashed var(--glass-border)" }}>Tarifas</th>
+                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>% Tar.</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Ad Valorem</th>
+                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>% AdV.</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>IOF</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>IOF Adic.</th>
                             <th style={{ padding: "1rem", color: "var(--accent-primary)", fontWeight: 500, borderLeft: "1px dashed var(--glass-border)" }}>Valor Líquido</th>
@@ -193,10 +196,13 @@ export default function OperationTable({ initialOperations, clients, currentUser
 
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(op.valorBruto)}</td>
                                 <td style={{ padding: "0.75rem 1rem", color: "var(--text-tertiary)" }}>{formatCurrency(op.fator)}</td>
+                                <td style={{ padding: "0.75rem 1rem", color: "var(--text-tertiary)", fontSize: "0.75rem" }}>{formatPercent(op.percentual)}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{op.dias}</td>
 
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(op.tarifas)}</td>
+                                <td style={{ padding: "0.75rem 1rem", color: "var(--text-tertiary)", fontSize: "0.75rem" }}>{formatPercent(op.percentualTarifas)}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(op.adValorem)}</td>
+                                <td style={{ padding: "0.75rem 1rem", color: "var(--text-tertiary)", fontSize: "0.75rem" }}>{formatPercent(op.percentualAdValorem)}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(op.iof)}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(op.iofAdicional)}</td>
 
@@ -230,11 +236,14 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                 <td style={{ padding: "0.75rem 1rem" }} colSpan={2}>Total</td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(sumColumn("valorBruto"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("fator"))}</td>
+                                <td style={{ padding: "0.75rem 1rem" }}></td>
                                 <td style={{ padding: "0.75rem 1rem", fontSize: "0.7rem", color: "var(--text-tertiary)" }}>
                                     P.M. {calculateAverageDays().toFixed(1)} d
                                 </td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(sumColumn("tarifas"))}</td>
+                                <td style={{ padding: "0.75rem 1rem" }}></td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("adValorem"))}</td>
+                                <td style={{ padding: "0.75rem 1rem" }}></td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("iof"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("iofAdicional"))}</td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("valorLiquido"))}</td>
@@ -246,16 +255,19 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }} colSpan={2}>Sel. ({selectedIds.size} itens)</td>
                                     <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("valorBruto", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("fator", true))}</td>
+                                    <td style={{ padding: "0.75rem 1rem" }}></td>
                                     <td style={{ padding: "0.75rem 1rem", fontSize: "0.7rem", color: "var(--accent-primary)" }}>
                                         P.M. {calculateAverageDays(true).toFixed(1)} d
                                     </td>
                                     <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("tarifas", true))}</td>
+                                    <td style={{ padding: "0.75rem 1rem" }}></td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("adValorem", true))}</td>
+                                    <td style={{ padding: "0.75rem 1rem" }}></td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("iof", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("iofAdicional", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--text-primary)" }}>{formatCurrency(sumColumn("valorLiquido", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-red)" }}>{formatCurrency(sumColumn("recompra", true))}</td>
-                                    {isAdminOrManager && <td></td>}
+                                    pieces of text.                                    {isAdminOrManager && <td></td>}
                                 </tr>
                             )}
                         </tfoot>
@@ -294,6 +306,10 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Fator (R$)</label>
                                     <NumericFormat required className="glass-input" value={formData.fator} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, fator: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
                                 </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>% Fator</label>
+                                    <input type="number" step="0.01" className="glass-input" value={formData.percentual} onChange={e => setFormData({ ...formData, percentual: e.target.value })} />
+                                </div>
                             </div>
 
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
@@ -305,12 +321,20 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Tarifas (R$)</label>
                                     <NumericFormat required className="glass-input" value={formData.tarifas} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, tarifas: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
                                 </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>% Tarifas</label>
+                                    <input type="number" step="0.01" className="glass-input" value={formData.percentualTarifas} onChange={e => setFormData({ ...formData, percentualTarifas: e.target.value })} />
+                                </div>
                             </div>
 
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "1rem" }}>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Ad Valorem (R$)</label>
                                     <NumericFormat required className="glass-input" value={formData.adValorem} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, adValorem: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>% AdValorem</label>
+                                    <input type="number" step="0.01" className="glass-input" value={formData.percentualAdValorem} onChange={e => setFormData({ ...formData, percentualAdValorem: e.target.value })} />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IRPJ (Opcional)</label>
