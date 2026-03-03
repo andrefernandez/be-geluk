@@ -198,6 +198,16 @@ export default function OperationTable({ initialOperations, clients, currentUser
                     <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>{formatPercent(calculateWeightedAveragePercent("percentual"))} <span style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-tertiary)' }}>AM (Pond.)</span></span>
                 </div>
                 <div className="glass-card" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Custo Total (%)</span>
+                    <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--accent-red)" }}>
+                        {formatPercent(
+                            calculateWeightedAveragePercent("percentual") +
+                            calculateWeightedAveragePercent("percentualTarifas") +
+                            calculateWeightedAveragePercent("percentualAdValorem")
+                        )}
+                    </span>
+                </div>
+                <div className="glass-card" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Prazo Médio</span>
                     <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>{calculateAverageDays().toFixed(1)} <span style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-tertiary)' }}>Dias</span></span>
                 </div>
@@ -353,11 +363,15 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                         const fator = parseFloat(formData.fator) || 0;
                                         const tarifas = parseFloat(formData.tarifas) || 0;
                                         const adValorem = parseFloat(formData.adValorem) || 0;
+                                        const dias = parseFloat(formData.dias) || 0;
+
+                                        const dateObj = new Date(formData.date);
+                                        const daysInMonth = new Date(dateObj.getUTCFullYear(), dateObj.getUTCMonth() + 1, 0).getDate();
 
                                         setFormData({
                                             ...formData,
                                             valorBruto: v.floatValue !== undefined ? String(v.floatValue) : "",
-                                            percentual: bruto > 0 ? ((fator / bruto) * 100).toFixed(2) : "",
+                                            percentual: (bruto > 0 && dias > 0) ? (((fator / bruto) / dias) * daysInMonth * 100).toFixed(2) : "",
                                             percentualTarifas: bruto > 0 ? ((tarifas / bruto) * 100).toFixed(2) : "",
                                             percentualAdValorem: bruto > 0 ? ((adValorem / bruto) * 100).toFixed(2) : ""
                                         });
@@ -368,10 +382,15 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     <NumericFormat required className="glass-input" value={formData.fator} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
                                         const fator = v.floatValue || 0;
                                         const bruto = parseFloat(formData.valorBruto) || 0;
+                                        const dias = parseFloat(formData.dias) || 0;
+
+                                        const dateObj = new Date(formData.date);
+                                        const daysInMonth = new Date(dateObj.getUTCFullYear(), dateObj.getUTCMonth() + 1, 0).getDate();
+
                                         setFormData({
                                             ...formData,
                                             fator: v.floatValue !== undefined ? String(v.floatValue) : "",
-                                            percentual: bruto > 0 ? ((fator / bruto) * 100).toFixed(2) : ""
+                                            percentual: (bruto > 0 && dias > 0) ? (((fator / bruto) / dias) * daysInMonth * 100).toFixed(2) : ""
                                         });
                                     }} />
                                 </div>
@@ -384,7 +403,20 @@ export default function OperationTable({ initialOperations, clients, currentUser
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Dias</label>
-                                    <input required type="number" className="glass-input" value={formData.dias} onChange={e => setFormData({ ...formData, dias: e.target.value })} />
+                                    <input required type="number" className="glass-input" value={formData.dias} onChange={e => {
+                                        const dias = parseFloat(e.target.value) || 0;
+                                        const bruto = parseFloat(formData.valorBruto) || 0;
+                                        const fator = parseFloat(formData.fator) || 0;
+
+                                        const dateObj = new Date(formData.date);
+                                        const daysInMonth = new Date(dateObj.getUTCFullYear(), dateObj.getUTCMonth() + 1, 0).getDate();
+
+                                        setFormData({
+                                            ...formData,
+                                            dias: e.target.value,
+                                            percentual: (bruto > 0 && dias > 0) ? (((fator / bruto) / dias) * daysInMonth * 100).toFixed(2) : ""
+                                        });
+                                    }} />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Tarifas (R$)</label>
@@ -432,6 +464,16 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IOF Adicional (Opcional)</label>
                                     <NumericFormat className="glass-input" value={formData.iofAdicional} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, iofAdicional: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--accent-red)", fontWeight: 600 }}>% Custo Total</label>
+                                    <input readOnly type="text" className="glass-input" style={{ opacity: 0.9, backgroundColor: "rgba(239, 68, 68, 0.05)", borderColor: "var(--accent-red)", color: "var(--accent-red)", fontWeight: 600 }}
+                                        value={`${(
+                                            (parseFloat(formData.percentual) || 0) +
+                                            (parseFloat(formData.percentualTarifas) || 0) +
+                                            (parseFloat(formData.percentualAdValorem) || 0)
+                                        ).toFixed(2)}%`}
+                                    />
                                 </div>
                             </div>
 
