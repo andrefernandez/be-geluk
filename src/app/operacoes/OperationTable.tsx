@@ -59,6 +59,23 @@ export default function OperationTable({ initialOperations, clients, currentUser
         }, 0) / 100;
     };
 
+    const calculateAverageDays = (onlySelected = false) => {
+        const opsToCalc = onlySelected && selectedIds.size > 0
+            ? operations.filter(op => selectedIds.has(op.id))
+            : operations;
+
+        const totalBruto = opsToCalc.reduce((acc, op) => acc + (Number(op.valorBruto) || 0), 0);
+        if (totalBruto === 0) return 0;
+
+        const weightedDays = opsToCalc.reduce((acc, op) => {
+            const bruto = Number(op.valorBruto) || 0;
+            const dias = Number(op.dias) || 0;
+            return acc + (bruto * dias);
+        }, 0);
+
+        return weightedDays / totalBruto;
+    };
+
     const handleOpenModal = () => {
         setEditingId(null);
         setFormData({
@@ -213,7 +230,9 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                 <td style={{ padding: "0.75rem 1rem" }} colSpan={2}>Total</td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(sumColumn("valorBruto"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("fator"))}</td>
-                                <td style={{ padding: "0.75rem 1rem" }}></td>
+                                <td style={{ padding: "0.75rem 1rem", fontSize: "0.7rem", color: "var(--text-tertiary)" }}>
+                                    P.M. {calculateAverageDays().toFixed(1)} d
+                                </td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(sumColumn("tarifas"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("adValorem"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("iof"))}</td>
@@ -227,7 +246,9 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }} colSpan={2}>Sel. ({selectedIds.size} itens)</td>
                                     <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("valorBruto", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("fator", true))}</td>
-                                    <td style={{ padding: "0.75rem 1rem" }}></td>
+                                    <td style={{ padding: "0.75rem 1rem", fontSize: "0.7rem", color: "var(--accent-primary)" }}>
+                                        P.M. {calculateAverageDays(true).toFixed(1)} d
+                                    </td>
                                     <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("tarifas", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("adValorem", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("iof", true))}</td>
