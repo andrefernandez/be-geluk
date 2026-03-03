@@ -65,11 +65,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
     return list.reduce((acc, item) => acc + Math.round((Number(item.amount) || 0) * 100), 0) / 100;
   };
 
-  // ---- CALCULA DASHBOARD MAE ----
-
+  // ---- CALCULA DASHBOARD ----
   const totalOperado = safeSumOperations("valorBruto");
 
-  // Receita Bruta = Fator + Tarifas + AdValorem + IOF + IOF Adicional
+  // Receita Bruta = Soma de tudo o que a Factoring cobra (Fator + Tarifas + AdValorem + IOFs)
   const receitaBruta = (Math.round((
     safeSumOperations("fator") +
     safeSumOperations("tarifas") +
@@ -78,46 +77,24 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
     safeSumOperations("iofAdicional")
   ) * 100)) / 100;
 
-  const custoOperadoPercent = totalOperado > 0 ? ((receitaBruta / totalOperado) * 100) : 0; // Aproximação Custo/Operado da planilha
+  // Custos Totais = Soma de tudo o que foi lançado na aba de Custos (Fixos, Variáveis, Impostos, Repasses)
+  const custoTotal = safeSumList(costs);
 
-  // Separação dos Custos
-  const custosFixos = safeSumList(costs.filter(c => c.category === "FIXO"));
-  const custosVariaveis = safeSumList(costs.filter(c => c.category === "VARIAVEL"));
-  const impostosList = costs.filter(c => c.category === "IMPOSTO");
-  const impostos = safeSumList(impostosList);
-
-  // Agora "Investidores" é puxado direto da tela de Lançamentos de Custos
-  const investidoresTotal = safeSumList(costs.filter(c => c.category === "INVESTIDORES"));
-
-  // ==========================================
-  // CÁLCULO DE RESULTADO: DRE (Lucro Real)
-  // ==========================================
-  // Segundo as normas contábeis de fomento mercantil no Lucro Real, o resultado segue:
-  // 1. Receita Operacional Bruta = Fator + Ad Valorem + Tarifas (+ IOF retido do cliente)
-  // 2. (-) Impostos sobre Faturamento (PIS, COFINS, ISS) e IOF Repassado
-  // 3. (-) Despesas Operacionais (Custos Fixos, Variáveis, Repasses Investidores)
-  // 4. (-) Impostos sobre o Lucro (IRPJ e CSLL)
-  // = Lucro Líquido
-
-  const iofTotal = safeSumOperations("iof") + safeSumOperations("iofAdicional");
-  const impostosRegistrados = safeSumList(impostosList); // (PIS + COFINS + ISS + IRPJ + CSLL) lançados na tela
-
-  // Mantemos o custo total normal para os outros painéis:
-  const custoTotal = custosFixos + custosVariaveis + impostosRegistrados + investidoresTotal;
-
-  // Lucro Líquido Corrigido: Receita Bruta - Despesas - Todos os Impostos (incluindo o IOF retido)
-  // Obs: O "Valor Bruto" dos títulos (totalOperado) NÃO é deduzido do lucro, 
-  // pois a aquisição do recebível é uma mutação patrimonial (troca de dinheiro por direito de crédito), não uma despesa.
-  // O IOF agora é puxado exclusivamente dos lançamentos da aba de Custos (dentro de impostosRegistrados),
-  // para não duplicar com a dedução automática.
-  const lucroLiquido = receitaBruta - custosFixos - custosVariaveis - impostosRegistrados - investidoresTotal;
+  // Lucro Líquido Simplificado: O que entrou de taxas menos o que saiu de custos
+  const lucroLiquido = receitaBruta - custoTotal;
 
   const rentabilidade = totalOperado > 0 ? (lucroLiquido / totalOperado) * 100 : 0;
-
   const custoReceitaPercent = receitaBruta > 0 ? (custoTotal / receitaBruta) * 100 : 0;
 
+  // Separação apenas para exibição na lista detalhada
+  const custosFixos = safeSumList(costs.filter(c => c.category === "FIXO"));
+  const custosVariaveis = safeSumList(costs.filter(c => c.category === "VARIAVEL"));
+  const impostosRegistrados = safeSumList(costs.filter(c => c.category === "IMPOSTO"));
+  const investidoresTotal = safeSumList(costs.filter(c => c.category === "INVESTIDORES"));
+  const iofTotal = safeSumOperations("iof") + safeSumOperations("iofAdicional");
+
   // ==========================================
-  // DADOS PARA O GRÁFICO (MÊS A MÊS)
+  // DADOS PARA O GRÁFICO (MÊS A MÊS) - UNIFICADO
   // ==========================================
   const allOperations = await prisma.operation.findMany({ orderBy: { date: 'asc' } });
   const allCosts = await prisma.cost.findMany();
@@ -140,24 +117,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   const chartData = Object.values(groupedByMonth)
     .sort((a, b) => a.rawDate.getTime() - b.rawDate.getTime())
     .map(group => {
-      const groupOps = group.ops;
-      const groupCosts = group.costs;
+      const gTotalOperado = group.ops.reduce((acc, o) => acc + Math.round(Number(o.valorBruto || 0) * 100), 0) / 100;
+      const gReceita = group.ops.reduce((acc, o) => acc + Math.round((
+        Number(o.fator) + Number(o.tarifas) + Number(o.adValorem) + Number(o.iof) + Number(o.iofAdicional)
+      ) * 100), 0) / 100;
 
-      const gTotalOperado = groupOps.reduce((acc, o) => acc + Math.round(Number(o.valorBruto || 0) * 100), 0) / 100;
-      const gReceita = groupOps.reduce((acc, o) => acc + Math.round((Number(o.fator) + Number(o.tarifas) + Number(o.adValorem) + Number(o.iof) + Number(o.iofAdicional)) * 100), 0) / 100;
+      const gCusto = group.costs.reduce((acc, c) => acc + Math.round(Number(c.amount || 0) * 100), 0) / 100;
 
-      const gCustosFixos = groupCosts.filter(c => c.category === 'FIXO').reduce((acc, c) => acc + Math.round(Number(c.amount) * 100), 0) / 100;
-      const gCustosVariaveis = groupCosts.filter(c => c.category === 'VARIAVEL').reduce((acc, c) => acc + Math.round(Number(c.amount) * 100), 0) / 100;
-      const gImpostosList = groupCosts.filter(c => c.category === 'IMPOSTO');
-
-      const gPis = gImpostosList.filter(c => c.name.toLowerCase().includes('pis')).reduce((a, c) => a + Math.round(Number(c.amount) * 100), 0) / 100;
-      const gCofins = gImpostosList.filter(c => c.name.toLowerCase().includes('cofins')).reduce((a, c) => a + Math.round(Number(c.amount) * 100), 0) / 100;
-      const gIofMensal = gImpostosList.filter(c => c.name.toLowerCase().includes('iof')).reduce((a, c) => a + Math.round(Number(c.amount) * 100), 0) / 100;
-      const gIr = gImpostosList.filter(c => c.name.toLowerCase().includes('ir') || c.name.toLowerCase().includes('i.r')).reduce((a, c) => a + Math.round(Number(c.amount) * 100), 0) / 100;
-      const gCsll = gImpostosList.filter(c => c.name.toLowerCase().includes('csll') || c.name.toLowerCase().includes('contrib')).reduce((a, c) => a + Math.round(Number(c.amount) * 100), 0) / 100;
-
-      const gLucroLiquido = gReceita - (gPis + gCofins + gIofMensal) - (gIr + gCsll) - (gCustosFixos + gCustosVariaveis);
-
+      const gLucroLiquido = gReceita - gCusto;
       const gRentabilidade = gTotalOperado > 0 ? (gLucroLiquido / gTotalOperado) * 100 : 0;
 
       return {
