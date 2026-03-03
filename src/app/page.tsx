@@ -165,6 +165,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
           <div className="glass-panel" style={{ padding: "1.5rem" }}>
             <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Receita Bruta</h3>
             <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(receitaBruta)}</div>
+            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
+              RENTABILIDADE: {formatPercent(totalOperado > 0 ? (receitaBruta / totalOperado) * 100 : 0)}
+            </div>
           </div>
 
           <div className="glass-panel" style={{ padding: "1.5rem" }}>
@@ -173,7 +176,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
               {formatCurrency(lucroLiquido)}
             </div>
             <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
-              RENTABILIDADE: {formatPercent(rentabilidade)}
+              RENT. LÍQUIDA: {formatPercent(rentabilidade)}
             </div>
           </div>
 
