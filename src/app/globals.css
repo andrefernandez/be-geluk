@@ -93,6 +93,23 @@ button {
   gap: 1rem;
 }
 
+.responsive-grid-1-2 {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+}
+
+.responsive-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+}
+
+.responsive-p {
+  padding: 2.5rem;
+}
+
 /* Component Classes (Now Solid) */
 .glass-panel,
 .glass-card {
@@ -106,6 +123,25 @@ button {
 .glass-card:hover {
   background: var(--card-hover);
   border-color: #3f3f46;
+}
+
+/* Modal Form Grids */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-grid-4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 1rem;
 }
 
 /* Form Elements */
@@ -187,12 +223,32 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .glass-panel {
+  .glass-panel,
+  .glass-card {
     padding: 1.25rem;
   }
 
   .container-full {
     padding: 0 1rem;
+  }
+
+  .responsive-grid-1-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .responsive-header-flex {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .responsive-p {
+    padding: 1rem;
+  }
+
+  .form-grid-2, .form-grid-3, .form-grid-4 {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -215,7 +271,25 @@ button {
   }
 
   .main-content {
-    padding: 1.5rem 1rem;
+    padding: 90px 1rem 1.5rem 1rem;
     overflow-x: hidden;
+  }
+}
+
+/* Responsive Visibility utilities */
+.mobile-only {
+  display: none !important;
+}
+
+.desktop-only {
+  display: block;
+}
+
+@media (max-width: 1024px) {
+  .mobile-only {
+    display: block !important;
+  }
+  .desktop-only {
+    display: none !important;
   }
 }

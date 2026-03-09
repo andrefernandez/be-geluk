@@ -47,8 +47,8 @@ export default async function CustosPage({ searchParams }: { searchParams: Promi
     });
 
     return (
-        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", padding: "2rem" }}>
-            <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3rem" }}>
+        <div className="responsive-p" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+            <header className="responsive-header-flex">
                 <div>
                     <h1 className="text-gradient" style={{ fontSize: "2rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Custos e Despesas</h1>
                     <p style={{ color: "var(--text-secondary)", marginTop: "0.25rem" }}>Controle de gastos fixos, variáveis e impostos</p>

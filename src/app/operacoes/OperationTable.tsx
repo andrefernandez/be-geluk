@@ -175,8 +175,8 @@ export default function OperationTable({ initialOperations, clients, currentUser
     };
 
     return (
-        <div>
-            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: "1.5rem" }}>
+        <div className="responsive-p">
+            <div className="responsive-header-flex">
                 {isAdminOrManager && (
                     <button className="btn-primary" onClick={handleOpenModal} style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }}>
                         + Nova Operação
@@ -217,7 +217,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                 </div>
             </div>
 
-            <div style={{ overflowX: "auto" }}>
+            <div className="desktop-only" style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", whiteSpace: "nowrap" }}>
                     <thead>
                         <tr style={{ borderBottom: "1px solid var(--glass-border-light)", fontSize: "0.75rem", textTransform: "uppercase" }}>
@@ -312,13 +312,65 @@ export default function OperationTable({ initialOperations, clients, currentUser
                 )}
             </div>
 
+            {/* Mobile View */}
+            <div className="mobile-only" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {operations.map(op => (
+                    <div key={op.id} className="glass-card" onClick={() => isAdminOrManager && handleEdit(op)} style={{ padding: "1.25rem", cursor: isAdminOrManager ? "pointer" : "default", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                        <div className="flex-between" style={{ alignItems: "flex-start", marginBottom: 0 }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                <span style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-primary)" }}>{op.client.name}</span>
+                                <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>{new Date(op.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })} | {op.dias} dias</span>
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                                <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Bruto Operado</span>
+                                <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-secondary)" }}>{formatCurrency(op.valorBruto)}</span>
+                            </div>
+                        </div>
+
+                        <div style={{ height: "1px", backgroundColor: "var(--glass-border)", margin: "0.25rem 0" }}></div>
+
+                        <div className="flex-between">
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Valor Líquido</span>
+                                <span style={{ fontWeight: 800, fontSize: "1.125rem", color: "var(--accent-primary)" }}>{formatCurrency(op.valorLiquido)}</span>
+                            </div>
+                            {op.recompra && (
+                                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.25rem" }}>
+                                    <span style={{ fontSize: "0.6875rem", color: "var(--accent-red)", textTransform: "uppercase", fontWeight: 700 }}>Recompra</span>
+                                    <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--accent-red)" }}>{formatCurrency(op.recompra)}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ))}
+
+                {operations.length > 0 && (
+                    <div className="glass-card" style={{ padding: "1rem", marginTop: "0.5rem", border: "1px dashed var(--glass-border)" }}>
+                        <div className="flex-between">
+                            <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-secondary)" }}>Total Bruto</span>
+                            <span style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-primary)" }}>{formatCurrency(sumColumn("valorBruto"))}</span>
+                        </div>
+                        <div className="flex-between" style={{ marginTop: "0.5rem" }}>
+                            <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-secondary)" }}>Total Líquido</span>
+                            <span style={{ fontWeight: 800, fontSize: "1.125rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("valorLiquido"))}</span>
+                        </div>
+                    </div>
+                )}
+                
+                {operations.length === 0 && (
+                    <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-tertiary)" }}>
+                        Nenhuma operação cadastrada.
+                    </div>
+                )}
+            </div>
+
             {isModalOpen && (
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
                     <div className="glass-card" style={{ width: "100%", maxWidth: "800px", padding: "2rem", display: "flex", flexDirection: "column", gap: "1.5rem", maxHeight: "90vh", overflowY: "auto" }}>
                         <h3 style={{ fontSize: "1.25rem", fontWeight: 600 }}>{editingId ? "Editar Operação" : "Nova Operação"}</h3>
 
                         <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                            <div className="form-grid-2">
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Data</label>
                                     <input required type="date" className="glass-input" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
@@ -331,7 +383,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                 </div>
                             </div>
 
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                            <div className="form-grid-2">
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Bruto Operação (R$)</label>
                                     <NumericFormat required className="glass-input" value={formData.valorBruto} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
@@ -372,7 +424,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                 </div>
                             </div>
 
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                            <div className="form-grid-2">
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Dias</label>
                                     <input required type="number" className="glass-input" value={formData.dias} onChange={e => {
@@ -404,7 +456,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                 </div>
                             </div>
 
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "1rem" }}>
+                            <div className="form-grid-4">
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Ad Valorem (R$)</label>
                                     <NumericFormat required className="glass-input" value={formData.adValorem} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
@@ -432,7 +484,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                 </div>
                             </div>
 
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                            <div className="form-grid-2">
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--accent-primary)", fontWeight: 600 }}>Valor Líquido (R$)</label>
                                     <NumericFormat required className="glass-input" style={{ borderColor: "var(--accent-primary)" }} value={formData.valorLiquido} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, valorLiquido: v.floatValue !== undefined ? String(v.floatValue) : "" })} />

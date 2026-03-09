@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { LayoutDashboard, ArrowRightLeft, Users, TrendingUp, HandCoins, UserCog, Menu, X } from "lucide-react";
 
 export function Navigation() {
     const pathname = usePathname();
     const { data: session } = useSession();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     if (!session) return null;
 
@@ -14,46 +17,68 @@ export function Navigation() {
     const isInvestor = (session.user as any).role === "INVESTOR";
 
     const navItems = isInvestor ? [] : [
-        { name: "Dashboard", path: "/" },
-        { name: "Operações", path: "/operacoes" },
-        { name: "Clientes", path: "/clientes" },
-        { name: "Investidores", path: "/investidores" },
-        { name: "Custos", path: "/custos" },
-        ...(isAdminOrManager ? [{ name: "Usuários", path: "/usuarios" }] : []),
+        { name: "Dashboard", path: "/", icon: <LayoutDashboard size={20} /> },
+        { name: "Operações", path: "/operacoes", icon: <ArrowRightLeft size={20} /> },
+        { name: "Clientes", path: "/clientes", icon: <Users size={20} /> },
+        { name: "Investidores", path: "/investidores", icon: <TrendingUp size={20} /> },
+        { name: "Custos", path: "/custos", icon: <HandCoins size={20} /> },
+        ...(isAdminOrManager ? [{ name: "Usuários", path: "/usuarios", icon: <UserCog size={20} /> }] : []),
     ];
 
     return (
-        <nav className="nav-sidebar">
-            <div className="nav-logo">
-                <img src="https://www.gelukbank.com.br/logo.svg" alt="Geluk Logo" className="logo-img" />
-            </div>
-
-            <div className="nav-links">
-                {navItems.map(item => {
-                    const isActive = pathname === item.path;
-                    return (
-                        <Link key={item.path} href={item.path} className={`nav-link ${isActive ? 'active' : ''}`}>
-                            <span className="nav-link-dot"></span>
-                            {item.name}
-                        </Link>
-                    );
-                })}
-            </div>
-
-            <div className="nav-footer">
-                <div className="user-profile">
-                    <div className="avatar">
-                        {session.user?.name?.charAt(0) || "U"}
-                    </div>
-                    <div className="user-info">
-                        <p className="user-name">{session.user?.name}</p>
-                        <p className="user-role">{session.user?.email}</p>
-                    </div>
-                </div>
-                <button onClick={() => signOut()} className="logout-btn">
-                    Sair
+        <div style={{ display: 'contents' }}>
+            {/* Mobile Topbar */}
+            <div className="mobile-only mobile-topbar">
+                <img src="https://www.gelukbank.com.br/logo.svg" alt="Geluk Logo" className="logo-img-mobile" />
+                <button onClick={() => setIsMobileMenuOpen(true)} className="menu-btn" aria-label="Abrir menu">
+                    <Menu size={24} color="var(--text-primary)" />
                 </button>
             </div>
+
+            {/* Drawer Backdrop */}
+            {isMobileMenuOpen && (
+                <div className="mobile-only drawer-backdrop" onClick={() => setIsMobileMenuOpen(false)}></div>
+            )}
+
+            {/* Sidebar / Drawer */}
+            <nav className={`nav-sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
+                <div className="nav-logo flex-between" style={{ alignItems: "center" }}>
+                    <img src="https://www.gelukbank.com.br/logo.svg" alt="Geluk Logo" className="logo-img" />
+                    <button onClick={() => setIsMobileMenuOpen(false)} className="mobile-only close-btn" aria-label="Fechar menu">
+                        <X size={24} color="var(--text-primary)" />
+                    </button>
+                </div>
+
+                <div className="nav-links">
+                    {navItems.map(item => {
+                        const isActive = pathname === item.path;
+                        return (
+                            <Link key={item.path} href={item.path} onClick={() => setIsMobileMenuOpen(false)} className={`nav-link ${isActive ? 'active' : ''}`}>
+                                <span className="desktop-only nav-link-dot"></span>
+                                <div className="nav-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    {item.icon}
+                                </div>
+                                <span className="nav-text">{item.name}</span>
+                            </Link>
+                        );
+                    })}
+                </div>
+
+                <div className="nav-footer">
+                    <div className="user-profile">
+                        <div className="avatar">
+                            {session.user?.name?.charAt(0) || "U"}
+                        </div>
+                        <div className="user-info">
+                            <p className="user-name">{session.user?.name}</p>
+                            <p className="user-role">{session.user?.email}</p>
+                        </div>
+                    </div>
+                    <button onClick={() => signOut()} className="logout-btn">
+                        Sair
+                    </button>
+                </div>
+            </nav>
 
             <style jsx>{`
                 .nav-sidebar {
@@ -180,49 +205,131 @@ export function Navigation() {
 
                 @media (max-width: 1024px) {
                     .nav-sidebar {
-                        width: 100%;
-                        height: auto;
-                        flex-direction: row;
-                        align-items: center;
-                        padding: 0.75rem 1rem;
-                        position: relative;
-                        border-right: none;
-                        border-bottom: 1px solid var(--card-border);
+                        width: 280px;
+                        height: 100vh;
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        flex-direction: column;
+                        justify-content: flex-start;
+                        background: rgba(20, 20, 22, 0.98);
+                        backdrop-filter: blur(16px);
+                        border-right: 1px solid var(--card-border);
+                        border-top: none;
+                        z-index: 10001;
+                        padding: 2.5rem 1.25rem;
+                        transform: translateX(-100%);
+                        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     }
 
+                    .nav-sidebar.open {
+                        transform: translateX(0);
+                    }
+
+                    .nav-logo, .nav-footer {
+                        display: flex;
+                    }
+                    
                     .nav-logo {
-                        margin-bottom: 0;
-                        margin-right: 1.5rem;
-                    }
-
-                    .logo-img {
-                        width: 40px;
+                        margin-bottom: 3rem;
+                        justify-content: space-between;
+                        width: 100%;
                     }
 
                     .nav-links {
-                        flex-direction: row;
-                        overflow-x: auto;
+                        width: 100%;
+                        height: auto;
+                        flex-direction: column;
+                        justify-content: flex-start;
+                        align-items: stretch;
                         gap: 0.5rem;
+                        overflow-y: auto;
                     }
 
                     .nav-link {
-                         padding: 0.5rem 0.75rem;
-                         white-space: nowrap;
+                         padding: 0.75rem 1rem;
+                         flex-direction: row;
+                         justify-content: flex-start;
+                         height: auto;
+                         flex: none;
+                         font-size: 0.8125rem;
+                         text-align: left;
+                         gap: 0.75rem;
                     }
 
-                    .nav-footer {
-                        margin-top: 0;
-                        padding-top: 0;
-                        border-top: none;
-                        flex-direction: row;
-                        padding-left: 1.5rem;
+                    .nav-icon {
+                        display: none !important;
                     }
 
-                    .user-info, .logout-btn {
-                         display: none;
+                    .nav-link.active {
+                        background: rgba(16, 185, 129, 0.1);
+                        color: var(--accent-primary);
                     }
                 }
+
+                .mobile-topbar {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 70px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0;
+                    background: rgba(20, 20, 22, 0.95);
+                    backdrop-filter: blur(10px);
+                    border-bottom: 1px solid var(--card-border);
+                    z-index: 9990;
+                }
+
+                .logo-img-mobile {
+                    width: 90px;
+                    height: auto;
+                    position: absolute;
+                    left: 50%;
+                    top: 50%;
+                    transform: translate(-50%, -50%);
+                }
+
+                .menu-btn {
+                    position: absolute;
+                    left: 0.75rem;
+                    top: 50%;
+                    transform: translateY(-50%);
+                }
+
+                .menu-btn, .close-btn {
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0;
+                    width: 44px;
+                    height: 44px;
+                    border-radius: var(--radius-sm);
+                    transition: background var(--transition-fast);
+                }
+
+                .menu-btn:hover, .close-btn:hover {
+                    background: rgba(255, 255, 255, 0.05);
+                }
+
+                .drawer-backdrop {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100vh;
+                    background: rgba(0, 0, 0, 0.6);
+                    backdrop-filter: blur(2px);
+                    z-index: 10000;
+                    opacity: 1;
+                    animation: fadeIn 0.3s ease-out;
+                }
             `}</style>
-        </nav>
+        </div>
     );
 }

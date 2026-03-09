@@ -64,7 +64,7 @@ export default function UserTable({ initialUsers, currentUserRole }: { initialUs
                 )}
             </div>
 
-            <div style={{ overflowX: "auto" }}>
+            <div className="desktop-only" style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
                     <thead>
                         <tr style={{ borderBottom: "1px solid var(--glass-border-light)" }}>
@@ -109,6 +109,34 @@ export default function UserTable({ initialUsers, currentUserRole }: { initialUs
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile View */}
+            <div className="mobile-only" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {users.map(user => (
+                    <div key={user.id} className="glass-card" onClick={() => isAdmin && handleOpenModal(user)} style={{ padding: "1.25rem", cursor: isAdmin ? "pointer" : "default" }}>
+                        <div className="flex-between" style={{ alignItems: "flex-start", marginBottom: "0.75rem" }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                <span style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-primary)" }}>{user.name}</span>
+                                <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{user.email}</span>
+                            </div>
+                            <span style={{
+                                padding: "0.25rem 0.5rem",
+                                borderRadius: "var(--radius-sm)",
+                                fontSize: "0.65rem",
+                                fontWeight: 600,
+                                backgroundColor: user.role === "ADMIN" ? "rgba(16, 185, 129, 0.15)" : user.role === "MANAGER" ? "rgba(59, 130, 246, 0.15)" : "rgba(255, 255, 255, 0.05)",
+                                color: user.role === "ADMIN" ? "var(--accent-primary)" : user.role === "MANAGER" ? "var(--accent-blue)" : "var(--text-primary)",
+                                border: `1px solid ${user.role === "ADMIN" ? "var(--accent-primary)" : user.role === "MANAGER" ? "var(--accent-blue)" : "var(--glass-border)"}`
+                            }}>
+                                {user.role}
+                            </span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>Adicionado em {new Date(user.createdAt).toLocaleDateString("pt-BR")}</span>
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {/* Modal */}

@@ -103,7 +103,7 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                 )}
             </div>
 
-            <div style={{ overflowX: "auto" }}>
+            <div className="desktop-only" style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
                     <thead>
                         <tr style={{ borderBottom: "1px solid var(--glass-border-light)" }}>
@@ -182,6 +182,44 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                 )}
             </div>
 
+            {/* Mobile View */}
+            <div className="mobile-only" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {costs.map(cost => {
+                    const categoryColor = cost.category === "FIXO" ? "var(--accent-blue)" : cost.category === "VARIAVEL" ? "var(--accent-orange)" : cost.category === "INVESTIDORES" ? "var(--accent-primary)" : "var(--accent-red)";
+                    const categoryBg = cost.category === "FIXO" ? "rgba(59, 130, 246, 0.1)" : cost.category === "VARIAVEL" ? "rgba(245, 158, 11, 0.1)" : cost.category === "INVESTIDORES" ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)";
+
+                    return (
+                        <div key={cost.id} className="glass-card" onClick={() => isAdminOrManager && handleOpenModal(cost)} style={{ padding: "1.25rem", cursor: isAdminOrManager ? "pointer" : "default" }}>
+                            <div className="flex-between" style={{ alignItems: "flex-start", marginBottom: "0.75rem" }}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                    <span style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-primary)" }}>{cost.name}</span>
+                                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>{new Date(cost.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</span>
+                                </div>
+                                <span style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text-primary)" }}>{formatCurrency(cost.amount)}</span>
+                            </div>
+                            <div className="flex-between">
+                                <span style={{ backgroundColor: categoryBg, color: categoryColor, padding: "0.25rem 0.5rem", borderRadius: "100px", fontSize: "0.65rem", fontWeight: 700, border: `1px solid ${categoryColor}40` }}>
+                                    {cost.category}
+                                </span>
+                            </div>
+                        </div>
+                    );
+                })}
+                {costs.length > 0 && (
+                    <div className="glass-card" style={{ padding: "1.25rem", marginTop: "0.5rem", backgroundColor: "rgba(255,255,255,0.02)" }}>
+                        <div className="flex-between">
+                            <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-secondary)" }}>Total Lançamentos</span>
+                            <span style={{ fontWeight: 800, fontSize: "1.125rem", color: "var(--text-primary)" }}>{formatCurrency(sumCosts())}</span>
+                        </div>
+                    </div>
+                )}
+                {costs.length === 0 && (
+                    <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-tertiary)" }}>
+                        Nenhum custo cadastrado.
+                    </div>
+                )}
+            </div>
+
             {/* Modal */}
             {
                 isModalOpen && (
@@ -195,7 +233,7 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                                     <input required className="glass-input" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Ex: Sistema Credit Hub" />
                                 </div>
 
-                                <div style={{ display: "flex", gap: "1rem" }}>
+                                <div className="form-grid-2">
                                     <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
                                         <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Data</label>
                                         <input required type="date" className="glass-input" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
@@ -218,7 +256,7 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                                     </div>
                                 </div>
 
-                                <div style={{ display: "flex", gap: "1rem" }}>
+                                <div className="form-grid-2">
                                     <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
                                         <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Categoria</label>
                                         <select className="glass-input" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}>

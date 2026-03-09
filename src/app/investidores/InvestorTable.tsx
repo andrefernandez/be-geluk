@@ -471,7 +471,7 @@ export default function InvestorTable({ initialInvestors, currentUserRole }: { i
                     </div>
                 </div>
 
-                <div style={{ overflowX: "auto" }}>
+                <div className="desktop-only" style={{ overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                         <thead>
                             <tr style={{ borderBottom: "1px solid var(--card-border)" }}>
@@ -607,6 +607,98 @@ export default function InvestorTable({ initialInvestors, currentUserRole }: { i
                         </tbody>
                     </table>
 
+                </div>
+
+                {/* Mobile View */}
+                <div className="mobile-only" style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1rem" }}>
+                    {investors.map(inv => {
+                        const totals = calculateTotal(inv);
+                        const isExpanded = expandedRow === inv.id;
+
+                        return (
+                            <div key={inv.id} className="glass-card" style={{ padding: 0, overflow: "hidden" }}>
+                                <div onClick={() => setExpandedRow(isExpanded ? null : inv.id)} style={{ padding: "1.25rem", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                                    <div className="flex-between" style={{ alignItems: "flex-start", marginBottom: 0 }}>
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                                <span style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-primary)" }}>{inv.name}</span>
+                                                <span style={{ color: "var(--text-tertiary)" }}>{isExpanded ? "▲" : "▼"}</span>
+                                            </div>
+                                            <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>Desde {new Date(inv.startDate || inv.createdAt).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</span>
+                                        </div>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                                            <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Total Aplicado</span>
+                                            <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-secondary)" }}>{formatCurrency(totals.totalAplicado)}</span>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ height: "1px", backgroundColor: "var(--glass-border)", margin: "0.25rem 0" }}></div>
+
+                                    <div className="flex-between">
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                            <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Total Atual</span>
+                                            <span style={{ fontWeight: 800, fontSize: "1.125rem", color: "var(--accent-primary)" }}>{formatCurrency(totals.totalAtual)}</span>
+                                        </div>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.25rem", textAlign: "right" }}>
+                                             <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", fontWeight: 700 }}>{inv.type === "RETIRADA" ? "Juros Simples" : "Juros Compostos"}</span>
+                                             <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-secondary)" }}>{inv.rate ? `${inv.rate}%` : "-"} /mês</span>
+                                        </div>
+                                    </div>
+                                    
+                                    {isAdminOrManager && (
+                                        <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                                            <button className="btn-secondary" style={{ flex: 1, padding: "0.5rem", fontSize: "0.75rem" }} onClick={(e) => { e.stopPropagation(); handleOpenTxModal(inv); }}>Movimentar</button>
+                                            <button className="btn-secondary" style={{ flex: 1, padding: "0.5rem", fontSize: "0.75rem" }} onClick={(e) => { e.stopPropagation(); handleOpenInvestorModal(inv); }}>Editar</button>
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {isExpanded && (
+                                    <div style={{ backgroundColor: "#0c0c0d", padding: "1.25rem", borderTop: "1px solid var(--grid-line)" }}>
+                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                                            <h4 style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Extrato de Movimentações</h4>
+                                            {isAdminOrManager && (
+                                                <button onClick={() => handleDeleteInvestor(inv.id)} style={{ color: "var(--accent-red)", fontSize: "0.75rem", fontWeight: 600 }}>Excluir</button>
+                                            )}
+                                        </div>
+                                        
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                                            {getDetailedStatement(inv).map((tx: any) => (
+                                                <div key={tx.id} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", paddingBottom: "1rem", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+                                                     <div className="flex-between">
+                                                         <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                                                             <span style={{ fontWeight: 800, fontSize: "0.625rem", textTransform: "uppercase", padding: "0.2rem 0.4rem", borderRadius: "100px", color: tx.type === "APORTE" ? "var(--accent-secondary)" : tx.type === "RETIRADA" ? "var(--accent-red)" : "var(--accent-primary)", backgroundColor: tx.type === "APORTE" ? "rgba(16, 185, 129, 0.1)" : tx.type === "RETIRADA" ? "rgba(239, 68, 68, 0.1)" : "rgba(59, 130, 246, 0.1)" }}>
+                                                                    {tx.type}
+                                                             </span>
+                                                             <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>{new Date(tx.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</span>
+                                                         </div>
+                                                         {isAdminOrManager && (
+                                                             <button onClick={() => handleDeleteTx(tx.id)} style={{ color: "var(--accent-red)", opacity: 0.6, fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase" }}>Apagar</button>
+                                                         )}
+                                                     </div>
+                                                     <div className="flex-between">
+                                                         <div style={{ display: "flex", flexDirection: "column" }}>
+                                                             <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)" }}>Valor</span>
+                                                             <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)", fontWeight: 600 }}>{tx.amount > 0 ? formatCurrency(tx.amount) : "-"}</span>
+                                                         </div>
+                                                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                                                            <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)" }}>Rend.</span>
+                                                            <span style={{ fontSize: "0.875rem", color: "var(--accent-primary)", fontWeight: 600 }}>{tx.interestEarned > 0 ? `+${formatCurrency(tx.interestEarned)}` : "-"}</span>
+                                                         </div>
+                                                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                                                            <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)" }}>Saldo</span>
+                                                            <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(tx.runningBalance)}</span>
+                                                         </div>
+                                                     </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+
                     {investors.length === 0 && (
                         <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-tertiary)" }}>
                             Nenhum investidor cadastrado ainda.
@@ -633,7 +725,7 @@ export default function InvestorTable({ initialInvestors, currentUserRole }: { i
                                         <option value="REINVESTIMENTO">Reinvestimento (Juros sobre juros)</option>
                                     </select>
                                 </div>
-                                <div style={{ display: "flex", gap: "1rem" }}>
+                                <div className="form-grid-2">
                                     <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                         <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Data Início</label>
                                         <input required type="date" className="glass-input" value={startDate} onChange={e => setStartDate(e.target.value)} />
@@ -712,7 +804,7 @@ export default function InvestorTable({ initialInvestors, currentUserRole }: { i
                                     </div>
                                 )}
 
-                                <div style={{ display: "flex", gap: "1.25rem" }}>
+                                <div className="form-grid-2">
                                     <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
                                         <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Data</label>
                                         <input required type="date" className="glass-input" value={txDate} onChange={e => setTxDate(e.target.value)} />
@@ -805,7 +897,7 @@ export default function InvestorTable({ initialInvestors, currentUserRole }: { i
                                     </div>
                                 )}
 
-                                <div style={{ display: "flex", gap: "1.25rem" }}>
+                                <div className="form-grid-2">
                                     <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
                                         <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Data do Resgate</label>
                                         <input required type="date" className="glass-input" value={resgateDate} onChange={e => setResgateDate(e.target.value)} />

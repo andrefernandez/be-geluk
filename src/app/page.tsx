@@ -133,7 +133,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
       const gRentabilidade = gTotalOperado > 0 ? (gLucroLiquido / gTotalOperado) * 100 : 0;
 
       return {
-        month: new Date(group.rawDate).toLocaleDateString("pt-BR", { month: "short", year: "2-digit", timeZone: "UTC" }),
+        month: new Date(group.rawDate).toLocaleDateString("pt-BR", { month: "short", timeZone: "UTC" }),
         totalOperado: gTotalOperado,
         lucroLiquido: gLucroLiquido,
         rentabilidade: gRentabilidade
@@ -146,13 +146,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   const formatPercent = (val: number) => `${val.toFixed(2)}%`;
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", padding: "2.5rem" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3rem" }}>
+    <div className="responsive-p" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <header className="responsive-header-flex">
         <div>
           <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.025em" }}>DASHBOARD GERAL</h1>
           <p style={{ color: "var(--text-tertiary)", fontSize: "0.8125rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "0.25rem" }}>{displayTitle}</p>
         </div>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
           <MonthFilter />
           <Link href="/operacoes" className="btn-primary" style={{ height: "2.5rem", padding: "0 1.25rem", display: "flex", alignItems: "center", fontSize: "0.8125rem", fontWeight: 700 }}>NOVA OPERAÇÃO</Link>
         </div>
@@ -220,7 +220,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
         </div>
 
         {/* Secondary Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "2rem" }}>
+        <div className="responsive-grid-1-2">
           {/* Result Structure */}
           <div className="glass-panel" style={{ padding: "2rem" }}>
             <h2 style={{ fontSize: "0.875rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "1.5rem", textTransform: "uppercase" }}>Estrutura DRE</h2>
@@ -265,7 +265,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
                 <tbody>
                   {[...operations].reverse().slice(0, 8).map(op => (
                     <tr key={op.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.02)" }}>
-                      <td style={{ padding: "0.875rem 0", color: "var(--text-tertiary)", fontSize: "0.8125rem" }}>{new Date(op.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</td>
+                      <td style={{ padding: "0.875rem 0", color: "var(--text-tertiary)", fontSize: "0.8125rem" }}>{new Date(op.date).toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</td>
                       <td style={{ padding: "0.875rem 0", fontWeight: 700, fontSize: "0.8125rem", color: "var(--text-primary)" }}>{op.client.name}</td>
                       <td style={{ padding: "0.875rem 0", textAlign: "right", fontSize: "0.8125rem" }}>{formatCurrency(op.valorBruto)}</td>
                       <td style={{ padding: "0.875rem 0", textAlign: "right", fontWeight: 700, color: "var(--accent-primary)", fontSize: "0.8125rem" }}>{formatCurrency(op.valorLiquido)}</td>

@@ -24,8 +24,8 @@ export default async function ClientesPage() {
     });
 
     return (
-        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", padding: "2rem" }}>
-            <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3rem" }}>
+        <div className="responsive-p" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+            <header className="responsive-header-flex">
                 <div>
                     <h1 className="text-gradient" style={{ fontSize: "2rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Clientes</h1>
                     <p style={{ color: "var(--text-secondary)", marginTop: "0.25rem" }}>Gestão de sacados/cedentes</p>

@@ -75,7 +75,7 @@ export default function ClientTable({ initialClients, currentUserRole }: { initi
                 )}
             </div>
 
-            <div style={{ overflowX: "auto" }}>
+            <div className="desktop-only" style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
                     <thead>
                         <tr style={{ borderBottom: "1px solid var(--glass-border-light)" }}>
@@ -115,6 +115,28 @@ export default function ClientTable({ initialClients, currentUserRole }: { initi
                 {clients.length === 0 && (
                     <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-tertiary)" }}>
                         Nenhum cliente cadastrado ainda.
+                    </div>
+                )}
+            </div>
+
+            {/* Mobile View */}
+            <div className="mobile-only" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {clients.map(client => (
+                    <div key={client.id} className="glass-card" onClick={() => isAdminOrManager && handleOpenModal(client)} style={{ padding: "1.25rem", cursor: isAdminOrManager ? "pointer" : "default" }}>
+                        <div className="flex-between" style={{ alignItems: "flex-start", marginBottom: "0.75rem" }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                <span style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-primary)" }}>{client.name}</span>
+                                <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>Cadastrado em {new Date(client.createdAt).toLocaleDateString("pt-BR")}</span>
+                            </div>
+                            <span style={{ backgroundColor: "rgba(255,255,255,0.05)", padding: "0.25rem 0.5rem", borderRadius: "var(--radius-sm)", fontSize: "0.75rem", border: "1px solid var(--glass-border)", color: "var(--text-secondary)" }}>
+                                {client._count.operations} op.
+                            </span>
+                        </div>
+                    </div>
+                ))}
+                {clients.length === 0 && (
+                    <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-tertiary)" }}>
+                        Nenhum cliente cadastrado.
                     </div>
                 )}
             </div>
