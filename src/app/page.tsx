@@ -93,6 +93,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   const investidoresTotal = safeSumList(costs.filter(c => c.category === "INVESTIDORES"));
   const iofTotal = safeSumOperations("iof") + safeSumOperations("iofAdicional");
 
+  const valorDeclarado = operations.filter(op => op.declarada).reduce((acc, op) => acc + Math.round((Number(op.valorBruto) || 0) * 100), 0) / 100;
+  const valorNaoDeclarado = operations.filter(op => !op.declarada).reduce((acc, op) => acc + Math.round((Number(op.valorBruto) || 0) * 100), 0) / 100;
+  const percentualDeclarado = totalOperado > 0 ? (valorDeclarado / totalOperado) * 100 : 0;
+  const percentualNaoDeclarado = totalOperado > 0 ? (valorNaoDeclarado / totalOperado) * 100 : 0;
+
   // ==========================================
   // DADOS PARA O GRÁFICO (MÊS A MÊS) - UNIFICADO
   // ==========================================
@@ -185,6 +190,22 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
             <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(custosFixos + custosVariaveis + investidoresTotal)}</div>
             <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
               EFICIÊNCIA: {formatPercent(100 - custoReceitaPercent)}
+            </div>
+          </div>
+
+          <div className="glass-panel" style={{ padding: "1.5rem" }}>
+            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Op. Declaradas</h3>
+            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--accent-primary)" }}>{formatCurrency(valorDeclarado)}</div>
+            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
+              {formatPercent(percentualDeclarado)} DO TOTAL
+            </div>
+          </div>
+
+          <div className="glass-panel" style={{ padding: "1.5rem" }}>
+            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Op. Não Declaradas</h3>
+            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(valorNaoDeclarado)}</div>
+            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
+              {formatPercent(percentualNaoDeclarado)} DO TOTAL
             </div>
           </div>
         </div>

@@ -23,6 +23,7 @@ export async function createOperation(data: any) {
                 iofAdicional: data.iofAdicional,
                 valorLiquido: data.valorLiquido,
                 recompra: data.recompra,
+                declarada: data.declarada ?? false,
             },
         });
         revalidatePath("/operacoes");
@@ -64,6 +65,7 @@ export async function updateOperation(id: string, data: any) {
                 iofAdicional: data.iofAdicional,
                 valorLiquido: data.valorLiquido,
                 recompra: data.recompra,
+                declarada: data.declarada ?? false,
             },
         });
         revalidatePath("/operacoes");

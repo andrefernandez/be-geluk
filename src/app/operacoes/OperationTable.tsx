@@ -36,7 +36,8 @@ export default function OperationTable({ initialOperations, clients, currentUser
         iof: "",
         iofAdicional: "",
         valorLiquido: "",
-        recompra: ""
+        recompra: "",
+        declarada: false
     });
 
     const formatCurrency = (val: number | null) => {
@@ -100,7 +101,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
             date: new Date().toISOString().split("T")[0],
             valorBruto: "", fator: "", percentual: "", percentualPrazo: "", dias: "",
             tarifas: "", percentualTarifas: "", adValorem: "", percentualAdValorem: "",
-            irpj: "", iof: "", iofAdicional: "", valorLiquido: "", recompra: ""
+            irpj: "", iof: "", iofAdicional: "", valorLiquido: "", recompra: "", declarada: false
         });
         setIsModalOpen(true);
     };
@@ -125,6 +126,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
             iofAdicional: op.iofAdicional?.toString() || "",
             valorLiquido: op.valorLiquido?.toString() || "",
             recompra: op.recompra?.toString() || "",
+            declarada: op.declarada ?? false,
         });
         setIsModalOpen(true);
     };
@@ -154,6 +156,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
             iofAdicional: formData.iofAdicional ? Number(formData.iofAdicional) : null,
             valorLiquido: Number(formData.valorLiquido),
             recompra: formData.recompra ? Number(formData.recompra) : null,
+            declarada: formData.declarada,
         };
 
         if (editingId) {
@@ -328,7 +331,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                 </div>
                             </div>
 
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Bruto Operação (R$)</label>
                                     <NumericFormat required className="glass-input" value={formData.valorBruto} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
@@ -367,10 +370,6 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                         });
                                     }} />
                                 </div>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>% Fator</label>
-                                    <input readOnly type="number" step="0.01" className="glass-input" style={{ opacity: 0.7, cursor: "not-allowed" }} value={formData.percentual} />
-                                </div>
                             </div>
 
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
@@ -403,10 +402,6 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                         });
                                     }} />
                                 </div>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>% Tarifas</label>
-                                    <input readOnly type="number" step="0.01" className="glass-input" style={{ opacity: 0.7, cursor: "not-allowed" }} value={formData.percentualTarifas} />
-                                </div>
                             </div>
 
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "1rem" }}>
@@ -422,31 +417,18 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                         });
                                     }} />
                                 </div>
+
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>% AdValorem</label>
-                                    <input readOnly type="number" step="0.01" className="glass-input" style={{ opacity: 0.7, cursor: "not-allowed" }} value={formData.percentualAdValorem} />
-                                </div>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IRPJ (Opcional)</label>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IRPJ</label>
                                     <NumericFormat className="glass-input" value={formData.irpj} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, irpj: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IOF (Opcional)</label>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IOF</label>
                                     <NumericFormat className="glass-input" value={formData.iof} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, iof: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IOF Adicional (Opcional)</label>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IOF Adicional</label>
                                     <NumericFormat className="glass-input" value={formData.iofAdicional} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, iofAdicional: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
-                                </div>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                    <label style={{ fontSize: "0.875rem", color: "var(--accent-red)", fontWeight: 600 }}>% Custo Total</label>
-                                    <input readOnly type="text" className="glass-input" style={{ opacity: 0.9, backgroundColor: "rgba(239, 68, 68, 0.05)", borderColor: "var(--accent-red)", color: "var(--accent-red)", fontWeight: 600 }}
-                                        value={`${(
-                                            (parseFloat(formData.percentual) || 0) +
-                                            (parseFloat(formData.percentualTarifas) || 0) +
-                                            (parseFloat(formData.percentualAdValorem) || 0)
-                                        ).toFixed(2)}%`}
-                                    />
                                 </div>
                             </div>
 
@@ -459,6 +441,19 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     <label style={{ fontSize: "0.875rem", color: "var(--accent-red)", fontWeight: 600 }}>Recompra (R$)</label>
                                     <NumericFormat className="glass-input" style={{ borderColor: "var(--accent-red)" }} value={formData.recompra} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, recompra: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
                                 </div>
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.5rem" }}>
+                                <input
+                                    type="checkbox"
+                                    id="declarada"
+                                    checked={formData.declarada}
+                                    onChange={(e) => setFormData({ ...formData, declarada: e.target.checked })}
+                                    style={{ width: "18px", height: "18px", accentColor: "var(--accent-primary)", cursor: "pointer" }}
+                                />
+                                <label htmlFor="declarada" style={{ fontSize: "0.875rem", color: "var(--text-secondary)", cursor: "pointer", fontWeight: 500 }}>
+                                    Operação Declarada/Contabilizada
+                                </label>
                             </div>
 
                             <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--glass-border)" }}>
