@@ -51,9 +51,18 @@ export function Navigation() {
 
                 <div className="nav-links">
                     {navItems.map(item => {
-                        const isActive = pathname === item.path;
+                        const isActive = item.path === '/' ? pathname === '/' : pathname.startsWith(item.path);
                         return (
-                            <Link key={item.path} href={item.path} onClick={() => setIsMobileMenuOpen(false)} className={`nav-link ${isActive ? 'active' : ''}`}>
+                            <Link 
+                                key={item.path} 
+                                href={item.path} 
+                                onClick={() => setIsMobileMenuOpen(false)} 
+                                className={`nav-link ${isActive ? 'active' : ''}`}
+                                style={{
+                                    paddingLeft: '2.5rem',
+                                    ...(isActive ? { backgroundColor: 'rgba(255, 255, 255, 0.7)', color: '#1c1c1f', borderColor: 'transparent', fontWeight: 700 } : {})
+                                }}
+                            >
                                 <span className="nav-text">{item.name}</span>
                             </Link>
                         );
@@ -83,7 +92,7 @@ export function Navigation() {
                     border-right: 1px solid var(--card-border);
                     display: flex;
                     flex-direction: column;
-                    padding: 2.5rem 1.25rem;
+                    padding: 2.5rem 0;
                     position: sticky;
                     top: 0;
                     height: 100vh;
@@ -94,6 +103,7 @@ export function Navigation() {
                     margin-bottom: 3rem;
                     display: flex;
                     justify-content: center;
+                    padding: 0 1.25rem;
                 }
 
                 .logo-img {
@@ -104,7 +114,7 @@ export function Navigation() {
                 .nav-links {
                     display: flex;
                     flex-direction: column;
-                    gap: 0.25rem;
+                    gap: 0.5rem;
                     flex: 1;
                 }
 
@@ -112,8 +122,8 @@ export function Navigation() {
                     display: flex;
                     align-items: center;
                     gap: 0.75rem;
-                    padding: 0.75rem 1rem;
-                    border-radius: var(--radius-sm);
+                    padding: 1.125rem 1.25rem 1.125rem 2.5rem; /* top right bottom left */
+                    border-radius: 0;
                     color: var(--text-tertiary);
                     font-size: 0.8125rem;
                     font-weight: 600;
@@ -129,16 +139,16 @@ export function Navigation() {
                 }
 
                 .nav-link.active {
-                    color: var(--accent-primary);
-                    background: rgba(16, 185, 129, 0.05);
-                    border-color: rgba(16, 185, 129, 0.1);
+                    color: var(--accent-primary) !important;
+                    background: rgba(16, 185, 129, 0.2) !important;
+                    border-color: rgba(16, 185, 129, 0.4) !important;
                 }
 
 
 
                 .nav-footer {
                     margin-top: 2rem;
-                    padding-top: 2rem;
+                    padding: 2rem 1.25rem 0 1.25rem;
                     border-top: 1px solid var(--card-border);
                     display: flex;
                     flex-direction: column;
@@ -208,7 +218,7 @@ export function Navigation() {
                         border-right: 1px solid var(--card-border);
                         border-top: none;
                         z-index: 10001;
-                        padding: 2.5rem 1.25rem;
+                        padding: 2.5rem 0;
                         transform: translateX(-100%);
                         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     }
@@ -219,6 +229,8 @@ export function Navigation() {
 
                     .nav-logo, .nav-footer {
                         display: flex;
+                        padding-left: 1.25rem;
+                        padding-right: 1.25rem;
                     }
                     
                     .nav-logo {
@@ -233,12 +245,12 @@ export function Navigation() {
                         flex-direction: column;
                         justify-content: flex-start;
                         align-items: stretch;
-                        gap: 0.5rem;
+                        gap: 0.75rem;
                         overflow-y: auto;
                     }
 
                     .nav-link {
-                         padding: 0.75rem 1rem;
+                         padding: 1.125rem 1.25rem 1.125rem 2.5rem;
                          flex-direction: row;
                          justify-content: flex-start;
                          height: auto;
@@ -253,8 +265,8 @@ export function Navigation() {
                     }
 
                     .nav-link.active {
-                        background: rgba(16, 185, 129, 0.1);
-                        color: var(--accent-primary);
+                        background: rgba(16, 185, 129, 0.2) !important;
+                        color: var(--accent-primary) !important;
                     }
                 }
 
