@@ -237,7 +237,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                     </thead>
                     <tbody>
                         {operations.map((op) => (
-                            <tr key={op.id} style={{ borderBottom: "1px solid var(--glass-border)", transition: "background var(--transition-fast)", fontSize: "0.875rem" }} className="hover-row">
+                            <tr key={op.id} onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) toggleSelection(op.id); }} style={{ cursor: "pointer", backgroundColor: selectedIds.has(op.id) ? "rgba(16, 185, 129, 0.1)" : "transparent", borderBottom: "1px solid var(--glass-border)", transition: "background var(--transition-fast)", fontSize: "0.875rem" }} className="hover-row">
                                 <td style={{ padding: "0.75rem 1rem", color: "var(--text-secondary)" }}>{new Date(op.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</td>
                                 <td style={{ padding: "0.75rem 1rem", fontWeight: 500 }}>{op.client.name}</td>
 
@@ -256,12 +256,6 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                 {isAdminOrManager && (
                                     <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
                                         <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", alignItems: "center" }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedIds.has(op.id)}
-                                                onChange={() => toggleSelection(op.id)}
-                                                style={{ cursor: "pointer", width: "18px", height: "18px", accentColor: "var(--accent-primary)", marginRight: "0.25rem" }}
-                                            />
                                             <button onClick={() => handleEdit(op)} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", backgroundColor: "rgba(16, 185, 129, 0.1)", color: "var(--accent-primary)", border: "1px solid var(--accent-primary)", borderRadius: "var(--radius-sm)" }}>
                                                 Editar
                                             </button>
