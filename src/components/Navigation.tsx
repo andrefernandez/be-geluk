@@ -19,6 +19,7 @@ export function Navigation() {
     const navItems = isInvestor ? [] : [
         { name: "Dashboard", path: "/" },
         { name: "Operações", path: "/operacoes" },
+        { name: "Acordos", path: "/acordos" },
         { name: "Clientes", path: "/clientes" },
         { name: "Investidores", path: "/investidores" },
         { name: "Custos", path: "/custos" },

@@ -25,6 +25,7 @@ model Client {
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
   operations Operation[]
+  agreements Agreement[]
 }
 
 model Investor {
@@ -87,4 +88,28 @@ model Operation {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   client              Client   @relation(fields: [clientId], references: [id])
+}
+
+model Agreement {
+  id                String                 @id @default(cuid())
+  clientId          String
+  client            Client                 @relation(fields: [clientId], references: [id])
+  totalValue        Float
+  installmentsCount Int
+  status            String                 @default("ACTIVE") // ACTIVE, COMPLETED, CANCELLED
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  installments      AgreementInstallment[]
+}
+
+model AgreementInstallment {
+  id            String    @id @default(cuid())
+  agreementId   String
+  agreement     Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  value         Float
+  dueDate       DateTime
+  status        String    @default("PENDING") // PENDING, PAID
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
