@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { LayoutDashboard, ArrowRightLeft, Users, TrendingUp, HandCoins, UserCog, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 export function Navigation() {
     const pathname = usePathname();
@@ -17,12 +17,12 @@ export function Navigation() {
     const isInvestor = (session.user as any).role === "INVESTOR";
 
     const navItems = isInvestor ? [] : [
-        { name: "Dashboard", path: "/", icon: <LayoutDashboard size={20} /> },
-        { name: "Operações", path: "/operacoes", icon: <ArrowRightLeft size={20} /> },
-        { name: "Clientes", path: "/clientes", icon: <Users size={20} /> },
-        { name: "Investidores", path: "/investidores", icon: <TrendingUp size={20} /> },
-        { name: "Custos", path: "/custos", icon: <HandCoins size={20} /> },
-        ...(isAdminOrManager ? [{ name: "Usuários", path: "/usuarios", icon: <UserCog size={20} /> }] : []),
+        { name: "Dashboard", path: "/" },
+        { name: "Operações", path: "/operacoes" },
+        { name: "Clientes", path: "/clientes" },
+        { name: "Investidores", path: "/investidores" },
+        { name: "Custos", path: "/custos" },
+        ...(isAdminOrManager ? [{ name: "Usuários", path: "/usuarios" }] : []),
     ];
 
     return (
@@ -54,10 +54,6 @@ export function Navigation() {
                         const isActive = pathname === item.path;
                         return (
                             <Link key={item.path} href={item.path} onClick={() => setIsMobileMenuOpen(false)} className={`nav-link ${isActive ? 'active' : ''}`}>
-                                <span className="desktop-only nav-link-dot"></span>
-                                <div className="nav-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                    {item.icon}
-                                </div>
                                 <span className="nav-text">{item.name}</span>
                             </Link>
                         );
@@ -138,12 +134,7 @@ export function Navigation() {
                     border-color: rgba(16, 185, 129, 0.1);
                 }
 
-                .nav-link-dot {
-                    width: 4px;
-                    height: 4px;
-                    border-radius: 50%;
-                    background: currentColor;
-                }
+
 
                 .nav-footer {
                     margin-top: 2rem;
