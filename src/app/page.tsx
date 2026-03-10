@@ -14,8 +14,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
     redirect("/login");
   }
 
-  if ((session.user as any).role === "INVESTOR") {
+  if ((session?.user as any)?.role === "INVESTOR") {
     redirect("/investidores");
+  }
+
+  if ((session?.user as any)?.role === "CONTADOR") {
+    redirect("/custos");
   }
 
   // Definindo o período selecionado

@@ -47,17 +47,15 @@ export default async function AcordosPage() {
     };
 
     return (
-        <div className="main-layout">
-            <main className="main-content">
-                <div className="container-full">
-                    <div className="responsive-header-flex">
+        <div className="container-full">
+            <div className="responsive-header-flex">
                         <div>
                             <h1 style={{ fontSize: "1.875rem", fontWeight: 700, marginBottom: "0.5rem" }}>Acordos</h1>
                             <p style={{ color: "var(--text-secondary)" }}>Gerencie parcelamentos e acordos com clientes</p>
                         </div>
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1.5rem", marginBottom: "2rem" }}>
+                    <div className="layout-grid" style={{ marginBottom: "2rem" }}>
                         <div className="glass-panel" style={{ padding: "1.5rem" }}>
                             <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Valor Recebido</h3>
                             <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(totalPaidValue)}</div>
@@ -83,13 +81,11 @@ export default async function AcordosPage() {
                     </div>
 
                     <div className="glass-panel" style={{ padding: "0" }}>
-                        <AgreementList 
-                            initialAgreements={agreementsData} 
-                            clients={clientsData} 
+                        <AgreementList
+                            initialAgreements={agreementsData}
+                            clients={clientsData}
                         />
                     </div>
-                </div>
-            </main>
         </div>
     );
 }

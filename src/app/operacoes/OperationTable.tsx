@@ -9,7 +9,11 @@ export default function OperationTable({ initialOperations, clients, currentUser
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    
+    // Default: selectedIds contains ALL initial operations
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(
+        new Set(initialOperations.map(op => op.id))
+    );
 
     const toggleSelection = (id: string) => {
         const newSet = new Set(selectedIds);
@@ -37,7 +41,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
         iofAdicional: "",
         valorLiquido: "",
         recompra: "",
-        declarada: false
+        declarada: true // User requested default true
     });
 
     const formatCurrency = (val: number | null) => {
@@ -101,7 +105,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
             date: new Date().toISOString().split("T")[0],
             valorBruto: "", fator: "", percentual: "", percentualPrazo: "", dias: "",
             tarifas: "", percentualTarifas: "", adValorem: "", percentualAdValorem: "",
-            irpj: "", iof: "", iofAdicional: "", valorLiquido: "", recompra: "", declarada: false
+            irpj: "", iof: "", iofAdicional: "", valorLiquido: "", recompra: "", declarada: true
         });
         setIsModalOpen(true);
     };

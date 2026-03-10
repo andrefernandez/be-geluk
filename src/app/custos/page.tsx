@@ -60,7 +60,7 @@ export default async function CustosPage({ searchParams }: { searchParams: Promi
 
             <main style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2rem" }}>
                 <div className="glass-panel" style={{ flex: 1, padding: "2rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                    <CostTable initialCosts={costs} currentUserRole={(session.user as any).role} />
+                    <CostTable initialCosts={costs} currentUserRole={(session?.user as any)?.role || "USER"} />
                 </div>
             </main>
         </div>

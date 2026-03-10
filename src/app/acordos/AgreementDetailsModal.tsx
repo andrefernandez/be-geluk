@@ -78,21 +78,21 @@ export function AgreementDetailsModal({ isOpen, onClose, agreement, clients, onS
       <div className="glass-panel modal-content animate-fade-in" style={{ maxWidth: '600px', width: '90%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
         
         {/* Header */}
-        <div className="flex-between" style={{ marginBottom: "1.5rem" }}>
-          <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem", gap: "1rem" }}>
+          <div style={{ flex: 1 }}>
             <h2 style={{ fontSize: "1.25rem", fontWeight: 600 }}>Acordo - {agreement.client.name}</h2>
             <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
               Total: <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{formatCurrency(agreement.totalValue)}</span>
             </p>
           </div>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
             <button onClick={() => setIsEditModalOpen(true)} className="btn-secondary" style={{ padding: "0.5rem", color: "var(--text-secondary)" }} title="Editar Acordo">
               <Edit2 size={18} />
             </button>
             <button onClick={handleDelete} disabled={isSubmitting} className="btn-secondary" style={{ padding: "0.5rem", color: "var(--accent-red)", borderColor: "rgba(239, 68, 68, 0.2)" }} title="Excluir Acordo">
               <Trash2 size={18} />
             </button>
-            <div style={{ width: "1px", background: "var(--card-border)", margin: "0 0.25rem" }} />
+            <div style={{ width: "1px", background: "var(--card-border)", margin: "0 0.25rem", display: "none" }} />
             <button onClick={onClose} className="btn-secondary" style={{ padding: "0.5rem" }}>
               <X size={20} />
             </button>
@@ -131,8 +131,9 @@ export function AgreementDetailsModal({ isOpen, onClose, agreement, clients, onS
               return (
                 <div 
                   key={installment.id} 
-                  className="glass-card flex-between" 
+                  className="glass-card" 
                   style={{ 
+                    display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "1rem",
                     padding: "1rem", 
                     borderColor: isPaid ? "rgba(16, 185, 129, 0.3)" : (isOverdue ? "rgba(239, 68, 68, 0.3)" : "var(--card-border)"),
                     background: isPaid ? "rgba(16, 185, 129, 0.05)" : "var(--card-bg)"
