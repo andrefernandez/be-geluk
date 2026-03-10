@@ -10,10 +10,8 @@ export default function OperationTable({ initialOperations, clients, currentUser
     const [editingId, setEditingId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     
-    // Default: selectedIds contains ALL initial operations
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(
-        new Set(initialOperations.map(op => op.id))
-    );
+    // Default: selectedIds contains NO initial operations
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
     const toggleSelection = (id: string) => {
         const newSet = new Set(selectedIds);
