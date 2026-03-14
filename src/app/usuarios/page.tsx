@@ -11,6 +11,10 @@ export default async function UsuariosPage() {
         redirect("/login");
     }
 
+    if ((session?.user as any)?.role === "COMERCIAL") {
+        redirect("/clientes");
+    }
+
     // Apenas Admin e Manager podem ver/editar usuários? 
     // No caso, deixaremos Admin para criar/editar.
     const users = await prisma.user.findMany({

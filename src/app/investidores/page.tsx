@@ -11,6 +11,10 @@ export default async function InvestidoresPage() {
         redirect("/login");
     }
 
+    if ((session?.user as any)?.role === "COMERCIAL") {
+        redirect("/clientes");
+    }
+
     const userRole = (session.user as any).role;
     const userInvestorId = (session.user as any).investorId;
 

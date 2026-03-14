@@ -1,17 +1,34 @@
 import { prisma } from "@/lib/prisma";
 import AgreementList from "./AgreementList";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../api/auth/[...nextauth]/route";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function AcordosPage() {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+        redirect("/login");
+    }
+
+    const isComercial = (session?.user as any)?.role === "COMERCIAL";
+
+    if (isComercial) {
+        redirect("/clientes");
+    }
+
     // Fetch clients for the creation modal
     const clientsData = await prisma.client.findMany({
+        where: isComercial ? { representativeId: (session.user as any).id } : {},
         orderBy: { name: 'asc' },
         select: { id: true, name: true }
     });
 
     // Fetch agreements with installments and client info
     const agreementsData = await prisma.agreement.findMany({
+        where: isComercial ? { client: { representativeId: (session.user as any).id } } : {},
         include: {
             client: {
                 select: { name: true }

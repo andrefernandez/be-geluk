@@ -13,6 +13,10 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
         redirect("/login");
     }
 
+    if ((session?.user as any)?.role === "COMERCIAL") {
+        redirect("/clientes");
+    }
+
     let now = new Date();
     const resolvedParams = await searchParams;
     let monthParam = typeof resolvedParams?.month === 'string' ? resolvedParams.month : Array.isArray(resolvedParams?.month) ? resolvedParams.month[0] : null;
@@ -40,9 +44,12 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
         dateFilter = { gte: startOfMonth, lte: endOfMonth };
     }
 
+    const isComercial = (session?.user as any)?.role === "COMERCIAL";
+
     const operations = await prisma.operation.findMany({
         where: {
-            date: dateFilter
+            date: dateFilter,
+            ...(isComercial ? { client: { representativeId: (session.user as any).id } } : {})
         },
         include: {
             client: true
@@ -51,6 +58,7 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
     });
 
     const clients = await prisma.client.findMany({
+        where: isComercial ? { representativeId: (session.user as any).id } : {},
         orderBy: { name: "asc" }
     });
 

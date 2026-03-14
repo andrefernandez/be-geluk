@@ -1,35 +1,55 @@
 "use client";
 
 import { useState } from "react";
-import { createClient, updateClient, deleteClient } from "./actions";
+import { createClient, updateClient, deleteClient, updateClientStatus } from "./actions";
 
 type Client = {
     id: string;
     name: string;
+    cnpj?: string | null;
+    status: string;
     createdAt: Date;
-    _count: { operations: number };
+    representativeId?: string | null;
+    representative?: { name: string } | null;
+    _count: { 
+        operations: number;
+        agreements: number;
+    };
 };
 
-export default function ClientTable({ initialClients, currentUserRole }: { initialClients: Client[], currentUserRole: string }) {
-    const [clients] = useState<Client[]>(initialClients);
+type Rep = { id: string; name: string; role: string };
+
+export default function ClientTable({ initialClients, currentUserRole, currentUserId, representatives }: { initialClients: Client[], currentUserRole: string, currentUserId: string, representatives: Rep[] }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
+    const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
     const [name, setName] = useState("");
+    const [cnpj, setCnpj] = useState("");
+    const [representativeId, setRepresentativeId] = useState("");
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
 
     const isAdminOrManager = currentUserRole === "ADMIN" || currentUserRole === "MANAGER";
+    const isComercial = currentUserRole === "COMERCIAL";
+
+    const pendingClients = initialClients.filter(c => c.status === "PENDENTE");
+    const otherClients = initialClients.filter(c => c.status !== "PENDENTE");
 
     const handleOpenModal = (client?: Client) => {
         setErrorMsg("");
         if (client) {
             setEditingClient(client);
             setName(client.name);
+            setCnpj(client.cnpj || "");
+            setRepresentativeId(client.representativeId || "");
         } else {
             setEditingClient(null);
             setName("");
+            setCnpj("");
+            setRepresentativeId(isComercial ? currentUserId : "");
         }
+        setConfirmingId(null);
         setIsModalOpen(true);
     };
 
@@ -39,10 +59,12 @@ export default function ClientTable({ initialClients, currentUserRole }: { initi
         setErrorMsg("");
 
         let res;
+        const status = isComercial ? "PENDENTE" : (editingClient?.status || "ATIVO");
+
         if (editingClient) {
-            res = await updateClient(editingClient.id, { name });
+            res = await updateClient(editingClient.id, { name, cnpj, status, representativeId });
         } else {
-            res = await createClient({ name });
+            res = await createClient({ name, cnpj, status, representativeId });
         }
 
         if (!res.success) {
@@ -53,22 +75,128 @@ export default function ClientTable({ initialClients, currentUserRole }: { initi
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (confirm("Tem certeza que deseja deletar este cliente?")) {
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Se ainda não clicou uma vez, entra no estado de confirmação
+        if (confirmingId !== id) {
+            setConfirmingId(id);
+            // Resetar após 3 segundos se não confirmar
+            setTimeout(() => setConfirmingId(prev => prev === id ? null : prev), 3000);
+            return;
+        }
+
+        // Se já estava no estado de confirmação e clicou de novo, executa a exclusão
+        setLoading(true);
+        try {
             const res = await deleteClient(id);
+            if (res.success) {
+                window.location.reload();
+            } else {
+                alert("Erro: " + res.error);
+                setConfirmingId(null);
+            }
+        } catch (err: any) {
+            alert("Erro de conexão: " + err.message);
+            setConfirmingId(null);
+        }
+        setLoading(false);
+    };
+
+    const handleStatusUpdate = async (e: React.MouseEvent, id: string, newStatus: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLoading(true);
+        try {
+            const res = await updateClientStatus(id, newStatus);
             if (!res.success) {
                 alert(res.error);
             } else {
                 window.location.reload();
+                return;
             }
+        } catch (err) {
+            console.error("Status update error:", err);
+            alert("Erro ao atualizar status.");
+        }
+        setLoading(false);
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case "PENDENTE": return { bg: "rgba(245, 158, 11, 0.15)", text: "var(--accent-orange, #f59e0b)", border: "var(--accent-orange, #f59e0b)" };
+            case "APROVADO": return { bg: "rgba(16, 185, 129, 0.15)", text: "var(--accent-primary)", border: "var(--accent-primary)" };
+            case "REPROVADO": return { bg: "rgba(239, 68, 68, 0.15)", text: "var(--accent-red)", border: "var(--accent-red)" };
+            case "ATIVO": return { bg: "rgba(16, 185, 129, 0.15)", text: "var(--accent-primary)", border: "var(--accent-primary)" };
+            case "INATIVO": return { bg: "rgba(107, 114, 128, 0.15)", text: "var(--text-tertiary)", border: "var(--text-tertiary)" };
+            default: return { bg: "rgba(255, 255, 255, 0.05)", text: "var(--text-primary)", border: "var(--glass-border)" };
         }
     };
 
     return (
         <div>
+            {/* Approval Section */}
+            {isAdminOrManager && pendingClients.length > 0 && (
+                <div className="glass-card" style={{ marginBottom: "2rem", padding: "1.5rem", border: "1px solid rgba(245, 158, 11, 0.3)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#f59e0b", animation: "pulse 2s infinite" }}></div>
+                        <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#f59e0b" }}>Clientes Pendentes de Aprovação</h2>
+                    </div>
+                    
+                    <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                            <thead>
+                                <tr style={{ borderBottom: "1px solid var(--glass-border-light)" }}>
+                                    <th style={{ padding: "0.75rem", color: "var(--text-secondary)", fontWeight: 500, fontSize: "0.875rem" }}>Empresa</th>
+                                    <th style={{ padding: "0.75rem", color: "var(--text-secondary)", fontWeight: 500, fontSize: "0.875rem" }}>CNPJ</th>
+                                    <th style={{ padding: "0.75rem", color: "var(--text-secondary)", fontWeight: 500, fontSize: "0.875rem", textAlign: "right" }}>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {pendingClients.map(client => (
+                                    <tr key={client.id} style={{ borderBottom: "1px solid var(--glass-border)" }}>
+                                        <td style={{ padding: "0.75rem", fontWeight: 500 }}>{client.name}</td>
+                                        <td style={{ padding: "0.75rem", color: "var(--text-tertiary)", fontSize: "0.875rem" }}>{client.cnpj || "---"}</td>
+                                        <td style={{ padding: "0.75rem", textAlign: "right", display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                                            <button 
+                                                type="button"
+                                                onClick={(e) => handleStatusUpdate(e, client.id, "APROVADO")}
+                                                className="btn-primary" 
+                                                style={{ padding: "0.25rem 0.75rem", fontSize: "0.75rem", backgroundColor: "rgba(16, 185, 129, 0.8)" }}
+                                                disabled={loading}
+                                            >
+                                                Aprovar
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                onClick={(e) => handleStatusUpdate(e, client.id, "REPROVADO")}
+                                                style={{ padding: "0.25rem 0.75rem", fontSize: "0.75rem", backgroundColor: "rgba(239, 68, 68, 0.1)", color: "var(--accent-red)", border: "1px solid var(--accent-red)", borderRadius: "var(--radius-sm)" }}
+                                                disabled={loading}
+                                            >
+                                                Reprovar
+                                            </button>
+                                            {(client._count?.operations === 0 && client._count?.agreements === 0) && (
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => handleOpenModal(client)}
+                                                    style={{ padding: "0.25rem 0.75rem", fontSize: "0.75rem", backgroundColor: "rgba(239, 68, 68, 0.1)", color: "var(--accent-red)", border: "1px solid var(--accent-red)", borderRadius: "var(--radius-sm)" }}
+                                                >
+                                                    Excluir
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
                 <h2 style={{ fontSize: "1.25rem", fontWeight: 600 }}>Clientes Cadastrados</h2>
-                {isAdminOrManager && (
+                {(isAdminOrManager || isComercial) && (
                     <button className="btn-primary" onClick={() => handleOpenModal()} style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }}>
                         + Novo Cliente
                     </button>
@@ -80,70 +208,147 @@ export default function ClientTable({ initialClients, currentUserRole }: { initi
                     <thead>
                         <tr style={{ borderBottom: "1px solid var(--glass-border-light)" }}>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Nome da Empresa</th>
+                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>CNPJ</th>
+                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Status</th>
+                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Representante</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Operações</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Data Criação</th>
                             {isAdminOrManager && <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, textAlign: "right" }}>Ações</th>}
                         </tr>
                     </thead>
                     <tbody>
-                        {clients.map((client) => (
-                            <tr key={client.id} style={{ borderBottom: "1px solid var(--glass-border)", transition: "background var(--transition-fast)" }} className="hover-row">
-                                <td style={{ padding: "1rem", fontWeight: 500 }}>{client.name}</td>
-                                <td style={{ padding: "1rem", color: "var(--text-secondary)" }}>
-                                    <span style={{ backgroundColor: "rgba(255,255,255,0.05)", padding: "0.25rem 0.5rem", borderRadius: "var(--radius-sm)", fontSize: "0.875rem", border: "1px solid var(--glass-border)" }}>
-                                        {client._count.operations} registro(s)
-                                    </span>
-                                </td>
-                                <td style={{ padding: "1rem", color: "var(--text-tertiary)", fontSize: "0.875rem" }}>
-                                    {new Date(client.createdAt).toLocaleDateString("pt-BR")}
-                                </td>
-                                {isAdminOrManager && (
-                                    <td style={{ padding: "1rem", textAlign: "right", display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                                        <button className="btn-secondary" onClick={() => handleOpenModal(client)} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}>Editar</button>
-                                        {client._count.operations === 0 && (
-                                            <button onClick={() => handleDelete(client.id)} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", backgroundColor: "rgba(239, 68, 68, 0.1)", color: "var(--accent-red)", border: "1px solid var(--accent-red)", borderRadius: "var(--radius-sm)" }}>
-                                                Excluir
-                                            </button>
-                                        )}
+                        {otherClients.map((client) => {
+                            const statusStyle = getStatusColor(client.status);
+                            return (
+                                <tr key={client.id} style={{ borderBottom: "1px solid var(--glass-border)", transition: "background var(--transition-fast)" }} className="hover-row">
+                                    <td style={{ padding: "1rem", fontWeight: 500 }}>{client.name}</td>
+                                    <td style={{ padding: "1rem", color: "var(--text-tertiary)", fontSize: "0.875rem" }}>{client.cnpj || "---"}</td>
+                                    <td style={{ padding: "1rem" }}>
+                                        <span style={{
+                                            padding: "0.25rem 0.625rem",
+                                            borderRadius: "99px",
+                                            fontSize: "0.7rem",
+                                            fontWeight: 700,
+                                            backgroundColor: statusStyle.bg,
+                                            color: statusStyle.text,
+                                            border: `1px solid ${statusStyle.border}`,
+                                            textTransform: "uppercase"
+                                        }}>
+                                            {client.status}
+                                        </span>
                                     </td>
-                                )}
-                            </tr>
-                        ))}
+                                    <td style={{ padding: "1rem", color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+                                        {client.representative?.name || <span style={{ color: "var(--text-tertiary)", fontStyle: "italic" }}>Não definido</span>}
+                                    </td>
+                                    <td style={{ padding: "1rem", color: "var(--text-secondary)" }}>
+                                        <span style={{ backgroundColor: "rgba(255,255,255,0.05)", padding: "0.25rem 0.5rem", borderRadius: "var(--radius-sm)", fontSize: "0.875rem", border: "1px solid var(--glass-border)" }}>
+                                            {client._count.operations} registro(s)
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: "1rem", color: "var(--text-tertiary)", fontSize: "0.875rem" }}>
+                                        {new Date(client.createdAt).toLocaleDateString("pt-BR")}
+                                    </td>
+                                    {isAdminOrManager && (
+                                        <td style={{ padding: "1rem", textAlign: "right", display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                                            {client.status === "APROVADO" || client.status === "ATIVO" || client.status === "INATIVO" ? (
+                                                <button 
+                                                    type="button"
+                                                    onClick={(e) => handleStatusUpdate(e, client.id, client.status === "ATIVO" ? "INATIVO" : "ATIVO")}
+                                                    className="btn-secondary" 
+                                                    style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
+                                                >
+                                                    {client.status === "ATIVO" ? "Inativar" : "Ativar"}
+                                                </button>
+                                            ) : null}
+                                            <button type="button" className="btn-secondary" onClick={() => handleOpenModal(client)} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}>Editar</button>
+                                        </td>
+                                    )}
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
 
-                {clients.length === 0 && (
+                {otherClients.length === 0 && (
                     <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-tertiary)" }}>
-                        Nenhum cliente cadastrado ainda.
+                        Nenhum cliente aprovado/ativo cadastrado ainda.
                     </div>
                 )}
             </div>
 
             {/* Mobile View */}
             <div className="mobile-only" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                {clients.map(client => (
-                    <div key={client.id} className="glass-card" onClick={() => isAdminOrManager && handleOpenModal(client)} style={{ padding: "1.25rem", cursor: isAdminOrManager ? "pointer" : "default" }}>
-                        <div className="flex-between" style={{ alignItems: "flex-start", marginBottom: "0.75rem" }}>
-                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                                <span style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-primary)" }}>{client.name}</span>
-                                <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>Cadastrado em {new Date(client.createdAt).toLocaleDateString("pt-BR")}</span>
+                {initialClients.map(client => {
+                    const statusStyle = getStatusColor(client.status);
+                    return (
+                        <div key={client.id} className="glass-card" onClick={() => isAdminOrManager && handleOpenModal(client)} style={{ padding: "1.25rem", cursor: isAdminOrManager ? "pointer" : "default" }}>
+                            <div className="flex-between" style={{ alignItems: "flex-start", marginBottom: "0.75rem" }}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                        <span style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-primary)" }}>{client.name}</span>
+                                        <span style={{
+                                            padding: "0.15rem 0.4rem",
+                                            borderRadius: "99px",
+                                            fontSize: "0.6rem",
+                                            fontWeight: 700,
+                                            backgroundColor: statusStyle.bg,
+                                            color: statusStyle.text,
+                                            border: `1px solid ${statusStyle.border}`,
+                                            textTransform: "uppercase"
+                                        }}>
+                                            {client.status}
+                                        </span>
+                                    </div>
+                                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>CNPJ: {client.cnpj || "---"}</span>
+                                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 500 }}>Rep: {client.representative?.name || "N/A"}</span>
+                                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>Cadastrado em {new Date(client.createdAt).toLocaleDateString("pt-BR")}</span>
+                                </div>
+                                <span style={{ backgroundColor: "rgba(255,255,255,0.05)", padding: "0.25rem 0.5rem", borderRadius: "var(--radius-sm)", fontSize: "0.75rem", border: "1px solid var(--glass-border)", color: "var(--text-secondary)" }}>
+                                    {client._count.operations} op.
+                                </span>
                             </div>
-                            <span style={{ backgroundColor: "rgba(255,255,255,0.05)", padding: "0.25rem 0.5rem", borderRadius: "var(--radius-sm)", fontSize: "0.75rem", border: "1px solid var(--glass-border)", color: "var(--text-secondary)" }}>
-                                {client._count.operations} op.
-                            </span>
+                            
+                            {isAdminOrManager && (
+                                <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem", flexWrap: "wrap" }}>
+                                    {client.status === "PENDENTE" && (
+                                        <>
+                                            <button 
+                                                type="button"
+                                                onClick={(e) => handleStatusUpdate(e, client.id, "APROVADO")}
+                                                className="btn-primary" 
+                                                style={{ flex: 1, padding: "0.5rem", fontSize: "0.75rem" }}
+                                            >
+                                                Aprovar
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                onClick={(e) => handleStatusUpdate(e, client.id, "REPROVADO")}
+                                                style={{ flex: 1, padding: "0.5rem", fontSize: "0.75rem", backgroundColor: "rgba(239, 68, 68, 0.1)", color: "var(--accent-red)", border: "1px solid var(--accent-red)", borderRadius: "var(--radius-sm)" }}
+                                            >
+                                                Reprovar
+                                            </button>
+                                        </>
+                                    )}
+                                    {client.status !== "PENDENTE" && (
+                                        <button 
+                                            type="button"
+                                            onClick={(e) => handleStatusUpdate(e, client.id, client.status === "ATIVO" ? "INATIVO" : "ATIVO")}
+                                            className="btn-secondary" 
+                                            style={{ flex: 1, padding: "0.5rem", fontSize: "0.75rem" }}
+                                        >
+                                            {client.status === "ATIVO" ? "Inativar" : "Ativar"}
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
-                    </div>
-                ))}
-                {clients.length === 0 && (
-                    <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-tertiary)" }}>
-                        Nenhum cliente cadastrado.
-                    </div>
-                )}
+                    );
+                })}
             </div>
 
             {/* Modal */}
             {isModalOpen && (
-                <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+                <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10002 }}>
                     <div className="glass-card" style={{ width: "100%", maxWidth: "450px", padding: "2rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                         <h3 style={{ fontSize: "1.25rem", fontWeight: 600 }}>{editingClient ? "Editar Cliente" : "Novo Cliente"}</h3>
 
@@ -159,20 +364,78 @@ export default function ClientTable({ initialClients, currentUserRole }: { initi
                                 <input required className="glass-input" value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Metalur" />
                             </div>
 
-                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1rem" }}>
-                                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
-                                <button type="submit" className="btn-primary" disabled={loading}>{loading ? "Salvando..." : "Salvar"}</button>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>CNPJ</label>
+                                <input className="glass-input" value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
+                            </div>
+
+                            {!isComercial && (
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Representante (Comercial/Manager)</label>
+                                    <select 
+                                        className="glass-input" 
+                                        value={representativeId} 
+                                        onChange={e => setRepresentativeId(e.target.value)}
+                                        style={{ 
+                                            backgroundColor: "var(--bg-secondary, #1a1a1a)", 
+                                            color: "var(--text-primary, #ffffff)",
+                                            borderColor: "var(--glass-border, rgba(255,255,255,0.1))"
+                                        }}
+                                    >
+                                        <option value="" style={{ backgroundColor: "#1a1a1a", color: "#ffffff" }}>Selecione um representante</option>
+                                        {representatives.map(rep => (
+                                            <option key={rep.id} value={rep.id} style={{ backgroundColor: "#1a1a1a", color: "#ffffff" }}>
+                                                {rep.name} ({rep.role})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {isComercial && (
+                                <input type="hidden" value={representativeId} />
+                            )}
+
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem" }}>
+                                <div>
+                                    {editingClient && (editingClient._count.operations === 0 && editingClient._count.agreements === 0) && (
+                                        <button 
+                                            type="button" 
+                                            onClick={(e) => handleDelete(e, editingClient.id)}
+                                            style={{ 
+                                                padding: "0.5rem 1rem", 
+                                                fontSize: "0.875rem", 
+                                                backgroundColor: confirmingId === editingClient.id ? "var(--accent-red)" : "transparent",
+                                                color: confirmingId === editingClient.id ? "white" : "var(--accent-red)",
+                                                border: "1px solid var(--accent-red)",
+                                                borderRadius: "var(--radius-sm)",
+                                                fontWeight: 600
+                                            }}
+                                            disabled={loading}
+                                        >
+                                            {confirmingId === editingClient.id ? "Tem certeza?" : "Excluir Cliente"}
+                                        </button>
+                                    )}
+                                </div>
+                                <div style={{ display: "flex", gap: "1rem" }}>
+                                    <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
+                                    <button type="submit" className="btn-primary" disabled={loading}>{loading ? "Salvando..." : "Salvar"}</button>
+                                </div>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
 
-            {/* Adding arbitrary hover style for rows */}
             <style dangerouslySetInnerHTML={{
                 __html: `
-        .hover-row:hover { background-color: var(--glass-bg-hover); }
-      `}} />
+                .hover-row:hover { background-color: var(--glass-bg-hover); }
+                @keyframes pulse {
+                    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+                    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+                    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+                }
+            `}} />
         </div>
     );
 }

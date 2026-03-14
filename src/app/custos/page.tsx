@@ -13,6 +13,10 @@ export default async function CustosPage({ searchParams }: { searchParams: Promi
         redirect("/login");
     }
 
+    if ((session?.user as any)?.role === "COMERCIAL") {
+        redirect("/clientes");
+    }
+
     let now = new Date();
     const resolvedParams = await searchParams;
     let monthParam = typeof resolvedParams?.month === 'string' ? resolvedParams.month : Array.isArray(resolvedParams?.month) ? resolvedParams.month[0] : null;

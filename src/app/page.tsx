@@ -22,6 +22,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
     redirect("/custos");
   }
 
+  if ((session?.user as any)?.role === "COMERCIAL") {
+    redirect("/clientes");
+  }
+
   // Definindo o período selecionado
   let dateFilter: any = {};
   let displayTitle = "";
@@ -48,9 +52,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
     displayTitle = `Resumo Mensal - ${now.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`;
   }
 
+  const isComercial = (session?.user as any)?.role === "COMERCIAL";
+
   // Busca operações do período selecionado
   const operations = await prisma.operation.findMany({
-    where: { date: dateFilter },
+    where: { 
+      date: dateFilter,
+      ...(isComercial ? { client: { representativeId: (session.user as any).id } } : {})
+    },
     include: { client: true },
     orderBy: { date: "asc" }
   });
@@ -189,13 +198,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
             </div>
           </div>
 
-          <div className="glass-panel" style={{ padding: "1.5rem" }}>
-            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Custos Totais</h3>
-            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(custosFixos + custosVariaveis + investidoresTotal)}</div>
-            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
-              EFICIÊNCIA: {formatPercent(100 - custoReceitaPercent)}
+          {!isComercial && (
+            <div className="glass-panel" style={{ padding: "1.5rem" }}>
+              <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Custos Totais</h3>
+              <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(custosFixos + custosVariaveis + investidoresTotal)}</div>
+              <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
+                EFICIÊNCIA: {formatPercent(100 - custoReceitaPercent)}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="glass-panel" style={{ padding: "1.5rem" }}>
             <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Op. Declaradas</h3>
@@ -226,28 +237,30 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
         {/* Secondary Grid */}
         <div className="responsive-grid-1-2">
           {/* Result Structure */}
-          <div className="glass-panel" style={{ padding: "2rem" }}>
-            <h2 style={{ fontSize: "0.875rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "1.5rem", textTransform: "uppercase" }}>Estrutura DRE</h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {[
-                { label: "Receita Operacional", value: receitaBruta, color: "var(--text-primary)" },
-                { label: "Custos Fixos", value: -custosFixos, color: "var(--accent-red)" },
-                { label: "Custos Variáveis", value: -custosVariaveis, color: "var(--accent-red)" },
-                { label: "IOF Retido", value: -iofTotal, color: "var(--accent-red)" },
-                { label: "Impostos", value: -impostosRegistrados, color: "var(--accent-red)" },
-                { label: "Investidores", value: -investidoresTotal, color: "var(--accent-red)" },
-              ].map((item, idx) => (
-                <div key={idx} style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "0.75rem" }}>
-                  <span style={{ color: "var(--text-tertiary)", fontSize: "0.8125rem", fontWeight: 500 }}>{item.label}</span>
-                  <span style={{ fontWeight: 600, fontSize: "0.8125rem", color: item.color }}>{formatCurrency(item.value)}</span>
+          {!isComercial && (
+            <div className="glass-panel" style={{ padding: "2rem" }}>
+              <h2 style={{ fontSize: "0.875rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "1.5rem", textTransform: "uppercase" }}>Estrutura DRE</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {[
+                  { label: "Receita Operacional", value: receitaBruta, color: "var(--text-primary)" },
+                  { label: "Custos Fixos", value: -custosFixos, color: "var(--accent-red)" },
+                  { label: "Custos Variáveis", value: -custosVariaveis, color: "var(--accent-red)" },
+                  { label: "IOF Retido", value: -iofTotal, color: "var(--accent-red)" },
+                  { label: "Impostos", value: -impostosRegistrados, color: "var(--accent-red)" },
+                  { label: "Investidores", value: -investidoresTotal, color: "var(--accent-red)" },
+                ].map((item, idx) => (
+                  <div key={idx} style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "0.75rem" }}>
+                    <span style={{ color: "var(--text-tertiary)", fontSize: "0.8125rem", fontWeight: 500 }}>{item.label}</span>
+                    <span style={{ fontWeight: 600, fontSize: "0.8125rem", color: item.color }}>{formatCurrency(item.value)}</span>
+                  </div>
+                ))}
+                <div style={{ display: "flex", justifyContent: "space-between", paddingTop: "0.5rem" }}>
+                  <span style={{ fontWeight: 800, fontSize: "0.875rem", color: "var(--accent-primary)" }}>LUCRO LÍQUIDO</span>
+                  <span style={{ fontWeight: 800, fontSize: "0.875rem", color: lucroLiquido >= 0 ? "var(--accent-primary)" : "var(--accent-red)" }}>{formatCurrency(lucroLiquido)}</span>
                 </div>
-              ))}
-              <div style={{ display: "flex", justifyContent: "space-between", paddingTop: "0.5rem" }}>
-                <span style={{ fontWeight: 800, fontSize: "0.875rem", color: "var(--accent-primary)" }}>LUCRO LÍQUIDO</span>
-                <span style={{ fontWeight: 800, fontSize: "0.875rem", color: lucroLiquido >= 0 ? "var(--accent-primary)" : "var(--accent-red)" }}>{formatCurrency(lucroLiquido)}</span>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Table */}
           <div className="glass-panel" style={{ padding: "2rem" }}>

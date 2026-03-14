@@ -17,15 +17,20 @@ model User {
   investorId String?  @unique
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  representedClients Client[] @relation("Representative")
 }
 
 model Client {
   id         String      @id @default(cuid())
   name       String      @unique
+  cnpj       String?
+  status     String      @default("ATIVO") // PENDENTE, APROVADO, REPROVADO, ATIVO, INATIVO
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
-  operations Operation[]
-  agreements Agreement[]
+  operations       Operation[]
+  agreements       Agreement[]
+  representativeId String?
+  representative   User?       @relation("Representative", fields: [representativeId], references: [id])
 }
 
 model Investor {
