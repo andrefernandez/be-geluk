@@ -5,13 +5,22 @@ import { createOperation, deleteOperation, updateOperation } from "./actions";
 import { NumericFormat } from 'react-number-format';
 
 export default function OperationTable({ initialOperations, clients, currentUserRole }: { initialOperations: any[], clients: any[], currentUserRole: string }) {
-    const operations = initialOperations;
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [clientSearch, setClientSearch] = useState("");
+    const [dateSearch, setDateSearch] = useState("");
     
     // Default: selectedIds contains NO initial operations
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+    const filteredOperations = initialOperations.filter(op => {
+        const matchesClient = op.client.name.toLowerCase().includes(clientSearch.toLowerCase());
+        const matchesDate = dateSearch ? new Date(op.date).toISOString().split("T")[0] === dateSearch : true;
+        return matchesClient && matchesDate;
+    });
+
+    const operations = filteredOperations;
 
     const toggleSelection = (id: string) => {
         const newSet = new Set(selectedIds);
@@ -178,9 +187,30 @@ export default function OperationTable({ initialOperations, clients, currentUser
 
     return (
         <div className="responsive-p">
-            <div className="responsive-header-flex">
+            <div className="responsive-header-flex" style={{ gap: "1rem", flexWrap: "wrap", alignItems: "flex-end" }}>
+                <div style={{ display: "flex", gap: "1rem", flex: 1, minWidth: "300px" }}>
+                    <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, marginBottom: "0.5rem", display: "block" }}>Filtrar por Cliente</label>
+                        <input 
+                            type="text" 
+                            className="glass-input" 
+                            placeholder="Nome do cliente..." 
+                            value={clientSearch}
+                            onChange={(e) => setClientSearch(e.target.value)}
+                        />
+                    </div>
+                    <div style={{ width: "180px" }}>
+                        <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, marginBottom: "0.5rem", display: "block" }}>Filtrar por Data</label>
+                        <input 
+                            type="date" 
+                            className="glass-input" 
+                            value={dateSearch}
+                            onChange={(e) => setDateSearch(e.target.value)}
+                        />
+                    </div>
+                </div>
                 {isAdminOrManager && (
-                    <button className="btn-primary" onClick={handleOpenModal} style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }}>
+                    <button className="btn-primary" onClick={handleOpenModal} style={{ padding: "0.5rem 1rem", fontSize: "0.875rem", height: "auto" }}>
                         + Nova Operação
                     </button>
                 )}
@@ -515,7 +545,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
 
             <style dangerouslySetInnerHTML={{
                 __html: `
-            .hover - row:hover { background - color: var(--glass - bg - hover); }
+                .hover-row:hover { background-color: var(--glass-bg-hover); }
         `}} />
         </div>
     );

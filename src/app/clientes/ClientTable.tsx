@@ -32,9 +32,15 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
 
     const isAdminOrManager = currentUserRole === "ADMIN" || currentUserRole === "MANAGER";
     const isComercial = currentUserRole === "COMERCIAL";
+    const [searchTerm, setSearchTerm] = useState("");
 
-    const pendingClients = initialClients.filter(c => c.status === "PENDENTE");
-    const otherClients = initialClients.filter(c => c.status !== "PENDENTE");
+    const filteredInitialClients = initialClients.filter(c => 
+        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.cnpj && c.cnpj.includes(searchTerm))
+    );
+
+    const pendingClients = filteredInitialClients.filter(c => c.status === "PENDENTE");
+    const otherClients = filteredInitialClients.filter(c => c.status !== "PENDENTE");
 
     const handleOpenModal = (client?: Client) => {
         setErrorMsg("");
@@ -194,10 +200,22 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                 </div>
             )}
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                <h2 style={{ fontSize: "1.25rem", fontWeight: 600 }}>Clientes Cadastrados</h2>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "2rem", gap: "2rem", flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: "250px" }}>
+                    <h2 style={{ fontSize: "1.25rem", fontWeight: 600, marginBottom: "1rem" }}>Clientes Cadastrados</h2>
+                    <div style={{ position: "relative" }}>
+                        <input 
+                            type="text" 
+                            className="glass-input" 
+                            placeholder="Buscar por nome ou CNPJ..." 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{ paddingLeft: "1rem" }}
+                        />
+                    </div>
+                </div>
                 {(isAdminOrManager || isComercial) && (
-                    <button className="btn-primary" onClick={() => handleOpenModal()} style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }}>
+                    <button className="btn-primary" onClick={() => handleOpenModal()} style={{ padding: "0.625rem 1.25rem", fontSize: "0.875rem", height: "fit-content" }}>
                         + Novo Cliente
                     </button>
                 )}
@@ -254,8 +272,8 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                                 <button 
                                                     type="button"
                                                     onClick={(e) => handleStatusUpdate(e, client.id, client.status === "ATIVO" ? "INATIVO" : "ATIVO")}
-                                                    className="btn-secondary" 
-                                                    style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
+                                                    className={client.status === "ATIVO" ? "btn-secondary" : "btn-primary"} 
+                                                    style={{ padding: "0.25rem 0.625rem", fontSize: "0.75rem", height: "auto" }}
                                                 >
                                                     {client.status === "ATIVO" ? "Inativar" : "Ativar"}
                                                 </button>
@@ -333,7 +351,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                         <button 
                                             type="button"
                                             onClick={(e) => handleStatusUpdate(e, client.id, client.status === "ATIVO" ? "INATIVO" : "ATIVO")}
-                                            className="btn-secondary" 
+                                            className={client.status === "ATIVO" ? "btn-secondary" : "btn-primary"} 
                                             style={{ flex: 1, padding: "0.5rem", fontSize: "0.75rem" }}
                                         >
                                             {client.status === "ATIVO" ? "Inativar" : "Ativar"}
