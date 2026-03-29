@@ -298,24 +298,19 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
             {/* Mobile View for Últimas Operações */}
             <div className="mobile-only" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {[...operations].reverse().slice(0, 8).map(op => (
-                <div key={`mob-${op.id}`} className="glass-card" style={{ padding: "0.625rem 1rem", display: "flex", flexDirection: "column", gap: "0.375rem" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-primary)" }}>{op.client.name}</span>
-                      <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>- {new Date(op.date).toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</span>
+                <div key={`mob-${op.id}`} className="glass-card" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={{ fontSize: "0.875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Cliente: {op.client.name}</span>
                   </div>
-
-                  <div style={{ height: "1px", backgroundColor: "var(--glass-border)", margin: "0" }}></div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.125rem" }}>
-                    <div className="flex-between">
-                        <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Bruto</span>
-                        <span style={{ fontWeight: 600, fontSize: "0.8125rem", color: "var(--text-secondary)" }}>{formatCurrency(op.valorBruto)}</span>
-                    </div>
-                    <div className="flex-between">
-                        <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Líquido</span>
-                        <span style={{ fontWeight: 600, fontSize: "0.8125rem", color: "var(--text-secondary)" }}>{formatCurrency(op.valorLiquido)}</span>
-                    </div>
-                 </div>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Data: {new Date(op.date).toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Bruto: {formatCurrency(op.valorBruto)}</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={{ fontSize: "0.875rem", color: "var(--accent-primary)", fontWeight: 600 }}>Líquido: {formatCurrency(op.valorLiquido)}</span>
+                  </div>
                 </div>
               ))}
               {operations.length === 0 && (

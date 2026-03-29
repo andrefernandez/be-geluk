@@ -187,36 +187,40 @@ export default function OperationTable({ initialOperations, clients, currentUser
 
     return (
         <div className="responsive-p">
-            <div className="responsive-header-flex" style={{ gap: "1rem", flexWrap: "wrap", alignItems: "flex-end" }}>
-                <div style={{ display: "flex", gap: "1rem", flex: 1, minWidth: "300px" }}>
-                    <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, marginBottom: "0.5rem", display: "block" }}>Filtrar por Cliente</label>
+            <div className="responsive-header-flex" style={{ flexWrap: "wrap", alignItems: "center", justifyContent: "center", marginBottom: "2rem" }}>
+                <div className="filters-container" style={{ display: "flex", flexDirection: "column", gap: "1.25rem", width: "100%", maxWidth: "400px", margin: "0 auto" }}>
+                    <div style={{ width: "100%" }}>
+                        <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, marginBottom: "0.5rem", display: "block", textAlign: "center" }}>Filtrar por Cliente</label>
                         <input 
                             type="text" 
                             className="glass-input" 
                             placeholder="Nome do cliente..." 
                             value={clientSearch}
                             onChange={(e) => setClientSearch(e.target.value)}
+                            style={{ textAlign: "center" }}
                         />
                     </div>
-                    <div style={{ width: "180px" }}>
-                        <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, marginBottom: "0.5rem", display: "block" }}>Filtrar por Data</label>
+                    <div style={{ width: "100%" }}>
+                        <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, marginBottom: "0.5rem", display: "block", textAlign: "center" }}>Filtrar por Data</label>
                         <input 
                             type="date" 
                             className="glass-input" 
                             value={dateSearch}
                             onChange={(e) => setDateSearch(e.target.value)}
+                            style={{ textAlign: "center" }}
                         />
                     </div>
                 </div>
                 {isAdminOrManager && (
-                    <button className="btn-primary" onClick={handleOpenModal} style={{ padding: "0.5rem 1rem", fontSize: "0.875rem", height: "auto" }}>
-                        + Nova Operação
-                    </button>
+                    <div style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: "1.5rem" }}>
+                        <button className="btn-primary" onClick={handleOpenModal} style={{ padding: "0.75rem 1.5rem", fontSize: "0.875rem", height: "auto", width: "auto" }}>
+                            + Nova Operação
+                        </button>
+                    </div>
                 )}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem", marginBottom: "2rem" }}>
                 <div className="glass-card" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Nº de Operações</span>
                     <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>{operations.length}</span>
@@ -341,44 +345,39 @@ export default function OperationTable({ initialOperations, clients, currentUser
             {/* Mobile View */}
             <div className="mobile-only" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 {operations.map(op => (
-                    <div key={op.id} className="glass-card" onClick={() => isAdminOrManager && handleEdit(op)} style={{ padding: "1.25rem", cursor: isAdminOrManager ? "pointer" : "default", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                        <div className="flex-between" style={{ alignItems: "flex-start", marginBottom: 0 }}>
-                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                                <span style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-primary)" }}>{op.client.name}</span>
-                                <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>{new Date(op.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })} | {op.dias} dias</span>
-                            </div>
-                            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                                <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Bruto Operado</span>
-                                <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-secondary)" }}>{formatCurrency(op.valorBruto)}</span>
-                            </div>
+                    <div key={op.id} className="glass-card" onClick={() => isAdminOrManager && handleEdit(op)} style={{ padding: "1.25rem", cursor: isAdminOrManager ? "pointer" : "default", display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontSize: "0.875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Cliente: {op.client.name}</span>
                         </div>
-
-                        <div style={{ height: "1px", backgroundColor: "var(--glass-border)", margin: "0.25rem 0" }}></div>
-
-                        <div className="flex-between">
-                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                                <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Valor Líquido</span>
-                                <span style={{ fontWeight: 800, fontSize: "1.125rem", color: "var(--accent-primary)" }}>{formatCurrency(op.valorLiquido)}</span>
-                            </div>
-                            {op.recompra && (
-                                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.25rem" }}>
-                                    <span style={{ fontSize: "0.6875rem", color: "var(--accent-red)", textTransform: "uppercase", fontWeight: 700 }}>Recompra</span>
-                                    <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--accent-red)" }}>{formatCurrency(op.recompra)}</span>
-                                </div>
-                            )}
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Data: {new Date(op.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</span>
                         </div>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Prazo: {op.dias} dias</span>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Bruto: {formatCurrency(op.valorBruto)}</span>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontSize: "0.875rem", color: "var(--accent-primary)", fontWeight: 600 }}>Valor Líquido: {formatCurrency(op.valorLiquido)}</span>
+                        </div>
+                        {op.recompra && (
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <span style={{ fontSize: "0.875rem", color: "var(--accent-red)", fontWeight: 600 }}>Recompra: {formatCurrency(op.recompra)}</span>
+                            </div>
+                        )}
                     </div>
                 ))}
 
                 {operations.length > 0 && (
-                    <div className="glass-card" style={{ padding: "1rem", marginTop: "0.5rem", border: "1px dashed var(--glass-border)" }}>
+                    <div className="glass-card" style={{ padding: "1.25rem", marginTop: "0.5rem", border: "1px dashed var(--glass-border)", backgroundColor: "rgba(16, 185, 129, 0.02)" }}>
                         <div className="flex-between">
-                            <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-secondary)" }}>Total Bruto</span>
+                            <span style={{ fontWeight: 700, fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Total Bruto</span>
                             <span style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-primary)" }}>{formatCurrency(sumColumn("valorBruto"))}</span>
                         </div>
-                        <div className="flex-between" style={{ marginTop: "0.5rem" }}>
-                            <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-secondary)" }}>Total Líquido</span>
-                            <span style={{ fontWeight: 800, fontSize: "1.125rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("valorLiquido"))}</span>
+                        <div className="flex-between" style={{ marginTop: "0.75rem" }}>
+                            <span style={{ fontWeight: 700, fontSize: "0.75rem", color: "var(--accent-primary)", textTransform: "uppercase" }}>Total Líquido</span>
+                            <span style={{ fontWeight: 800, fontSize: "1.25rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("valorLiquido"))}</span>
                         </div>
                     </div>
                 )}
