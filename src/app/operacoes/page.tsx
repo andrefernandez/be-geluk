@@ -52,7 +52,8 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
             ...(isComercial ? { client: { representativeId: (session.user as any).id } } : {})
         },
         include: {
-            client: true
+            client: true,
+            sacados: true
         },
         orderBy: { date: "asc" },
     });
@@ -61,6 +62,39 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
         where: isComercial ? { representativeId: (session.user as any).id } : {},
         orderBy: { name: "asc" }
     });
+
+    const globalSettings = await prisma.globalSettings.findFirst();
+
+    const allHistoryOperations = await prisma.operation.findMany({
+        select: {
+            clientId: true,
+            percentual: true,
+            percentualAdValorem: true,
+            percentualTarifas: true,
+            tarifas: true,
+            iof: true,
+            iofAdicional: true,
+            irpj: true
+        }
+    });
+
+    const clientHistoryMaxRates: Record<string, any> = {};
+    for (const op of allHistoryOperations) {
+        const totalTax = (Number(op.percentual) || 0) + (Number(op.percentualAdValorem) || 0) + (Number(op.percentualTarifas) || 0);
+        const existing = clientHistoryMaxRates[op.clientId];
+        if (!existing || totalTax > existing.totalTax) {
+            clientHistoryMaxRates[op.clientId] = {
+                totalTax,
+                f: op.percentual,
+                a: op.percentualAdValorem,
+                t: op.percentualTarifas,
+                tFixed: op.tarifas,
+                iof: op.iof,
+                iofAdicional: op.iofAdicional,
+                irpj: op.irpj
+            };
+        }
+    }
 
     return (
         <div className="responsive-p" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -79,6 +113,8 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
                         initialOperations={operations as any}
                         clients={clients as any}
                         currentUserRole={(session.user as any).role}
+                        clientHistoryMaxRates={clientHistoryMaxRates}
+                        globalSettings={globalSettings}
                     />
                 </div>
             </main>

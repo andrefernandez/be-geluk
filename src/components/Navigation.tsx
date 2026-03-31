@@ -21,15 +21,18 @@ export function Navigation() {
     const navItems = isInvestor ? [] : isContador ? [
         { name: "Custos", path: "/custos" },
     ] : isComercial ? [
-        { name: "Clientes", path: "/clientes" },
+        { name: "Cedentes", path: "/clientes" },
     ] : [
         { name: "Dashboard", path: "/" },
         { name: "Operações", path: "/operacoes" },
         { name: "Acordos", path: "/acordos" },
-        { name: "Clientes", path: "/clientes" },
+        { name: "Cedentes", path: "/clientes" },
         { name: "Investidores", path: "/investidores" },
         { name: "Custos", path: "/custos" },
-        ...(isAdminOrManager ? [{ name: "Usuários", path: "/usuarios" }] : []),
+        ...(isAdminOrManager ? [
+            { name: "Usuários", path: "/usuarios" },
+            { name: "Taxas e Tarifas", path: "/taxas-tarifas" }
+        ] : []),
     ];
 
     return (

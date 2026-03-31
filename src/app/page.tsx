@@ -274,7 +274,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
                 <thead>
                   <tr style={{ borderBottom: "1px solid var(--card-border)" }}>
                     <th style={{ padding: "0.75rem 0", color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", textAlign: "left" }}>Data</th>
-                    <th style={{ padding: "0.75rem 0", color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", textAlign: "left" }}>Cliente</th>
+                    <th style={{ padding: "0.75rem 0", color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", textAlign: "left" }}>Cedente</th>
                     <th style={{ padding: "0.75rem 0", color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", textAlign: "right" }}>Valor Bruto</th>
                     <th style={{ padding: "0.75rem 0", color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", textAlign: "right" }}>Valor Líquido</th>
                   </tr>
@@ -300,7 +300,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
               {[...operations].reverse().slice(0, 8).map(op => (
                 <div key={`mob-${op.id}`} className="glass-card" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "0.5rem" }}>
                   <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: "0.875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Cliente: {op.client.name}</span>
+                    <span style={{ fontSize: "0.875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Cedente: {op.client.name}</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Data: {new Date(op.date).toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</span>

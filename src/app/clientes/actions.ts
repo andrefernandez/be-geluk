@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function createClient(data: { name: string, cnpj?: string, status?: string, representativeId?: string }) {
+export async function createClient(data: { name: string, cnpj?: string, status?: string, representativeId?: string, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number }) {
     try {
         const existing = await prisma.client.findUnique({ where: { name: data.name } });
         if (existing) {
@@ -16,6 +16,9 @@ export async function createClient(data: { name: string, cnpj?: string, status?:
                 cnpj: data.cnpj,
                 status: data.status || "ATIVO",
                 representativeId: data.representativeId,
+                taxaFator: data.taxaFator,
+                taxaAdValorem: data.taxaAdValorem,
+                taxaTarifa: data.taxaTarifa,
             } as any,
         });
         revalidatePath("/clientes");
@@ -25,7 +28,7 @@ export async function createClient(data: { name: string, cnpj?: string, status?:
     }
 }
 
-export async function updateClient(id: string, data: { name: string, cnpj?: string, status?: string, representativeId?: string }) {
+export async function updateClient(id: string, data: { name: string, cnpj?: string, status?: string, representativeId?: string, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number }) {
     try {
         const existing = await prisma.client.findUnique({ where: { name: data.name } });
         if (existing && existing.id !== id) {
@@ -39,6 +42,9 @@ export async function updateClient(id: string, data: { name: string, cnpj?: stri
                 cnpj: data.cnpj,
                 status: data.status,
                 representativeId: data.representativeId,
+                taxaFator: data.taxaFator,
+                taxaAdValorem: data.taxaAdValorem,
+                taxaTarifa: data.taxaTarifa,
             } as any,
         });
         revalidatePath("/clientes");

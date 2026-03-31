@@ -22,12 +22,15 @@ model User {
 }
 
 model Client {
-  id         String      @id @default(cuid())
-  name       String      @unique
-  cnpj       String?
-  status     String      @default("ATIVO") // PENDENTE, APROVADO, REPROVADO, ATIVO, INATIVO
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id               String      @id @default(cuid())
+  name             String      @unique
+  cnpj             String?
+  status           String      @default("ATIVO")
+  taxaFator        Float?
+  taxaAdValorem    Float?
+  taxaTarifa       Float?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
   operations       Operation[]
   agreements       Agreement[]
   representativeId String?
@@ -94,6 +97,18 @@ model Operation {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   client              Client   @relation(fields: [clientId], references: [id])
+  sacados             Sacado[]
+}
+
+model Sacado {
+  id          String   @id @default(cuid())
+  operationId String
+  operation   Operation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  nome        String
+  cnpj        String?
+  valor       Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Agreement {
@@ -118,4 +133,14 @@ model AgreementInstallment {
   paidAt        DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+model GlobalSettings {
+  id                  String   @id @default(cuid())
+  defaultFator        Float?
+  defaultAdValorem    Float?
+  defaultIof          Float?
+  defaultIofAdicional Float?
+  defaultTarifas      Json?
+  updatedAt           DateTime @updatedAt
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient, updateClient, deleteClient, updateClientStatus } from "./actions";
+import { NumericFormat } from 'react-number-format';
 
 type Client = {
     id: string;
@@ -11,6 +12,9 @@ type Client = {
     createdAt: Date;
     representativeId?: string | null;
     representative?: { name: string } | null;
+    taxaFator?: number | null;
+    taxaAdValorem?: number | null;
+    taxaTarifa?: number | null;
     _count: { 
         operations: number;
         agreements: number;
@@ -27,6 +31,9 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
     const [name, setName] = useState("");
     const [cnpj, setCnpj] = useState("");
     const [representativeId, setRepresentativeId] = useState("");
+    const [taxaFator, setTaxaFator] = useState("");
+    const [taxaAdValorem, setTaxaAdValorem] = useState("");
+    const [taxaTarifa, setTaxaTarifa] = useState("");
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
 
@@ -49,11 +56,17 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
             setName(client.name);
             setCnpj(client.cnpj || "");
             setRepresentativeId(client.representativeId || "");
+            setTaxaFator(client.taxaFator ? client.taxaFator.toString() : "");
+            setTaxaAdValorem(client.taxaAdValorem ? client.taxaAdValorem.toString() : "");
+            setTaxaTarifa(client.taxaTarifa ? client.taxaTarifa.toString() : "");
         } else {
             setEditingClient(null);
             setName("");
             setCnpj("");
             setRepresentativeId(isComercial ? currentUserId : "");
+            setTaxaFator("");
+            setTaxaAdValorem("");
+            setTaxaTarifa("");
         }
         setConfirmingId(null);
         setIsModalOpen(true);
@@ -67,10 +80,14 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
         let res;
         const status = isComercial ? "PENDENTE" : (editingClient?.status || "ATIVO");
 
+        const tFator = taxaFator ? parseFloat(taxaFator) : undefined;
+        const tAdValorem = taxaAdValorem ? parseFloat(taxaAdValorem) : undefined;
+        const tTarifa = taxaTarifa ? parseFloat(taxaTarifa) : undefined;
+
         if (editingClient) {
-            res = await updateClient(editingClient.id, { name, cnpj, status, representativeId });
+            res = await updateClient(editingClient.id, { name, cnpj, status, representativeId, taxaFator: tFator, taxaAdValorem: tAdValorem, taxaTarifa: tTarifa });
         } else {
-            res = await createClient({ name, cnpj, status, representativeId });
+            res = await createClient({ name, cnpj, status, representativeId, taxaFator: tFator, taxaAdValorem: tAdValorem, taxaTarifa: tTarifa });
         }
 
         if (!res.success) {
@@ -147,7 +164,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                 <div className="glass-card" style={{ marginBottom: "2rem", padding: "1.5rem", border: "1px solid rgba(245, 158, 11, 0.3)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
                         <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#f59e0b", animation: "pulse 2s infinite" }}></div>
-                        <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#f59e0b" }}>Clientes Pendentes de Aprovação</h2>
+                        <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#f59e0b" }}>Cedentes Pendentes de Aprovação</h2>
                     </div>
                     
                     <div style={{ overflowX: "auto" }}>
@@ -202,7 +219,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "2rem", gap: "2rem", flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: "250px" }}>
-                    <h2 style={{ fontSize: "1.25rem", fontWeight: 600, marginBottom: "1rem" }}>Clientes Cadastrados</h2>
+                    <h2 style={{ fontSize: "1.25rem", fontWeight: 600, marginBottom: "1rem" }}>Cedentes Cadastrados</h2>
                     <div style={{ position: "relative" }}>
                         <input 
                             type="text" 
@@ -368,7 +385,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
             {isModalOpen && (
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10002 }}>
                     <div className="glass-card" style={{ width: "100%", maxWidth: "450px", padding: "2rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                        <h3 style={{ fontSize: "1.25rem", fontWeight: 600 }}>{editingClient ? "Editar Cliente" : "Novo Cliente"}</h3>
+                        <h3 style={{ fontSize: "1.25rem", fontWeight: 600 }}>{editingClient ? "Editar Cedente" : "Novo Cedente"}</h3>
 
                         {errorMsg && (
                             <div style={{ padding: "0.75rem", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid var(--accent-red)", borderRadius: "var(--radius-sm)", color: "var(--accent-red)", fontSize: "0.875rem" }}>
@@ -385,6 +402,21 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                 <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>CNPJ</label>
                                 <input className="glass-input" value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
+                            </div>
+
+                            <div style={{ display: "flex", gap: "1rem" }}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Fator a.m. (%)</label>
+                                    <NumericFormat className="glass-input" value={taxaFator} thousandSeparator="." decimalSeparator="," decimalScale={4} placeholder="Ex: 6,5" onValueChange={(v: any) => setTaxaFator(v.floatValue !== undefined ? String(v.floatValue) : "")} />
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Ad Valorem (%)</label>
+                                    <NumericFormat className="glass-input" value={taxaAdValorem} thousandSeparator="." decimalSeparator="," decimalScale={4} placeholder="Ex: 0,5" onValueChange={(v: any) => setTaxaAdValorem(v.floatValue !== undefined ? String(v.floatValue) : "")} />
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Tarifas / XML (R$)</label>
+                                    <NumericFormat className="glass-input" value={taxaTarifa} thousandSeparator="." decimalSeparator="," decimalScale={2} placeholder="Ex: 3,50" onValueChange={(v: any) => setTaxaTarifa(v.floatValue !== undefined ? String(v.floatValue) : "")} />
+                                </div>
                             </div>
 
                             {!isComercial && (
@@ -431,7 +463,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                             }}
                                             disabled={loading}
                                         >
-                                            {confirmingId === editingClient.id ? "Tem certeza?" : "Excluir Cliente"}
+                                            {confirmingId === editingClient.id ? "Tem certeza?" : "Excluir Cedente"}
                                         </button>
                                     )}
                                 </div>

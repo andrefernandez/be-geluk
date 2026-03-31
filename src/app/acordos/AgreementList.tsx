@@ -67,7 +67,7 @@ export default function AgreementList({ initialAgreements, clients }: AgreementL
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--card-border)", background: "rgba(255,255,255,0.02)" }}>
-                <th style={{ textAlign: "left", padding: "1rem 1.5rem", color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Cliente</th>
+                <th style={{ textAlign: "left", padding: "1rem 1.5rem", color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Cedente</th>
                 <th style={{ textAlign: "left", padding: "1rem 1.5rem", color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Data</th>
                 <th style={{ textAlign: "right", padding: "1rem 1.5rem", color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Valor Total</th>
                 <th style={{ textAlign: "center", padding: "1rem 1.5rem", color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Progresso</th>

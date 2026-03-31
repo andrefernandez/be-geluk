@@ -24,6 +24,13 @@ export async function createOperation(data: any) {
                 valorLiquido: data.valorLiquido,
                 recompra: data.recompra,
                 declarada: data.declarada ?? false,
+                sacados: {
+                    create: data.sacados?.map((s: any) => ({
+                        nome: s.nome,
+                        cnpj: s.cnpj,
+                        valor: s.valor
+                    })) || []
+                }
             },
         });
         revalidatePath("/operacoes");
@@ -66,6 +73,14 @@ export async function updateOperation(id: string, data: any) {
                 valorLiquido: data.valorLiquido,
                 recompra: data.recompra,
                 declarada: data.declarada ?? false,
+                sacados: {
+                    deleteMany: {},
+                    create: data.sacados?.map((s: any) => ({
+                        nome: s.nome,
+                        cnpj: s.cnpj,
+                        valor: s.valor
+                    })) || []
+                }
             },
         });
         revalidatePath("/operacoes");
