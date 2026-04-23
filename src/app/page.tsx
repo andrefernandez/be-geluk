@@ -92,14 +92,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   // Receita Bruta = Total cobrado do cliente (Receita Operacional + IOF)
   const receitaBruta = (Math.round((receitaOperacional + iofTotal) * 100)) / 100;
 
-  // Custos Totais = Soma de tudo o que foi lançado na aba de Custos (conforme a página de custos)
-  const custoTotal = safeSumList(costs);
+  // Custos Totais = Soma de tudo o que foi lançado na aba de Custos (manual)
+  const custoTotalManual = safeSumList(costs);
 
-  // Lucro Líquido = Receita Operacional - Custos Totais
-  const lucroLiquido = receitaOperacional - custoTotal;
+  // Custos Totais Dashboard = Custos Manuais + IOF (conforme solicitado, o IOF entra como receita e sai como custo)
+  const custoTotalDashboard = (Math.round((custoTotalManual + iofTotal) * 100)) / 100;
+
+  // Lucro Líquido = Receita Bruta - Custos Totais Dashboard
+  const lucroLiquido = receitaBruta - custoTotalDashboard;
 
   const rentabilidade = totalOperado > 0 ? (lucroLiquido / totalOperado) * 100 : 0;
-  const custoReceitaPercent = receitaBruta > 0 ? (custoTotal / receitaBruta) * 100 : 0;
+  const custoReceitaPercent = receitaBruta > 0 ? (custoTotalManual / receitaBruta) * 100 : 0;
 
   // Separação apenas para exibição na lista detalhada
   const custosFixos = safeSumList(costs.filter(c => c.category === "FIXO"));
@@ -185,10 +188,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
           </div>
 
           <div className="glass-panel" style={{ padding: "1.5rem" }}>
-            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Receita Operacional</h3>
-            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(receitaOperacional)}</div>
+            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Receita Bruta</h3>
+            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(receitaBruta)}</div>
             <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
-              RENTABILIDADE: {formatPercent(totalOperado > 0 ? (receitaOperacional / totalOperado) * 100 : 0)}
+              RENTABILIDADE: {formatPercent(totalOperado > 0 ? (receitaBruta / totalOperado) * 100 : 0)}
             </div>
           </div>
 
@@ -205,9 +208,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
           {!isComercial && (
             <div className="glass-panel" style={{ padding: "1.5rem" }}>
               <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Custos Totais</h3>
-              <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(custoTotal)}</div>
+              <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(custoTotalDashboard)}</div>
               <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
-                EFICIÊNCIA: {formatPercent(100 - custoReceitaPercent)}
+                INCLUI {formatCurrency(iofTotal)} DE IOF
               </div>
             </div>
           )}
