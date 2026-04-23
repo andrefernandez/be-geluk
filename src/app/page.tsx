@@ -93,8 +93,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   // Custos Totais = Soma de tudo o que foi lançado na aba de Custos (Fixos, Variáveis, Impostos, Repasses)
   const custoTotal = safeSumList(costs);
 
-  // Lucro Líquido Simplificado: O que entrou de taxas menos o que saiu de custos
-  const lucroLiquido = receitaBruta - custoTotal;
+  // Lucro Líquido: O que entrou de taxas menos o que saiu de custos (incluindo impostos retidos como IOF)
+  const lucroLiquido = receitaBruta - custoTotal - iofTotal;
 
   const rentabilidade = totalOperado > 0 ? (lucroLiquido / totalOperado) * 100 : 0;
   const custoReceitaPercent = receitaBruta > 0 ? (custoTotal / receitaBruta) * 100 : 0;
@@ -142,7 +142,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
 
       const gCusto = group.costs.reduce((acc, c) => acc + Math.round(Number(c.amount || 0) * 100), 0) / 100;
 
-      const gLucroLiquido = gReceita - gCusto;
+      const gIof = group.ops.reduce((acc, o) => acc + Math.round((Number(o.iof) + Number(o.iofAdicional)) * 100), 0) / 100;
+      const gLucroLiquido = gReceita - gCusto - gIof;
       const gRentabilidade = gTotalOperado > 0 ? (gLucroLiquido / gTotalOperado) * 100 : 0;
 
       return {
@@ -201,7 +202,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
           {!isComercial && (
             <div className="glass-panel" style={{ padding: "1.5rem" }}>
               <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Custos Totais</h3>
-              <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(custosFixos + custosVariaveis + investidoresTotal)}</div>
+              <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(custoTotal)}</div>
               <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
                 EFICIÊNCIA: {formatPercent(100 - custoReceitaPercent)}
               </div>
