@@ -82,12 +82,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   const totalOperado = safeSumOperations("valorBruto");
 
   // Receita Bruta = Soma de tudo o que a Factoring cobra (Fator + Tarifas + AdValorem + IOFs)
+  const iofTotal = safeSumOperations("iof") + safeSumOperations("iofAdicional");
+
   const receitaBruta = (Math.round((
     safeSumOperations("fator") +
     safeSumOperations("tarifas") +
     safeSumOperations("adValorem") +
-    safeSumOperations("iof") +
-    safeSumOperations("iofAdicional")
+    iofTotal
   ) * 100)) / 100;
 
   // Custos Totais = Soma de tudo o que foi lançado na aba de Custos (Fixos, Variáveis, Impostos, Repasses)
@@ -104,7 +105,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   const custosVariaveis = safeSumList(costs.filter(c => c.category === "VARIAVEL"));
   const impostosRegistrados = safeSumList(costs.filter(c => c.category === "IMPOSTO"));
   const investidoresTotal = safeSumList(costs.filter(c => c.category === "INVESTIDORES"));
-  const iofTotal = safeSumOperations("iof") + safeSumOperations("iofAdicional");
+  // iofTotal já definido acima
+
 
   const valorDeclarado = operations.filter(op => op.declarada).reduce((acc, op) => acc + Math.round((Number(op.valorBruto) || 0) * 100), 0) / 100;
   const valorNaoDeclarado = operations.filter(op => !op.declarada).reduce((acc, op) => acc + Math.round((Number(op.valorBruto) || 0) * 100), 0) / 100;
