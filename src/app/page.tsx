@@ -148,8 +148,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
 
       const gCusto = group.costs.reduce((acc, c) => acc + Math.round(Number(c.amount || 0) * 100), 0) / 100;
 
-      const gIof = group.ops.reduce((acc, o) => acc + Math.round((Number(o.iof) + Number(o.iofAdicional)) * 100), 0) / 100;
-      const gLucroLiquido = gReceita - gCusto - gIof;
+      const gLucroLiquido = gReceita - gCusto;
       const gRentabilidade = gTotalOperado > 0 ? (gLucroLiquido / gTotalOperado) * 100 : 0;
 
       return {
