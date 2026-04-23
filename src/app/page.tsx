@@ -98,8 +98,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   // Custos Totais Dashboard = Custos Manuais + IOF (conforme solicitado, o IOF entra como receita e sai como custo)
   const custoTotalDashboard = (Math.round((custoTotalManual + iofTotal) * 100)) / 100;
 
-  // Lucro Líquido = Receita Bruta - Custos Totais Dashboard
-  const lucroLiquido = receitaBruta - custoTotalDashboard;
+  // Lucro Líquido = Receita Bruta - Custos Manuais (conforme solicitado: Receita - Custos)
+  const lucroLiquido = receitaBruta - custoTotalManual;
 
   const rentabilidade = totalOperado > 0 ? (lucroLiquido / totalOperado) * 100 : 0;
   const custoReceitaPercent = receitaBruta > 0 ? (custoTotalManual / receitaBruta) * 100 : 0;
@@ -190,8 +190,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
           <div className="glass-panel" style={{ padding: "1.5rem" }}>
             <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Receita Bruta</h3>
             <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(receitaBruta)}</div>
-            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
-              RENTABILIDADE: {formatPercent(totalOperado > 0 ? (receitaBruta / totalOperado) * 100 : 0)}
+            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
+              <span>IOF: {formatCurrency(iofTotal)}</span>
+              <span>RENT.: {formatPercent(totalOperado > 0 ? (receitaBruta / totalOperado) * 100 : 0)}</span>
             </div>
           </div>
 
@@ -208,9 +209,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
           {!isComercial && (
             <div className="glass-panel" style={{ padding: "1.5rem" }}>
               <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Custos Totais</h3>
-              <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(custoTotalDashboard)}</div>
+              <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(custoTotalManual)}</div>
               <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
-                INCLUI {formatCurrency(iofTotal)} DE IOF
+                BATENDO COM PÁGINA DE CUSTOS
               </div>
             </div>
           )}
@@ -249,9 +250,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
               <h2 style={{ fontSize: "0.875rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "1.5rem", textTransform: "uppercase" }}>Estrutura DRE</h2>
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 {[
-                  { label: "Receita Bruta (C/ IOF)", value: receitaBruta, color: "var(--text-primary)" },
-                  { label: "(-) IOF Retido", value: -iofTotal, color: "var(--accent-red)" },
-                  { label: "(=) Receita Operacional", value: receitaOperacional, color: "var(--accent-primary)" },
+                  { label: "Receita Bruta", value: receitaBruta, color: "var(--text-primary)" },
                   { label: "Custos Fixos", value: -custosFixos, color: "var(--accent-red)" },
                   { label: "Custos Variáveis", value: -custosVariaveis, color: "var(--accent-red)" },
                   { label: "Impostos", value: -impostosRegistrados, color: "var(--accent-red)" },
