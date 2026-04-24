@@ -115,7 +115,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
         return weightedPercent / totalBruto;
     };
 
-    const applyClientRates = (clientId: string, state: any) => {
+    const applyClientRates = (clientId: string, state: any, force = false) => {
         const c = clients.find(cl => cl.id === clientId);
         if (!c) return state;
 
@@ -128,7 +128,9 @@ export default function OperationTable({ initialOperations, clients, currentUser
         const dateObj = new Date(state.date);
         const daysInMonth = new Date(dateObj.getUTCFullYear(), dateObj.getUTCMonth() + 1, 0).getDate();
 
-        const fRate = maxH && maxH.f != null ? maxH.f : (c.taxaFator != null ? c.taxaFator : 8.5);
+        // Fator
+        const currentFRate = (!force && state.percentual) ? parseFloat(state.percentual) : null;
+        const fRate = currentFRate !== null ? currentFRate : (maxH && maxH.f != null ? maxH.f : (c.taxaFator != null ? c.taxaFator : 8.5));
         let newFator = state.fator;
         let newPercentual = state.percentual;
         if (fRate != null) {
@@ -137,7 +139,9 @@ export default function OperationTable({ initialOperations, clients, currentUser
             newPercentual = fRate.toString();
         }
 
-        const aRate = maxH && maxH.a != null ? maxH.a : c.taxaAdValorem;
+        // Ad Valorem
+        const currentARate = (!force && state.percentualAdValorem) ? parseFloat(state.percentualAdValorem) : null;
+        const aRate = currentARate !== null ? currentARate : (maxH && maxH.a != null ? maxH.a : c.taxaAdValorem);
         let newAdValorem = state.adValorem;
         let newPercentualAdValorem = state.percentualAdValorem;
         if (aRate != null) {
@@ -146,7 +150,9 @@ export default function OperationTable({ initialOperations, clients, currentUser
             newPercentualAdValorem = aRate.toString();
         }
 
-        const tRate = maxH && maxH.t != null ? maxH.t : null;
+        // Tarifas
+        const currentTRate = (!force && state.percentualTarifas) ? parseFloat(state.percentualTarifas) : null;
+        const tRate = currentTRate !== null ? currentTRate : (maxH && maxH.t != null ? maxH.t : null);
         const tFixed = maxH && maxH.tFixed != null ? maxH.tFixed : c.taxaTarifa;
         let newTarifas = state.tarifas;
         let newPercentualTarifas = state.percentualTarifas;
@@ -156,28 +162,47 @@ export default function OperationTable({ initialOperations, clients, currentUser
             newTarifas = tVal > 0 ? tVal.toFixed(2) : "";
             newPercentualTarifas = tRate.toString();
         } else if (tFixed != null) {
-            const tVal = tFixed * numSacados;
-            newTarifas = tVal > 0 ? tVal.toFixed(2) : "";
-            newPercentualTarifas = bruto > 0 ? ((tVal / bruto) * 100).toFixed(2) : "";
+            if (force || !state.tarifas) {
+                const tVal = tFixed * numSacados;
+                newTarifas = tVal > 0 ? tVal.toFixed(2) : "";
+                newPercentualTarifas = bruto > 0 ? ((tVal / bruto) * 100).toString() : "";
+            } else {
+                // Keep current manual tarifas and update percentage
+                const tVal = parseFloat(state.tarifas) || 0;
+                newPercentualTarifas = bruto > 0 ? ((tVal / bruto) * 100).toString() : "";
+            }
         }
 
+        // IOF
+        const currentIofRate = (!force && state.percentualIof) ? parseFloat(state.percentualIof) : null;
         let newIof = state.iof;
         let newPercentualIof = state.percentualIof;
+        
+        if (currentIofRate !== null) {
+            const iofVal = bruto * (currentIofRate / 100);
+            newIof = iofVal > 0 ? iofVal.toFixed(2) : "";
+            newPercentualIof = currentIofRate.toString();
+        } else if (maxH && maxH.iof != null) {
+            newIof = maxH.iof.toString();
+            if (bruto > 0) newPercentualIof = ((maxH.iof / bruto) * 100).toString();
+        }
+
+        // IOF Adicional
+        const currentIofaRate = (!force && state.percentualIofAdicional) ? parseFloat(state.percentualIofAdicional) : null;
         let newIofAdicional = state.iofAdicional;
         let newPercentualIofAdicional = state.percentualIofAdicional;
-        let newIrpj = state.irpj;
 
-        if (maxH) {
-            if (maxH.iof != null) {
-                newIof = maxH.iof.toString();
-                if (bruto > 0) newPercentualIof = ((maxH.iof / bruto) * 100).toString();
-            }
-            if (maxH.iofAdicional != null) {
-                newIofAdicional = maxH.iofAdicional.toString();
-                if (bruto > 0) newPercentualIofAdicional = ((maxH.iofAdicional / bruto) * 100).toString();
-            }
-            if (maxH.irpj != null) newIrpj = maxH.irpj.toString();
+        if (currentIofaRate !== null) {
+            const iofaVal = bruto * (currentIofaRate / 100);
+            newIofAdicional = iofaVal > 0 ? iofaVal.toFixed(2) : "";
+            newPercentualIofAdicional = currentIofaRate.toString();
+        } else if (maxH && maxH.iofAdicional != null) {
+            newIofAdicional = maxH.iofAdicional.toString();
+            if (bruto > 0) newPercentualIofAdicional = ((maxH.iofAdicional / bruto) * 100).toString();
         }
+
+        let newIrpj = state.irpj;
+        if (force && maxH && maxH.irpj != null) newIrpj = maxH.irpj.toString();
 
         return {
             ...state,
@@ -194,6 +219,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
             irpj: newIrpj
         };
     };
+
 
     const calculatePrazoMedio = (sacados: any[], referenceDate: string) => {
         const activeSacados = sacados.filter(s => s.active);
@@ -243,7 +269,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                 { id: '6', nome: "Tarifa de contrato", valor: "200", active: false }
             ]
         };
-        if (initialData.clientId) initialData = applyClientRates(initialData.clientId, initialData);
+        if (initialData.clientId) initialData = applyClientRates(initialData.clientId, initialData, true);
         
         setFormData(initialData);
         setIsModalOpen(true);
@@ -420,7 +446,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                 };
 
                 if (newState.clientId && newState.dias) {
-                    newState = applyClientRates(newState.clientId, newState);
+                    newState = applyClientRates(newState.clientId, newState, true);
                 }
 
                 return newState;
@@ -442,7 +468,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
             };
 
             if (newState.clientId && newState.dias) {
-                newState = applyClientRates(newState.clientId, newState);
+                newState = applyClientRates(newState.clientId, newState, false);
             }
 
             return newState;
@@ -453,10 +479,13 @@ export default function OperationTable({ initialOperations, clients, currentUser
         setFormData(prev => {
             const newList = prev.tarifasList.map((t: any) => t.id === id ? { ...t, active: !t.active } : t);
             const totalTarifas = newList.filter((t: any) => t.active).reduce((sum: number, t: any) => sum + (Number(t.valor) || 0), 0);
+            const bruto = parseFloat(prev.valorBruto) || 0;
+            const perc = bruto > 0 ? ((totalTarifas / bruto) * 100).toString() : prev.percentualTarifas;
             return {
                 ...prev,
                 tarifasList: newList,
-                tarifas: String(totalTarifas)
+                tarifas: String(totalTarifas),
+                percentualTarifas: perc
             };
         });
     };
@@ -465,10 +494,13 @@ export default function OperationTable({ initialOperations, clients, currentUser
         setFormData(prev => {
             const newList = prev.tarifasList.map((t: any) => t.id === id ? { ...t, valor: newVal } : t);
             const totalTarifas = newList.filter((t: any) => t.active).reduce((sum: number, t: any) => sum + (Number(t.valor) || 0), 0);
+            const bruto = parseFloat(prev.valorBruto) || 0;
+            const perc = bruto > 0 ? ((totalTarifas / bruto) * 100).toString() : prev.percentualTarifas;
             return {
                 ...prev,
                 tarifasList: newList,
-                tarifas: String(totalTarifas)
+                tarifas: String(totalTarifas),
+                percentualTarifas: perc
             };
         });
     };
@@ -653,7 +685,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                             const calcDias = calculatePrazoMedio(prev.sacados, dateVal);
                                             let newState = { ...prev, date: dateVal, dias: calcDias || prev.dias };
                                             if (newState.clientId && newState.dias) {
-                                                newState = applyClientRates(newState.clientId, newState);
+                                                newState = applyClientRates(newState.clientId, newState, false);
                                             }
                                             return newState;
                                         });
@@ -669,7 +701,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     </div>
                                     <select required className="glass-input" value={formData.clientId} onChange={e => {
                                         let newState = { ...formData, clientId: e.target.value };
-                                        newState = applyClientRates(e.target.value, newState);
+                                        newState = applyClientRates(e.target.value, newState, true);
                                         setFormData(newState);
                                     }}>
                                         {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -726,7 +758,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Bruto Operação (R$)</label>
                                     <NumericFormat required className="glass-input" value={formData.valorBruto} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
                                         let newState = { ...formData, valorBruto: v.floatValue !== undefined ? String(v.floatValue) : "" };
-                                        if (newState.clientId && newState.dias) newState = applyClientRates(newState.clientId, newState);
+                                        if (newState.clientId && newState.dias) newState = applyClientRates(newState.clientId, newState, false);
                                         setFormData(newState);
                                     }} />
                                 </div>
@@ -734,7 +766,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Dias (Prazo Médio)</label>
                                     <input required type="number" className="glass-input" value={formData.dias} onChange={e => {
                                         let newState = { ...formData, dias: e.target.value };
-                                        if (newState.clientId && newState.valorBruto) newState = applyClientRates(newState.clientId, newState);
+                                        if (newState.clientId && newState.valorBruto) newState = applyClientRates(newState.clientId, newState, false);
                                         setFormData(newState);
                                     }} />
                                 </div>
@@ -794,7 +826,11 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Tarifas Consolidado (R$)</label>
                                     <NumericFormat required className="glass-input" value={formData.tarifas} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
                                         const val = v.floatValue;
-                                        setFormData(prev => ({ ...prev, tarifas: val !== undefined ? String(val) : "" }));
+                                        setFormData(prev => {
+                                            const bruto = parseFloat(prev.valorBruto) || 0;
+                                            const perc = bruto > 0 && val !== undefined ? ((val / bruto) * 100).toString() : prev.percentualTarifas;
+                                            return { ...prev, tarifas: val !== undefined ? String(val) : "", percentualTarifas: perc };
+                                        });
                                     }} />
                                 </div>
                             </div>

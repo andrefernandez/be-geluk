@@ -179,58 +179,48 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
 
       <main style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2.5rem" }}>
 
-        {/* KPI Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.5rem" }}>
-          <div className="glass-panel" style={{ padding: "1.5rem" }}>
-            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Total Operado</h3>
-            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(totalOperado)}</div>
+        {/* KPI Grid - Redesigned to match the World Time aesthetic */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
+          <div className="glass-panel" style={{ padding: "2rem", borderRadius: "40px", backgroundColor: "var(--bg-secondary)" }}>
+            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1rem" }}>Total Operado</h3>
+            <div style={{ fontSize: "2.5rem", fontWeight: 500, color: "var(--text-primary)", letterSpacing: "-0.05em" }}>{formatCurrency(totalOperado)}</div>
           </div>
 
-          <div className="glass-panel" style={{ padding: "1.5rem" }}>
-            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Receita Bruta</h3>
-            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(receitaBruta)}</div>
-            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
+          <div className="glass-panel" style={{ padding: "2rem", borderRadius: "40px", backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
+            <h3 style={{ color: "rgba(0,0,0,0.5)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1rem" }}>Receita Bruta</h3>
+            <div style={{ fontSize: "2.5rem", fontWeight: 500, color: "var(--bg-primary)", letterSpacing: "-0.05em" }}>{formatCurrency(receitaBruta)}</div>
+            <div style={{ color: "rgba(0,0,0,0.4)", fontSize: "0.8125rem", fontWeight: 600, marginTop: "1rem", display: "flex", justifyContent: "space-between" }}>
               <span>IOF: {formatCurrency(iofTotal)}</span>
               <span>RENT.: {formatPercent(totalOperado > 0 ? (receitaBruta / totalOperado) * 100 : 0)}</span>
             </div>
           </div>
 
-          <div className="glass-panel" style={{ padding: "1.5rem" }}>
-            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Lucro Líquido</h3>
-            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: lucroLiquido >= 0 ? "var(--accent-primary)" : "var(--accent-red)" }}>
+          <div className="glass-panel" style={{ padding: "2rem", borderRadius: "40px", backgroundColor: "var(--bg-secondary)" }}>
+            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1rem" }}>Lucro Líquido</h3>
+            <div style={{ fontSize: "2.5rem", fontWeight: 500, color: lucroLiquido >= 0 ? "var(--accent-primary)" : "var(--accent-red)", letterSpacing: "-0.05em" }}>
               {formatCurrency(lucroLiquido)}
             </div>
-            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
+            <div style={{ color: "var(--text-tertiary)", fontSize: "0.8125rem", fontWeight: 600, marginTop: "1rem" }}>
               RENT. LÍQUIDA: {formatPercent(rentabilidade)}
             </div>
           </div>
 
           {!isComercial && (
-            <div className="glass-panel" style={{ padding: "1.5rem" }}>
-              <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Custos Totais</h3>
-              <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(custoTotalManual)}</div>
-              <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
-                BATENDO COM PÁGINA DE CUSTOS
-              </div>
+            <div className="glass-panel" style={{ padding: "2rem", borderRadius: "40px", backgroundColor: "var(--bg-secondary)" }}>
+              <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1rem" }}>Custos Totais</h3>
+              <div style={{ fontSize: "2.5rem", fontWeight: 500, color: "var(--text-primary)", letterSpacing: "-0.05em" }}>{formatCurrency(custoTotalManual)}</div>
             </div>
           )}
 
-          <div className="glass-panel" style={{ padding: "1.5rem" }}>
-            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Op. Declaradas</h3>
-            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--accent-primary)" }}>{formatCurrency(valorDeclarado)}</div>
-            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
-              {formatPercent(percentualDeclarado)} DO TOTAL
-            </div>
-          </div>
-
-          <div className="glass-panel" style={{ padding: "1.5rem" }}>
-            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Op. Não Declaradas</h3>
-            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(valorNaoDeclarado)}</div>
-            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
-              {formatPercent(percentualNaoDeclarado)} DO TOTAL
+          <div className="glass-panel" style={{ padding: "2rem", borderRadius: "40px", backgroundColor: "var(--bg-secondary)" }}>
+            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1rem" }}>Operações</h3>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: "1rem" }}>
+              <div style={{ fontSize: "2.5rem", fontWeight: 500, color: "var(--accent-primary)", letterSpacing: "-0.05em" }}>{formatPercent(percentualDeclarado)}</div>
+              <div style={{ fontSize: "1rem", color: "var(--text-tertiary)", marginBottom: "0.5rem", fontWeight: 600 }}>DECLARADO</div>
             </div>
           </div>
         </div>
+
 
         {/* Chart Section */}
         <div className="glass-panel" style={{ padding: "2rem" }}>
