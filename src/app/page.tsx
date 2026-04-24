@@ -180,43 +180,47 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
       <main style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2.5rem" }}>
 
         {/* KPI Grid - Redesigned to match the World Time aesthetic */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
-          <div className="glass-panel" style={{ padding: "2rem", borderRadius: "40px", backgroundColor: "var(--bg-secondary)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.5rem" }}>
+          <div className="glass-panel" style={{ padding: "2rem", borderRadius: "32px", backgroundColor: "var(--bg-secondary)", border: "1px solid var(--card-border)" }}>
             <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1rem" }}>Total Operado</h3>
-            <div style={{ fontSize: "2.5rem", fontWeight: 500, color: "var(--text-primary)", letterSpacing: "-0.05em" }}>{formatCurrency(totalOperado)}</div>
+            <div style={{ fontSize: "2.25rem", fontWeight: 500, color: "var(--text-primary)", letterSpacing: "-0.04em" }}>{formatCurrency(totalOperado)}</div>
+            <div style={{ height: "1.25rem" }}></div> {/* Spacer for alignment */}
           </div>
 
-          <div className="glass-panel" style={{ padding: "2rem", borderRadius: "40px", backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
+          <div className="glass-panel" style={{ padding: "2rem", borderRadius: "32px", backgroundColor: "var(--text-primary)", color: "var(--bg-primary)", border: "none" }}>
             <h3 style={{ color: "rgba(0,0,0,0.5)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1rem" }}>Receita Bruta</h3>
-            <div style={{ fontSize: "2.5rem", fontWeight: 500, color: "var(--bg-primary)", letterSpacing: "-0.05em" }}>{formatCurrency(receitaBruta)}</div>
-            <div style={{ color: "rgba(0,0,0,0.4)", fontSize: "0.8125rem", fontWeight: 600, marginTop: "1rem", display: "flex", justifyContent: "space-between" }}>
+            <div style={{ fontSize: "2.25rem", fontWeight: 500, color: "var(--bg-primary)", letterSpacing: "-0.04em" }}>{formatCurrency(receitaBruta)}</div>
+            <div style={{ color: "rgba(0,0,0,0.6)", fontSize: "0.75rem", fontWeight: 700, marginTop: "1rem", display: "flex", justifyContent: "space-between", textTransform: "uppercase" }}>
               <span>IOF: {formatCurrency(iofTotal)}</span>
               <span>RENT.: {formatPercent(totalOperado > 0 ? (receitaBruta / totalOperado) * 100 : 0)}</span>
             </div>
           </div>
 
-          <div className="glass-panel" style={{ padding: "2rem", borderRadius: "40px", backgroundColor: "var(--bg-secondary)" }}>
+          <div className="glass-panel" style={{ padding: "2rem", borderRadius: "32px", backgroundColor: "var(--bg-secondary)", border: "1px solid var(--card-border)" }}>
             <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1rem" }}>Lucro Líquido</h3>
-            <div style={{ fontSize: "2.5rem", fontWeight: 500, color: lucroLiquido >= 0 ? "var(--accent-primary)" : "var(--accent-red)", letterSpacing: "-0.05em" }}>
+            <div style={{ fontSize: "2.25rem", fontWeight: 500, color: lucroLiquido >= 0 ? "var(--accent-primary)" : "var(--accent-red)", letterSpacing: "-0.04em" }}>
               {formatCurrency(lucroLiquido)}
             </div>
-            <div style={{ color: "var(--text-tertiary)", fontSize: "0.8125rem", fontWeight: 600, marginTop: "1rem" }}>
+            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 700, marginTop: "1rem", textTransform: "uppercase" }}>
               RENT. LÍQUIDA: {formatPercent(rentabilidade)}
             </div>
           </div>
 
           {!isComercial && (
-            <div className="glass-panel" style={{ padding: "2rem", borderRadius: "40px", backgroundColor: "var(--bg-secondary)" }}>
+            <div className="glass-panel" style={{ padding: "2rem", borderRadius: "32px", backgroundColor: "var(--bg-secondary)", border: "1px solid var(--card-border)" }}>
               <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1rem" }}>Custos Totais</h3>
-              <div style={{ fontSize: "2.5rem", fontWeight: 500, color: "var(--text-primary)", letterSpacing: "-0.05em" }}>{formatCurrency(custoTotalManual)}</div>
+              <div style={{ fontSize: "2.25rem", fontWeight: 500, color: "var(--text-primary)", letterSpacing: "-0.04em" }}>{formatCurrency(custoTotalManual)}</div>
+              <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 700, marginTop: "1rem", textTransform: "uppercase" }}>
+                DA RECEITA: {formatPercent(custoReceitaPercent)}
+              </div>
             </div>
           )}
 
-          <div className="glass-panel" style={{ padding: "2rem", borderRadius: "40px", backgroundColor: "var(--bg-secondary)" }}>
+          <div className="glass-panel" style={{ padding: "2rem", borderRadius: "32px", backgroundColor: "var(--bg-secondary)", border: "1px solid var(--card-border)" }}>
             <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1rem" }}>Operações</h3>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: "1rem" }}>
-              <div style={{ fontSize: "2.5rem", fontWeight: 500, color: "var(--accent-primary)", letterSpacing: "-0.05em" }}>{formatPercent(percentualDeclarado)}</div>
-              <div style={{ fontSize: "1rem", color: "var(--text-tertiary)", marginBottom: "0.5rem", fontWeight: 600 }}>DECLARADO</div>
+            <div style={{ fontSize: "2.25rem", fontWeight: 500, color: "var(--accent-primary)", letterSpacing: "-0.04em" }}>{formatPercent(percentualDeclarado)}</div>
+            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 700, marginTop: "1rem", textTransform: "uppercase" }}>
+              VOLUME DECLARADO
             </div>
           </div>
         </div>
