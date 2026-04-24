@@ -24,7 +24,7 @@ export function Navigation() {
         { name: "Cedentes", path: "/clientes" },
     ] : [
         { name: "Dashboard", path: "/" },
-        { name: "Todo", path: "/todo" },
+        { name: "B.o's", path: "/bos" },
         { name: "Operações", path: "/operacoes" },
         { name: "Acordos", path: "/acordos" },
         { name: "Cedentes", path: "/clientes" },

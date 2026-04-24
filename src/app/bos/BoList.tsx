@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Plus, Trash2, CheckCircle, Circle, ClipboardList } from "lucide-react";
-import { createTodo, deleteTodo, toggleTodoStatus } from "./actions";
+import { createBo, deleteBo, toggleBoStatus } from "./actions";
 
-interface Todo {
+interface Bo {
     id: string;
     title: string;
     description: string | null;
@@ -12,25 +12,25 @@ interface Todo {
     createdAt: Date;
 }
 
-interface TodoListProps {
-    initialTodos: Todo[];
+interface BoListProps {
+    initialTodos: Bo[];
 }
 
-export default function TodoList({ initialTodos }: TodoListProps) {
-    const [todos, setTodos] = useState(initialTodos);
+export default function BoList({ initialTodos }: BoListProps) {
+    const [bos, setBos] = useState(initialTodos);
     const [isAdding, setIsAdding] = useState(false);
-    const [newTodo, setNewTodo] = useState({ title: "", description: "" });
+    const [newBo, setNewBo] = useState({ title: "", description: "" });
     const [loading, setLoading] = useState(false);
 
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newTodo.title.trim()) return;
+        if (!newBo.title.trim()) return;
 
         setLoading(true);
-        const result = await createTodo(newTodo);
+        const result = await createBo(newBo);
         if (result.success && result.todo) {
-            setTodos([result.todo as Todo, ...todos]);
-            setNewTodo({ title: "", description: "" });
+            setBos([result.todo as Bo, ...bos]);
+            setNewBo({ title: "", description: "" });
             setIsAdding(false);
         } else {
             alert(result.error);
@@ -41,25 +41,25 @@ export default function TodoList({ initialTodos }: TodoListProps) {
     const handleToggle = async (id: string, currentStatus: string) => {
         // Optimistic update
         const newStatus = currentStatus === "OPEN" ? "CLOSED" : "OPEN";
-        setTodos(todos.map(t => t.id === id ? { ...t, status: newStatus } : t));
+        setBos(bos.map(t => t.id === id ? { ...t, status: newStatus } : t));
 
-        const result = await toggleTodoStatus(id, currentStatus);
+        const result = await toggleBoStatus(id, currentStatus);
         if (!result.success) {
             // Revert on failure
-            setTodos(todos.map(t => t.id === id ? { ...t, status: currentStatus } : t));
+            setBos(bos.map(t => t.id === id ? { ...t, status: currentStatus } : t));
             alert(result.error);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Tem certeza que deseja excluir esta tarefa?")) return;
+        if (!confirm("Tem certeza que deseja excluir este B.o?")) return;
 
-        const originalTodos = [...todos];
-        setTodos(todos.filter(t => t.id !== id));
+        const originalBos = [...bos];
+        setBos(bos.filter(t => t.id !== id));
 
-        const result = await deleteTodo(id);
+        const result = await deleteBo(id);
         if (!result.success) {
-            setTodos(originalTodos);
+            setBos(originalBos);
             alert(result.error);
         }
     };
@@ -67,10 +67,10 @@ export default function TodoList({ initialTodos }: TodoListProps) {
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>Tarefas Pendentes</h2>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>B.o's Pendentes</h2>
                 <button className="btn-primary" onClick={() => setIsAdding(true)}>
                     <Plus size={18} />
-                    <span>Nova Tarefa</span>
+                    <span>Novo B.o</span>
                 </button>
             </div>
 
@@ -82,8 +82,8 @@ export default function TodoList({ initialTodos }: TodoListProps) {
                             <input
                                 required
                                 className="glass-input"
-                                value={newTodo.title}
-                                onChange={e => setNewTodo({ ...newTodo, title: e.target.value })}
+                                value={newBo.title}
+                                onChange={e => setNewBo({ ...newBo, title: e.target.value })}
                                 placeholder="Ex: Cobrar o Moretti"
                             />
                         </div>
@@ -91,9 +91,9 @@ export default function TodoList({ initialTodos }: TodoListProps) {
                             <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Descrição (Opcional)</label>
                             <textarea
                                 className="glass-input"
-                                value={newTodo.description}
-                                onChange={e => setNewTodo({ ...newTodo, description: e.target.value })}
-                                placeholder="Detalhes sobre a tarefa..."
+                                value={newBo.description}
+                                onChange={e => setNewBo({ ...newBo, description: e.target.value })}
+                                placeholder="Detalhes sobre o B.o..."
                                 rows={3}
                                 style={{ resize: "none" }}
                             />
@@ -101,7 +101,7 @@ export default function TodoList({ initialTodos }: TodoListProps) {
                         <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
                             <button type="button" className="btn-secondary" onClick={() => setIsAdding(false)}>Cancelar</button>
                             <button type="submit" className="btn-primary" disabled={loading}>
-                                {loading ? "Salvando..." : "Criar Tarefa"}
+                                {loading ? "Salvando..." : "Criar B.o"}
                             </button>
                         </div>
                     </form>
@@ -109,54 +109,54 @@ export default function TodoList({ initialTodos }: TodoListProps) {
             )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                {todos.map((todo) => (
+                {bos.map((bo) => (
                     <div
-                        key={todo.id}
+                        key={bo.id}
                         className="glass-panel"
                         style={{
                             padding: "1rem 1.5rem",
                             display: "flex",
                             alignItems: "center",
                             gap: "1rem",
-                            opacity: todo.status === "CLOSED" ? 0.6 : 1,
+                            opacity: bo.status === "CLOSED" ? 0.6 : 1,
                             transition: "all 0.3s ease",
-                            borderLeft: todo.status === "OPEN" ? "4px solid var(--accent-secondary)" : "4px solid var(--card-border)"
+                            borderLeft: bo.status === "OPEN" ? "4px solid var(--accent-secondary)" : "4px solid var(--card-border)"
                         }}
                     >
                         <button
-                            onClick={() => handleToggle(todo.id, todo.status)}
+                            onClick={() => handleToggle(bo.id, bo.status)}
                             style={{
                                 background: "none",
                                 border: "none",
                                 padding: 0,
                                 cursor: "pointer",
-                                color: todo.status === "CLOSED" ? "var(--accent-primary)" : "var(--text-tertiary)",
+                                color: bo.status === "CLOSED" ? "var(--accent-primary)" : "var(--text-tertiary)",
                                 transition: "transform 0.2s"
                             }}
                             className="status-toggle"
                         >
-                            {todo.status === "CLOSED" ? <CheckCircle size={24} /> : <Circle size={24} />}
+                            {bo.status === "CLOSED" ? <CheckCircle size={24} /> : <Circle size={24} />}
                         </button>
 
                         <div style={{ flex: 1 }}>
                             <h3 style={{
                                 fontSize: "1rem",
                                 fontWeight: 600,
-                                color: todo.status === "CLOSED" ? "var(--text-tertiary)" : "var(--text-primary)",
-                                textDecoration: todo.status === "CLOSED" ? "line-through" : "none",
+                                color: bo.status === "CLOSED" ? "var(--text-tertiary)" : "var(--text-primary)",
+                                textDecoration: bo.status === "CLOSED" ? "line-through" : "none",
                                 marginBottom: "0.25rem"
                             }}>
-                                {todo.title}
+                                {bo.title}
                             </h3>
-                            {todo.description && (
+                            {bo.description && (
                                 <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
-                                    {todo.description}
+                                    {bo.description}
                                 </p>
                             )}
                         </div>
 
                         <button
-                            onClick={() => handleDelete(todo.id)}
+                            onClick={() => handleDelete(bo.id)}
                             style={{
                                 background: "none",
                                 border: "none",
@@ -174,16 +174,16 @@ export default function TodoList({ initialTodos }: TodoListProps) {
                     </div>
                 ))}
 
-                {todos.length === 0 && !isAdding && (
+                {bos.length === 0 && !isAdding && (
                     <div style={{ padding: "4rem 2rem", textAlign: "center", color: "var(--text-tertiary)" }}>
                         <ClipboardList size={48} style={{ marginBottom: "1rem", opacity: 0.2 }} />
-                        <p>Nenhuma tarefa pendente.</p>
+                        <p>Nenhum B.o pendente.</p>
                         <button
                             className="btn-secondary"
                             style={{ marginTop: "1rem" }}
                             onClick={() => setIsAdding(true)}
                         >
-                            Criar primeira tarefa
+                            Criar primeiro B.o
                         </button>
                     </div>
                 )}
