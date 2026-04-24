@@ -22,16 +22,16 @@
   --card-hover: #1c1c1f;
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
 
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
 
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s ease;
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -113,11 +113,12 @@ button {
 /* Component Classes (Now Solid) */
 .glass-panel,
 .glass-card {
-  background: var(--card-bg);
+  background: var(--bg-secondary);
   border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   padding: 1.5rem;
   box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
 }
 
 .glass-card:hover {
@@ -148,12 +149,12 @@ button {
 .glass-input {
   background: #0a0a0b;
   border: 1px solid var(--card-border);
-  border-radius: var(--radius-xs);
+  border-radius: 9999px;
   color: var(--text-primary);
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1.25rem;
   transition: all var(--transition-fast);
   width: 100%;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .glass-input:focus {
@@ -165,14 +166,16 @@ button {
 .btn-primary {
   background: var(--accent-primary);
   color: #fff;
-  padding: 0.625rem 1.25rem;
-  border-radius: var(--radius-xs);
-  font-weight: 600;
-  font-size: 0.875rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.8125rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  letter-spacing: 0.025em;
+  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);
 }
 
 .btn-primary:hover {
