@@ -186,10 +186,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
             <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(totalOperado)}</div>
           </div>
 
-          <div className="glass-panel" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
-            <h3 style={{ color: "rgba(0,0,0,0.5)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Receita Bruta</h3>
-            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--bg-primary)" }}>{formatCurrency(receitaBruta)}</div>
-            <div style={{ color: "rgba(0,0,0,0.4)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
+          <div className="glass-panel">
+            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Receita Bruta</h3>
+            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(receitaBruta)}</div>
+            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
               <span>IOF: {formatCurrency(iofTotal)}</span>
               <span>RENT.: {formatPercent(totalOperado > 0 ? (receitaBruta / totalOperado) * 100 : 0)}</span>
             </div>
