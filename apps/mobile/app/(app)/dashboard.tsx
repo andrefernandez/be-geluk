@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'rea
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
-// Para o app mobile acessar o backend na sua máquina, precisamos usar o IP da rede em vez de localhost
-const API_URL = 'http://192.168.1.62:3000/api/mobile';
+// Usando localhost para garantirmos que funciona antes de subir pra valer
+const API_URL = 'http://localhost:3000/api/mobile';
 
 const MONTHS = [
   { label: 'Geral', value: 'all' },
