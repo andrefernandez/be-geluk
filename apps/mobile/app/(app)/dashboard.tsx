@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'rea
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
-// Usando localhost para garantirmos que funciona antes de subir pra valer
-const API_URL = 'http://localhost:3000/api/mobile';
+// Usando a API em produção na Vercel para funcionar em qualquer dispositivo
+const API_URL = 'https://be-geluk.vercel.app/api/mobile';
 
 const MONTHS = [
   { label: 'Geral', value: 'all' },
@@ -166,6 +166,28 @@ export default function DashboardScreen() {
               <Feather name="users" size={24} color="#818cf8" />
             </View>
             <Text className="text-white font-bold text-lg">Clientes</Text>
+          </TouchableOpacity>
+
+          {/* Card B.O's */}
+          <TouchableOpacity 
+            className="bg-slate-800 w-[48%] p-4 rounded-2xl mb-4 border border-slate-700"
+            onPress={() => router.push('/(app)/bos')}
+          >
+            <View className="bg-amber-500/20 w-12 h-12 rounded-xl items-center justify-center mb-3">
+              <Feather name="alert-triangle" size={24} color="#fbbf24" />
+            </View>
+            <Text className="text-white font-bold text-lg">B.O's</Text>
+          </TouchableOpacity>
+
+          {/* Card Acordos */}
+          <TouchableOpacity 
+            className="bg-slate-800 w-[48%] p-4 rounded-2xl mb-4 border border-slate-700"
+            onPress={() => router.push('/(app)/agreements')}
+          >
+            <View className="bg-emerald-500/20 w-12 h-12 rounded-xl items-center justify-center mb-3">
+              <Feather name="file-text" size={24} color="#34d399" />
+            </View>
+            <Text className="text-white font-bold text-lg">Acordos</Text>
           </TouchableOpacity>
 
           {/* Card Câmera */}

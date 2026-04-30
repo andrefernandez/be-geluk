@@ -3,31 +3,36 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 
-// URL do seu servidor local rodando o Next.js (Mude para o IP da sua máquina se rodar no celular físico)
-// Usando a API em produção na Vercel para funcionar em qualquer dispositivo
-const API_URL = 'https://be-geluk.vercel.app/api/mobile/clients';
+const API_URL = 'https://be-geluk.vercel.app/api/mobile/agreements';
 
-export default function ClientsScreen() {
+export default function AgreementsScreen() {
   const router = useRouter();
-  const [clients, setClients] = useState<any[]>([]);
+  const [agreements, setAgreements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchClients();
+    fetchAgreements();
   }, []);
 
-  const fetchClients = async () => {
+  const fetchAgreements = async () => {
     try {
-      // Quando for usar no celular de verdade, troque localhost pelo IP da sua máquina rodando o backend
-      // pois 'localhost' no celular aponta para o próprio celular.
       const res = await fetch(API_URL);
       const data = await res.json();
-      setClients(data);
+      setAgreements(data);
     } catch (error) {
-      console.error('Erro ao buscar clientes:', error);
+      console.error('Erro ao buscar acordos:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  };
+
+  const formatDate = (dateString: string) => {
+    const d = new Date(dateString);
+    return d.toLocaleDateString('pt-BR');
   };
 
   return (
@@ -39,7 +44,7 @@ export default function ClientsScreen() {
         >
           <Feather name="arrow-left" size={20} color="#fff" />
         </TouchableOpacity>
-        <Text className="text-white text-2xl font-bold">Clientes</Text>
+        <Text className="text-white text-2xl font-bold">Acordos</Text>
       </View>
 
       {loading ? (
@@ -48,24 +53,26 @@ export default function ClientsScreen() {
         </View>
       ) : (
         <FlatList
-          data={clients}
+          data={agreements}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
           renderItem={({ item }) => (
             <View className="bg-slate-800 p-4 rounded-2xl mb-4 border border-slate-700">
               <View className="flex-row justify-between items-center mb-2">
-                <Text className="text-white font-bold text-lg">{item.name}</Text>
-                <View className={`px-2 py-1 rounded-md ${item.status === 'ATIVO' ? 'bg-emerald-500/20' : 'bg-rose-500/20'}`}>
-                  <Text className={`text-xs font-bold ${item.status === 'ATIVO' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                <Text className="text-white font-bold text-lg">{item.client?.name || 'Cliente'}</Text>
+                <View className={`px-2 py-1 rounded-md ${item.status === 'ACTIVE' ? 'bg-sky-500/20' : item.status === 'COMPLETED' ? 'bg-emerald-500/20' : 'bg-rose-500/20'}`}>
+                  <Text className={`text-xs font-bold ${item.status === 'ACTIVE' ? 'text-sky-400' : item.status === 'COMPLETED' ? 'text-emerald-400' : 'text-rose-400'}`}>
                     {item.status}
                   </Text>
                 </View>
               </View>
-              {item.cnpj && <Text className="text-slate-400 text-sm">CNPJ: {item.cnpj}</Text>}
+              <Text className="text-emerald-400 font-bold text-lg mb-1">{formatCurrency(item.totalValue)}</Text>
+              <Text className="text-slate-400 text-sm mb-2">{item.installmentsCount} parcelas</Text>
+              <Text className="text-slate-500 text-xs">Criado em: {formatDate(item.createdAt)}</Text>
             </View>
           )}
           ListEmptyComponent={
-            <Text className="text-slate-400 text-center mt-10">Nenhum cliente encontrado.</Text>
+            <Text className="text-slate-400 text-center mt-10">Nenhum acordo encontrado.</Text>
           }
         />
       )}

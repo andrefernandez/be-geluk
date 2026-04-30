@@ -3,31 +3,32 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 
-// URL do seu servidor local rodando o Next.js (Mude para o IP da sua máquina se rodar no celular físico)
-// Usando a API em produção na Vercel para funcionar em qualquer dispositivo
-const API_URL = 'https://be-geluk.vercel.app/api/mobile/clients';
+const API_URL = 'https://be-geluk.vercel.app/api/mobile/bos';
 
-export default function ClientsScreen() {
+export default function BosScreen() {
   const router = useRouter();
-  const [clients, setClients] = useState<any[]>([]);
+  const [bos, setBos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchClients();
+    fetchBos();
   }, []);
 
-  const fetchClients = async () => {
+  const fetchBos = async () => {
     try {
-      // Quando for usar no celular de verdade, troque localhost pelo IP da sua máquina rodando o backend
-      // pois 'localhost' no celular aponta para o próprio celular.
       const res = await fetch(API_URL);
       const data = await res.json();
-      setClients(data);
+      setBos(data);
     } catch (error) {
-      console.error('Erro ao buscar clientes:', error);
+      console.error('Erro ao buscar BOs:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatDate = (dateString: string) => {
+    const d = new Date(dateString);
+    return d.toLocaleDateString('pt-BR');
   };
 
   return (
@@ -39,7 +40,7 @@ export default function ClientsScreen() {
         >
           <Feather name="arrow-left" size={20} color="#fff" />
         </TouchableOpacity>
-        <Text className="text-white text-2xl font-bold">Clientes</Text>
+        <Text className="text-white text-2xl font-bold">B.O's</Text>
       </View>
 
       {loading ? (
@@ -48,24 +49,25 @@ export default function ClientsScreen() {
         </View>
       ) : (
         <FlatList
-          data={clients}
+          data={bos}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
           renderItem={({ item }) => (
             <View className="bg-slate-800 p-4 rounded-2xl mb-4 border border-slate-700">
               <View className="flex-row justify-between items-center mb-2">
-                <Text className="text-white font-bold text-lg">{item.name}</Text>
-                <View className={`px-2 py-1 rounded-md ${item.status === 'ATIVO' ? 'bg-emerald-500/20' : 'bg-rose-500/20'}`}>
-                  <Text className={`text-xs font-bold ${item.status === 'ATIVO' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                <Text className="text-white font-bold text-lg">{item.title}</Text>
+                <View className={`px-2 py-1 rounded-md ${item.status === 'OPEN' ? 'bg-amber-500/20' : 'bg-emerald-500/20'}`}>
+                  <Text className={`text-xs font-bold ${item.status === 'OPEN' ? 'text-amber-400' : 'text-emerald-400'}`}>
                     {item.status}
                   </Text>
                 </View>
               </View>
-              {item.cnpj && <Text className="text-slate-400 text-sm">CNPJ: {item.cnpj}</Text>}
+              {item.description && <Text className="text-slate-400 text-sm mb-2">{item.description}</Text>}
+              <Text className="text-slate-500 text-xs">Criado em: {formatDate(item.createdAt)}</Text>
             </View>
           )}
           ListEmptyComponent={
-            <Text className="text-slate-400 text-center mt-10">Nenhum cliente encontrado.</Text>
+            <Text className="text-slate-400 text-center mt-10">Nenhum B.O encontrado.</Text>
           }
         />
       )}

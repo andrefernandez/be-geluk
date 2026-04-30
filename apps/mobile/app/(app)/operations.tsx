@@ -3,8 +3,8 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 
-// URL do seu servidor local rodando o Next.js
-const API_URL = 'http://localhost:3000/api/mobile/operations';
+// URL da API em produção na Vercel para funcionar no celular
+const API_URL = 'https://be-geluk.vercel.app/api/mobile/operations';
 
 export default function OperationsScreen() {
   const router = useRouter();

@@ -5,7 +5,6 @@ export async function GET(request: Request) {
   try {
     const clients = await prisma.client.findMany({
       orderBy: { name: 'asc' },
-      take: 20, // Limiting to 20 for the mobile app
     });
     
     return NextResponse.json(clients);
