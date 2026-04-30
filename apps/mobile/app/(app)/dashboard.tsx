@@ -159,46 +159,7 @@ export default function DashboardScreen() {
               </View>
             </View>
 
-            {/* Gráfico Histórico */}
-            <View className="px-6 mb-12">
-              <Text className="text-zinc-900 text-xl font-extrabold tracking-tight mb-2">Desempenho Histórico</Text>
-              <Text className="text-zinc-400 text-xs mb-6">Evolução mensal de volumes e margens</Text>
-              
-              <View className="bg-white rounded-[32px] p-6 shadow-sm shadow-zinc-200/50 border border-zinc-100">
-                {chartData.length === 0 ? (
-                  <Text className="text-center text-zinc-400 py-10">Sem histórico disponível</Text>
-                ) : (
-                  <View className="flex-row items-end justify-between h-40">
-                    {chartData.map((d: any, index: number) => {
-                      const heightPercent = maxChartValue > 0 ? (d.totalOperado / maxChartValue) * 100 : 0;
-                      return (
-                        <View key={index} className="items-center flex-1">
-                          <View className="w-10 bg-zinc-50 rounded-t-xl overflow-hidden justify-end" style={{ height: '100%' }}>
-                            <View 
-                              className="w-full rounded-xl bg-[#3b82f6]" 
-                              style={{ height: `${Math.max(heightPercent, 2)}%` }} 
-                            />
-                          </View>
-                          <Text className="text-zinc-400 text-[10px] font-bold mt-3 uppercase">{d.label}</Text>
-                          <Text className="text-zinc-400 text-[8px] mt-1">{d.rentabilidade?.toFixed(1)}%</Text>
-                        </View>
-                      );
-                    })}
-                  </View>
-                )}
-                
-                <View className="flex-row justify-center items-center mt-6 gap-4">
-                  <View className="flex-row items-center gap-1">
-                     <View className="w-3 h-3 rounded-full bg-[#3b82f6]" />
-                     <Text className="text-zinc-500 text-[10px]">Valor Operado</Text>
-                  </View>
-                  <View className="flex-row items-center gap-1">
-                     <View className="w-3 h-3 rounded-full bg-zinc-300" />
-                     <Text className="text-zinc-500 text-[10px]">Rentabilidade</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
+            {/* Gráfico Histórico removido temporariamente a pedido do usuário */}
           </>
         )}
 
@@ -226,7 +187,7 @@ export default function DashboardScreen() {
 
             {/* Acordos */}
             <TouchableOpacity 
-              className="bg-white flex-row items-center p-5 rounded-[28px] shadow-sm shadow-zinc-200/30 border border-zinc-100/80"
+              className="bg-white flex-row items-center p-5 rounded-[28px] mb-4 shadow-sm shadow-zinc-200/30 border border-zinc-100/80"
               onPress={() => router.push('/(app)/agreements')}
             >
               <View className="w-14 h-14 rounded-full bg-[#d4f34a]/20 items-center justify-center mr-5">
@@ -235,6 +196,40 @@ export default function DashboardScreen() {
               <View className="flex-1">
                 <Text className="text-zinc-900 font-bold text-[17px] mb-1">Acordos</Text>
                 <Text className="text-zinc-400 text-[12px]">Negociações ativas</Text>
+              </View>
+              <View className="bg-zinc-50 w-10 h-10 rounded-full items-center justify-center">
+                <Feather name="chevron-right" size={18} color="#a1a1aa" />
+              </View>
+            </TouchableOpacity>
+
+            {/* Investidores */}
+            <TouchableOpacity 
+              className="bg-white flex-row items-center p-5 rounded-[28px] mb-4 shadow-sm shadow-zinc-200/30 border border-zinc-100/80"
+              onPress={() => router.push('/(app)/investors')}
+            >
+              <View className="w-14 h-14 rounded-full bg-sky-50 items-center justify-center mr-5">
+                <Feather name="trending-up" size={22} color="#0284c7" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-zinc-900 font-bold text-[17px] mb-1">Investidores</Text>
+                <Text className="text-zinc-400 text-[12px]">Captação e carteira</Text>
+              </View>
+              <View className="bg-zinc-50 w-10 h-10 rounded-full items-center justify-center">
+                <Feather name="chevron-right" size={18} color="#a1a1aa" />
+              </View>
+            </TouchableOpacity>
+
+            {/* Usuários */}
+            <TouchableOpacity 
+              className="bg-white flex-row items-center p-5 rounded-[28px] shadow-sm shadow-zinc-200/30 border border-zinc-100/80"
+              onPress={() => router.push('/(app)/users')}
+            >
+              <View className="w-14 h-14 rounded-full bg-purple-50 items-center justify-center mr-5">
+                <Feather name="users" size={22} color="#9333ea" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-zinc-900 font-bold text-[17px] mb-1">Usuários</Text>
+                <Text className="text-zinc-400 text-[12px]">Gestão de acessos</Text>
               </View>
               <View className="bg-zinc-50 w-10 h-10 rounded-full items-center justify-center">
                 <Feather name="chevron-right" size={18} color="#a1a1aa" />
