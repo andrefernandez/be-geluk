@@ -1,0 +1,42 @@
+
+> web@0.1.0 build
+> prisma generate && prisma db push --accept-data-loss && next build
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+✔ Generated Prisma Client (v5.22.0) to .\..\..\node_modules\@prisma\client in 218ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+
+┌─────────────────────────────────────────────────────────┐
+│  Update available 5.22.0 -> 7.8.0                       │
+│                                                         │
+│  This is a major update - please follow the guide at    │
+│  https://pris.ly/d/major-version-upgrade                │
+│                                                         │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "neondb", schema "public" at "ep-muddy-block-ai29otkv-pooler.c-4.us-east-1.aws.neon.tech"
+
+Error: P1001: Can't reach database server at `ep-muddy-block-ai29otkv-pooler.c-4.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-muddy-block-ai29otkv-pooler.c-4.us-east-1.aws.neon.tech:5432`.
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path D:\projects\be-geluk\apps\web
+npm error workspace web@0.1.0
+npm error location D:\projects\be-geluk\apps\web
+npm error command failed
+npm error command C:\Windows\system32\cmd.exe /d /s /c prisma generate && prisma db push --accept-data-loss && next build
+npm notice
+npm notice New minor version of npm available! 11.11.1 -> 11.13.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.13.0
+npm notice To update run: npm install -g npm@11.13.0
+npm notice
