@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Pressable, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
@@ -25,11 +25,30 @@ export default function DashboardScreen() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // A nova API agora traz TUDO (kpis + histórico) em uma única chamada de forma otimizada
+        // 1. Busca os KPIs principais
         const res = await fetch(`${API_URL}/dash?month=${selectedMonth}`);
         if (res.ok) {
-          setDashData(await res.json());
+          const data = await res.json();
+          setDashData(data);
         }
+
+        // 2. Busca o histórico mês a mês na mão para montar o gráfico 
+        // (Isso garante que o gráfico funcione AGORA sem você precisar dar push na Vercel)
+        const historyPromises = MONTHS.filter(m => m.value !== 'all').slice().reverse().map(async (m) => {
+          const r = await fetch(`${API_URL}/dash?month=${m.value}`);
+          const monthData = await r.json();
+          return {
+            label: m.short,
+            value: m.value,
+            totalOperado: monthData.totalOperado || 0,
+            lucroLiquido: monthData.lucroLiquido || 0,
+            rentabilidade: monthData.rentabilidade || 0 // A API antiga devolvia 'rentabilidade'
+          };
+        });
+        
+        const historyResults = await Promise.all(historyPromises);
+        setChartDataState(historyResults);
+
       } catch (error) {
         console.log('Erro ao buscar dados do dashboard:', error);
       } finally {
@@ -40,11 +59,13 @@ export default function DashboardScreen() {
     fetchData();
   }, [selectedMonth]);
 
+  const [chartDataState, setChartDataState] = useState<any[]>([]);
+
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
   };
 
-  const chartData = dashData?.history || [];
+  const chartData = chartDataState.length > 0 ? chartDataState : (dashData?.history || []);
   const maxChartValue = Math.max(...chartData.map((d: any) => d.totalOperado), 1);
   const selectedMonthLabel = MONTHS.find(m => m.value === selectedMonth)?.label;
 
@@ -68,11 +89,8 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Header - Visão e Seleção */}
-        <View className="px-6 mb-8 flex-row justify-between items-center">
-          <View>
-            <Text className="text-zinc-900 text-3xl font-extrabold tracking-tight">Painel</Text>
-          </View>
+        {/* Header - Seleção de Mês */}
+        <View className="px-6 mb-8 flex-row justify-end items-center">
           <TouchableOpacity 
             className="bg-white border border-zinc-200 py-2 px-4 rounded-full flex-row items-center shadow-sm shadow-zinc-200/50"
             onPress={() => setMonthModalVisible(true)}
@@ -157,7 +175,7 @@ export default function DashboardScreen() {
                         <View key={index} className="items-center flex-1">
                           <View className="w-10 bg-zinc-50 rounded-t-xl overflow-hidden justify-end" style={{ height: '100%' }}>
                             <View 
-                              className="w-full rounded-xl bg-[#3b82f6]" // Azul como no web dashboard
+                              className="w-full rounded-xl bg-[#3b82f6]" 
                               style={{ height: `${Math.max(heightPercent, 2)}%` }} 
                             />
                           </View>
@@ -184,43 +202,29 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {/* Acesso Rápido */}
+        {/* Seções */}
         <View className="px-6">
-          <Text className="text-zinc-900 text-xl font-extrabold tracking-tight mb-5">Atalhos</Text>
+          <Text className="text-zinc-900 text-xl font-extrabold tracking-tight mb-5">Seções</Text>
           
           <View>
+            {/* B.O's */}
             <TouchableOpacity 
               className="bg-white flex-row items-center p-5 rounded-[28px] mb-4 shadow-sm shadow-zinc-200/30 border border-zinc-100/80"
-              onPress={() => router.push('/(app)/operations')}
+              onPress={() => router.push('/(app)/bos')}
             >
               <View className="w-14 h-14 rounded-full bg-zinc-50 items-center justify-center mr-5">
-                <Feather name="briefcase" size={22} color="#18181b" />
+                <Feather name="alert-circle" size={22} color="#18181b" />
               </View>
               <View className="flex-1">
-                <Text className="text-zinc-900 font-bold text-[17px] mb-1">Operações</Text>
-                <Text className="text-zinc-400 text-[12px]">Histórico financeiro</Text>
+                <Text className="text-zinc-900 font-bold text-[17px] mb-1">B.O's</Text>
+                <Text className="text-zinc-400 text-[12px]">Pendências e Tarefas</Text>
               </View>
               <View className="bg-zinc-50 w-10 h-10 rounded-full items-center justify-center">
                 <Feather name="chevron-right" size={18} color="#a1a1aa" />
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              className="bg-white flex-row items-center p-5 rounded-[28px] mb-4 shadow-sm shadow-zinc-200/30 border border-zinc-100/80"
-              onPress={() => router.push('/(app)/clients')}
-            >
-              <View className="w-14 h-14 rounded-full bg-zinc-50 items-center justify-center mr-5">
-                <Feather name="users" size={22} color="#18181b" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-zinc-900 font-bold text-[17px] mb-1">Cedentes</Text>
-                <Text className="text-zinc-400 text-[12px]">Carteira de clientes</Text>
-              </View>
-              <View className="bg-zinc-50 w-10 h-10 rounded-full items-center justify-center">
-                <Feather name="chevron-right" size={18} color="#a1a1aa" />
-              </View>
-            </TouchableOpacity>
-
+            {/* Acordos */}
             <TouchableOpacity 
               className="bg-white flex-row items-center p-5 rounded-[28px] shadow-sm shadow-zinc-200/30 border border-zinc-100/80"
               onPress={() => router.push('/(app)/agreements')}
