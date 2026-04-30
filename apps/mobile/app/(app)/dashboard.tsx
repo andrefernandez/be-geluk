@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
-// Usando a API em produção na Vercel para funcionar em qualquer dispositivo
 const API_URL = 'https://be-geluk.vercel.app/api/mobile';
 
 const MONTHS = [
-  { label: 'Geral', value: 'all' },
-  { label: 'Mai/26', value: '2026-05' },
-  { label: 'Abr/26', value: '2026-04' },
-  { label: 'Mar/26', value: '2026-03' },
-  { label: 'Fev/26', value: '2026-02' },
-  { label: 'Jan/26', value: '2026-01' },
+  { label: 'Geral (Todo Período)', value: 'all', short: 'Todos' },
+  { label: 'Maio/26', value: '2026-05', short: 'Mai' },
+  { label: 'Abril/26', value: '2026-04', short: 'Abr' },
+  { label: 'Março/26', value: '2026-03', short: 'Mar' },
+  { label: 'Fevereiro/26', value: '2026-02', short: 'Fev' },
+  { label: 'Janeiro/26', value: '2026-01', short: 'Jan' },
 ];
 
 export default function DashboardScreen() {
@@ -20,191 +19,264 @@ export default function DashboardScreen() {
   const [dashData, setDashData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState('all');
+  const [isMonthModalVisible, setMonthModalVisible] = useState(false);
 
   useEffect(() => {
-    // Simulação da chamada da API que acabamos de criar
-    const fetchDashboard = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${API_URL}/dash?month=${selectedMonth}`);
-        if (response.ok) {
-          const data = await response.json();
-          setDashData(data);
-        } else {
-          // Dados mocados temporários gerando números variados dependendo do mês
-          setDashData({
-            totalOperado: selectedMonth === 'all' ? 1500000.00 : Math.random() * 500000 + 100000,
-            receitaBruta: selectedMonth === 'all' ? 45000.00 : Math.random() * 15000 + 5000,
-            lucroLiquido: selectedMonth === 'all' ? 38000.00 : Math.random() * 12000 + 3000,
-            rentabilidade: selectedMonth === 'all' ? 2.53 : (Math.random() * 2) + 1
-          });
+        // A nova API agora traz TUDO (kpis + histórico) em uma única chamada de forma otimizada
+        const res = await fetch(`${API_URL}/dash?month=${selectedMonth}`);
+        if (res.ok) {
+          setDashData(await res.json());
         }
       } catch (error) {
         console.log('Erro ao buscar dados do dashboard:', error);
-        // Fallback de dados
-        setDashData({
-          totalOperado: selectedMonth === 'all' ? 1500000.00 : Math.random() * 500000 + 100000,
-          receitaBruta: selectedMonth === 'all' ? 45000.00 : Math.random() * 15000 + 5000,
-          lucroLiquido: selectedMonth === 'all' ? 38000.00 : Math.random() * 12000 + 3000,
-          rentabilidade: selectedMonth === 'all' ? 2.53 : (Math.random() * 2) + 1
-        });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboard();
+    fetchData();
   }, [selectedMonth]);
 
   const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
   };
 
+  const chartData = dashData?.history || [];
+  const maxChartValue = Math.max(...chartData.map((d: any) => d.totalOperado), 1);
+  const selectedMonthLabel = MONTHS.find(m => m.value === selectedMonth)?.label;
+
   return (
-    <ScrollView className="flex-1 bg-slate-900 pt-16" contentContainerStyle={{ paddingBottom: 40 }}>
-      {/* Header */}
-      <View className="flex-row justify-between items-center mb-6 px-6">
-        <View>
-          <Text className="text-white text-2xl font-bold">Olá, Usuário</Text>
-          <Text className="text-slate-400">Resumo Geral</Text>
-        </View>
-        <TouchableOpacity 
-          className="bg-slate-800 p-3 rounded-full"
-          onPress={() => router.replace('/')}
-        >
-          <Feather name="log-out" size={20} color="#f87171" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Seletor de Meses */}
-      <View className="mb-8">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: 12 }}>
-          {MONTHS.map((month) => {
-            const isSelected = selectedMonth === month.value;
-            return (
-              <TouchableOpacity
-                key={month.value}
-                onPress={() => setSelectedMonth(month.value)}
-                className={`px-5 py-2 rounded-full border ${
-                  isSelected ? 'bg-sky-500 border-sky-400' : 'bg-slate-800 border-slate-700'
-                }`}
-              >
-                <Text className={`font-bold ${isSelected ? 'text-white' : 'text-slate-400'}`}>
-                  {month.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      {/* KPI Section - Integrado com a API */}
-      <View className="mb-8 px-6">
-        <Text className="text-slate-400 font-bold mb-4 uppercase tracking-wider text-xs">Indicadores Principais</Text>
+    <View className="flex-1 bg-[#f7f7f9]">
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 140, paddingTop: 50 }} showsVerticalScrollIndicator={false}>
         
-        {loading ? (
-          <View className="py-8">
-            <ActivityIndicator size="large" color="#38bdf8" />
-          </View>
-        ) : (
-          <View className="flex-row flex-wrap justify-between">
-            {/* KPI 1 */}
-            <View className="bg-slate-800 w-[48%] p-4 rounded-2xl mb-4 border border-slate-700">
-              <Text className="text-slate-400 text-xs font-bold uppercase mb-2">Total Operado</Text>
-              <Text className="text-white font-bold text-lg" numberOfLines={1} adjustsFontSizeToFit>
-                {formatCurrency(dashData?.totalOperado || 0)}
-              </Text>
-            </View>
+        {/* Logo Superior Centralizado */}
+        <View className="px-6 mb-8 flex-row justify-between items-center">
+          {/* Espaçador para manter o equilíbrio */}
+          <View style={{ width: 40 }} />
+          
+          <Image 
+            source={require('../../assets/images/logo.png')} 
+            style={{ width: 130, height: 45, tintColor: '#18181b' }} 
+            resizeMode="contain" 
+          />
 
-            {/* KPI 2 */}
-            <View className="bg-slate-800 w-[48%] p-4 rounded-2xl mb-4 border border-slate-700">
-              <Text className="text-slate-400 text-xs font-bold uppercase mb-2">Receita Bruta</Text>
-              <Text className="text-white font-bold text-lg" numberOfLines={1} adjustsFontSizeToFit>
-                {formatCurrency(dashData?.receitaBruta || 0)}
-              </Text>
-            </View>
-
-            {/* KPI 3 */}
-            <View className="bg-slate-800 w-[48%] p-4 rounded-2xl mb-4 border border-slate-700">
-              <Text className="text-slate-400 text-xs font-bold uppercase mb-2">Lucro Líquido</Text>
-              <Text className="text-emerald-400 font-bold text-lg" numberOfLines={1} adjustsFontSizeToFit>
-                {formatCurrency(dashData?.lucroLiquido || 0)}
-              </Text>
-            </View>
-
-            {/* KPI 4 */}
-            <View className="bg-slate-800 w-[48%] p-4 rounded-2xl mb-4 border border-slate-700">
-              <Text className="text-slate-400 text-xs font-bold uppercase mb-2">Rentabilidade</Text>
-              <Text className="text-sky-400 font-bold text-lg">
-                {dashData?.rentabilidade?.toFixed(2) || '0.00'}%
-              </Text>
-            </View>
-          </View>
-        )}
-      </View>
-
-      <View className="px-6">
-        <Text className="text-slate-400 font-bold mb-4 uppercase tracking-wider text-xs">Acesso Rápido</Text>
-        <View className="flex-row flex-wrap justify-between">
-          {/* Card Operações */}
-          <TouchableOpacity 
-            className="bg-slate-800 w-[48%] p-4 rounded-2xl mb-4 border border-slate-700"
-            onPress={() => router.push('/(app)/operations')}
-          >
-            <View className="bg-sky-500/20 w-12 h-12 rounded-xl items-center justify-center mb-3">
-              <Feather name="briefcase" size={24} color="#38bdf8" />
-            </View>
-            <Text className="text-white font-bold text-lg">Operações</Text>
-          </TouchableOpacity>
-
-          {/* Card Clientes */}
-          <TouchableOpacity 
-            className="bg-slate-800 w-[48%] p-4 rounded-2xl mb-4 border border-slate-700"
-            onPress={() => router.push('/(app)/clients')}
-          >
-            <View className="bg-indigo-500/20 w-12 h-12 rounded-xl items-center justify-center mb-3">
-              <Feather name="users" size={24} color="#818cf8" />
-            </View>
-            <Text className="text-white font-bold text-lg">Clientes</Text>
-          </TouchableOpacity>
-
-          {/* Card B.O's */}
-          <TouchableOpacity 
-            className="bg-slate-800 w-[48%] p-4 rounded-2xl mb-4 border border-slate-700"
-            onPress={() => router.push('/(app)/bos')}
-          >
-            <View className="bg-amber-500/20 w-12 h-12 rounded-xl items-center justify-center mb-3">
-              <Feather name="alert-triangle" size={24} color="#fbbf24" />
-            </View>
-            <Text className="text-white font-bold text-lg">B.O's</Text>
-          </TouchableOpacity>
-
-          {/* Card Acordos */}
-          <TouchableOpacity 
-            className="bg-slate-800 w-[48%] p-4 rounded-2xl mb-4 border border-slate-700"
-            onPress={() => router.push('/(app)/agreements')}
-          >
-            <View className="bg-emerald-500/20 w-12 h-12 rounded-xl items-center justify-center mb-3">
-              <Feather name="file-text" size={24} color="#34d399" />
-            </View>
-            <Text className="text-white font-bold text-lg">Acordos</Text>
-          </TouchableOpacity>
-
-          {/* Card Câmera */}
-          <TouchableOpacity 
-            className="bg-slate-800 w-full p-4 rounded-2xl mb-4 border border-slate-700 flex-row items-center"
-            onPress={() => router.push('/(app)/camera')}
-          >
-            <View className="bg-emerald-500/20 w-12 h-12 rounded-xl items-center justify-center mr-4">
-              <Feather name="camera" size={24} color="#34d399" />
-            </View>
-            <View>
-              <Text className="text-white font-bold text-lg">Escanear Documento</Text>
-              <Text className="text-slate-400 text-sm">Tirar foto para vistoria</Text>
-            </View>
+          <TouchableOpacity onPress={() => router.replace('/')} className="bg-white border border-zinc-200 p-2.5 rounded-full shadow-sm shadow-zinc-200">
+             <Feather name="log-out" size={18} color="#71717a" />
           </TouchableOpacity>
         </View>
-      </View>
-    </ScrollView>
+
+        {/* Header - Visão e Seleção */}
+        <View className="px-6 mb-8 flex-row justify-between items-center">
+          <View>
+            <Text className="text-zinc-900 text-3xl font-extrabold tracking-tight">Painel</Text>
+          </View>
+          <TouchableOpacity 
+            className="bg-white border border-zinc-200 py-2 px-4 rounded-full flex-row items-center shadow-sm shadow-zinc-200/50"
+            onPress={() => setMonthModalVisible(true)}
+          >
+            <Text className="text-zinc-900 font-bold text-sm mr-2">{selectedMonthLabel}</Text>
+            <Feather name="chevron-down" size={16} color="#71717a" />
+          </TouchableOpacity>
+        </View>
+
+        {loading ? (
+          <ActivityIndicator size="large" color="#d4f34a" style={{ marginTop: 50 }} />
+        ) : (
+          <>
+            {/* KPI 1: Total Operado (Destaque Principal) */}
+            <View className="px-6 mb-6">
+              <View className="bg-[#121212] rounded-[32px] p-7 relative overflow-hidden shadow-2xl shadow-zinc-900/20">
+                <View className="absolute top-0 right-0 w-48 h-48 bg-[#d4f34a]/15 rounded-full -mr-20 -mt-20 blur-3xl" />
+                <Text className="text-zinc-400 text-[11px] font-bold uppercase tracking-widest mb-3">Total Operado</Text>
+                <Text className="text-white text-4xl font-extrabold tracking-tighter" numberOfLines={1} adjustsFontSizeToFit>
+                  {formatCurrency(dashData?.totalOperado)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Outros KPIs (Estilo Grid) */}
+            <View className="px-6 mb-10 flex-row flex-wrap justify-between">
+              
+              {/* Receita Bruta */}
+              <View className="bg-white w-[48%] rounded-[28px] p-5 mb-4 shadow-sm shadow-zinc-200/50 border border-zinc-100">
+                <Text className="text-zinc-400 text-[10px] font-bold uppercase mb-2">Receita Bruta</Text>
+                <Text className="text-zinc-900 font-extrabold text-[18px]" numberOfLines={1} adjustsFontSizeToFit>
+                  {formatCurrency(dashData?.receitaBruta)}
+                </Text>
+                <View className="mt-3">
+                  <Text className="text-zinc-500 text-[10px]">IOF: {formatCurrency(dashData?.iofTotal)}</Text>
+                  <Text className="text-zinc-500 text-[10px]">Rent.: {dashData?.rentabilidadeBruta?.toFixed(2)}%</Text>
+                </View>
+              </View>
+
+              {/* Lucro Líquido */}
+              <View className="bg-white w-[48%] rounded-[28px] p-5 mb-4 shadow-sm shadow-zinc-200/50 border border-zinc-100">
+                <Text className="text-zinc-400 text-[10px] font-bold uppercase mb-2">Lucro Líquido</Text>
+                <Text className="text-[#65a30d] font-extrabold text-[18px]" numberOfLines={1} adjustsFontSizeToFit>
+                  {formatCurrency(dashData?.lucroLiquido)}
+                </Text>
+                <View className="mt-3">
+                  <Text className="text-zinc-500 text-[10px]">Rent. Líquida: {dashData?.rentabilidadeLiquida?.toFixed(2)}%</Text>
+                </View>
+              </View>
+
+              {/* Custos Totais */}
+              <View className="bg-white w-[48%] rounded-[28px] p-5 shadow-sm shadow-zinc-200/50 border border-zinc-100">
+                <Text className="text-zinc-400 text-[10px] font-bold uppercase mb-2">Custos Totais</Text>
+                <Text className="text-zinc-900 font-extrabold text-[18px]" numberOfLines={1} adjustsFontSizeToFit>
+                  {formatCurrency(dashData?.custos)}
+                </Text>
+              </View>
+
+              {/* Operações (Volume) */}
+              <View className="bg-white w-[48%] rounded-[28px] p-5 shadow-sm shadow-zinc-200/50 border border-zinc-100">
+                <Text className="text-zinc-400 text-[10px] font-bold uppercase mb-2">Operações</Text>
+                <Text className="text-[#0284c7] font-extrabold text-[18px]" numberOfLines={1} adjustsFontSizeToFit>
+                  {dashData?.percentualDeclarado?.toFixed(2)}%
+                </Text>
+                <Text className="text-zinc-500 text-[10px] mt-3">Volume Declarado</Text>
+              </View>
+            </View>
+
+            {/* Gráfico Histórico */}
+            <View className="px-6 mb-12">
+              <Text className="text-zinc-900 text-xl font-extrabold tracking-tight mb-2">Desempenho Histórico</Text>
+              <Text className="text-zinc-400 text-xs mb-6">Evolução mensal de volumes e margens</Text>
+              
+              <View className="bg-white rounded-[32px] p-6 shadow-sm shadow-zinc-200/50 border border-zinc-100">
+                {chartData.length === 0 ? (
+                  <Text className="text-center text-zinc-400 py-10">Sem histórico disponível</Text>
+                ) : (
+                  <View className="flex-row items-end justify-between h-40">
+                    {chartData.map((d: any, index: number) => {
+                      const heightPercent = maxChartValue > 0 ? (d.totalOperado / maxChartValue) * 100 : 0;
+                      return (
+                        <View key={index} className="items-center flex-1">
+                          <View className="w-10 bg-zinc-50 rounded-t-xl overflow-hidden justify-end" style={{ height: '100%' }}>
+                            <View 
+                              className="w-full rounded-xl bg-[#3b82f6]" // Azul como no web dashboard
+                              style={{ height: `${Math.max(heightPercent, 2)}%` }} 
+                            />
+                          </View>
+                          <Text className="text-zinc-400 text-[10px] font-bold mt-3 uppercase">{d.label}</Text>
+                          <Text className="text-zinc-400 text-[8px] mt-1">{d.rentabilidade?.toFixed(1)}%</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
+                
+                <View className="flex-row justify-center items-center mt-6 gap-4">
+                  <View className="flex-row items-center gap-1">
+                     <View className="w-3 h-3 rounded-full bg-[#3b82f6]" />
+                     <Text className="text-zinc-500 text-[10px]">Valor Operado</Text>
+                  </View>
+                  <View className="flex-row items-center gap-1">
+                     <View className="w-3 h-3 rounded-full bg-zinc-300" />
+                     <Text className="text-zinc-500 text-[10px]">Rentabilidade</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* Acesso Rápido */}
+        <View className="px-6">
+          <Text className="text-zinc-900 text-xl font-extrabold tracking-tight mb-5">Atalhos</Text>
+          
+          <View>
+            <TouchableOpacity 
+              className="bg-white flex-row items-center p-5 rounded-[28px] mb-4 shadow-sm shadow-zinc-200/30 border border-zinc-100/80"
+              onPress={() => router.push('/(app)/operations')}
+            >
+              <View className="w-14 h-14 rounded-full bg-zinc-50 items-center justify-center mr-5">
+                <Feather name="briefcase" size={22} color="#18181b" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-zinc-900 font-bold text-[17px] mb-1">Operações</Text>
+                <Text className="text-zinc-400 text-[12px]">Histórico financeiro</Text>
+              </View>
+              <View className="bg-zinc-50 w-10 h-10 rounded-full items-center justify-center">
+                <Feather name="chevron-right" size={18} color="#a1a1aa" />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              className="bg-white flex-row items-center p-5 rounded-[28px] mb-4 shadow-sm shadow-zinc-200/30 border border-zinc-100/80"
+              onPress={() => router.push('/(app)/clients')}
+            >
+              <View className="w-14 h-14 rounded-full bg-zinc-50 items-center justify-center mr-5">
+                <Feather name="users" size={22} color="#18181b" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-zinc-900 font-bold text-[17px] mb-1">Cedentes</Text>
+                <Text className="text-zinc-400 text-[12px]">Carteira de clientes</Text>
+              </View>
+              <View className="bg-zinc-50 w-10 h-10 rounded-full items-center justify-center">
+                <Feather name="chevron-right" size={18} color="#a1a1aa" />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              className="bg-white flex-row items-center p-5 rounded-[28px] shadow-sm shadow-zinc-200/30 border border-zinc-100/80"
+              onPress={() => router.push('/(app)/agreements')}
+            >
+              <View className="w-14 h-14 rounded-full bg-[#d4f34a]/20 items-center justify-center mr-5">
+                <Feather name="file-text" size={22} color="#65a30d" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-zinc-900 font-bold text-[17px] mb-1">Acordos</Text>
+                <Text className="text-zinc-400 text-[12px]">Negociações ativas</Text>
+              </View>
+              <View className="bg-zinc-50 w-10 h-10 rounded-full items-center justify-center">
+                <Feather name="chevron-right" size={18} color="#a1a1aa" />
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+      </ScrollView>
+
+      {/* Modal de Seleção de Mês */}
+      <Modal
+        visible={isMonthModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setMonthModalVisible(false)}
+      >
+        <Pressable 
+          className="flex-1 bg-black/40 justify-end" 
+          onPress={() => setMonthModalVisible(false)}
+        >
+          <Pressable className="bg-white rounded-t-[36px] p-6 pb-12">
+            <View className="w-12 h-1.5 bg-zinc-200 rounded-full self-center mb-6" />
+            <Text className="text-zinc-900 text-xl font-bold mb-6 px-2">Selecione o Período</Text>
+            
+            {MONTHS.map((month) => {
+              const isSelected = selectedMonth === month.value;
+              return (
+                <TouchableOpacity
+                  key={month.value}
+                  onPress={() => {
+                    setSelectedMonth(month.value);
+                    setMonthModalVisible(false);
+                  }}
+                  className={`flex-row justify-between items-center p-4 mb-2 rounded-2xl ${isSelected ? 'bg-[#d4f34a]/20' : 'bg-transparent'}`}
+                >
+                  <Text className={`text-[16px] font-bold ${isSelected ? 'text-[#65a30d]' : 'text-zinc-700'}`}>
+                    {month.label}
+                  </Text>
+                  {isSelected && <Feather name="check" size={20} color="#65a30d" />}
+                </TouchableOpacity>
+              );
+            })}
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
   );
 }
