@@ -22,8 +22,9 @@ export async function GET() {
       return {
         id: inv.id,
         name: inv.name,
-        email: inv.email,
-        phone: inv.phone,
+        rate: inv.rate,
+        type: inv.type,
+        startDate: inv.startDate,
         totalInvested,
         totalWithdrawn,
         balance,
