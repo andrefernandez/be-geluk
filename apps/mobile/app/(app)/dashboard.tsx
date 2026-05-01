@@ -71,7 +71,7 @@ export default function DashboardScreen() {
 
   return (
     <View className="flex-1 bg-[#f7f7f9]">
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 140, paddingTop: 50 }} showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 140, paddingTop: 70 }} showsVerticalScrollIndicator={false}>
         
         {/* Logo Superior Centralizado */}
         <View className="px-6 mb-8 flex-row justify-between items-center">
@@ -80,7 +80,7 @@ export default function DashboardScreen() {
           
           <Image 
             source={require('../../assets/images/logo.png')} 
-            style={{ width: 130, height: 45, tintColor: '#18181b' }} 
+            style={{ width: 160, height: 55, tintColor: '#18181b' }} 
             resizeMode="contain" 
           />
 
