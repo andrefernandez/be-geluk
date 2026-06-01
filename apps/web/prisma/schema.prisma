@@ -94,6 +94,7 @@ model Operation {
   valorLiquido        Float
   recompra            Float?
   declarada           Boolean  @default(false)
+  active              Boolean  @default(true)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   client              Client   @relation(fields: [clientId], references: [id])
