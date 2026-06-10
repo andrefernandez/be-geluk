@@ -131,6 +131,7 @@ model AgreementInstallment {
   value         Float
   dueDate       DateTime
   status        String    @default("PENDING") // PENDING, PAID
+  paidValue     Float     @default(0)
   paidAt        DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

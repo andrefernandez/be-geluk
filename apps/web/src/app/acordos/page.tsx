@@ -40,7 +40,7 @@ export default async function AcordosPage() {
         orderBy: { createdAt: 'desc' }
     });
 
-    // Compute Metrics
+        // Compute Metrics
     const totalAgreements = agreementsData.length;
     let totalPaidValue = 0;
     let totalPendingValue = 0;
@@ -50,11 +50,11 @@ export default async function AcordosPage() {
     agreementsData.forEach((agreement: any) => {
         agreement.installments.forEach((inst: any) => {
             totalInstallments++;
+            const paid = inst.paidValue !== undefined && inst.paidValue !== null ? inst.paidValue : (inst.status === "PAID" ? inst.value : 0);
+            totalPaidValue += paid;
+            totalPendingValue += Math.max(0, inst.value - paid);
             if (inst.status === "PAID") {
-                totalPaidValue += inst.value;
                 totalPaidInstallments++;
-            } else {
-                totalPendingValue += inst.value;
             }
         });
     });

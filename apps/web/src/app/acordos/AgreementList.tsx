@@ -10,6 +10,7 @@ interface Installment {
   value: number;
   dueDate: Date;
   status: string;
+  paidValue: number;
   paidAt: Date | null;
 }
 
