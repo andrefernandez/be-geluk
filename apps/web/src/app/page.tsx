@@ -210,7 +210,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
 
   const metaDiariaUteis = businessDays > 0 ? volumeNecessarioTotal / businessDays : 0;
   const metaDiariaCalendario = calendarDays > 0 ? volumeNecessarioTotal / calendarDays : 0;
-  const lucroDiarioRealizado = businessDaysElapsed > 0 ? lucroLiquido / businessDaysElapsed : 0;
+  const custoDiarioUteis = businessDays > 0 ? custoTotalManual / businessDays : 0;
 
   // ==========================================
   // DADOS PARA O GRÁFICO (MÊS A MÊS) - UNIFICADO
@@ -298,19 +298,21 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
             </div>
           </div>
 
-          <div className="glass-panel">
-            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Líquido Diário</h3>
-            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: lucroDiarioRealizado >= 0 ? "var(--accent-primary)" : "var(--accent-red)" }}>{formatCurrency(lucroDiarioRealizado)}</div>
-            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
-              <span>MÉDIA DIÁRIA REALIZADA</span>
-              <span>DECORRIDOS: {businessDaysElapsed}d</span>
-            </div>
-          </div>
-
           {!isComercial && (
             <div className="glass-panel">
               <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Custos Totais</h3>
               <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(custoTotalManual)}</div>
+            </div>
+          )}
+
+          {!isComercial && (
+            <div className="glass-panel">
+              <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Líquido Diário (Meta)</h3>
+              <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--accent-orange)" }}>{formatCurrency(custoDiarioUteis)}</div>
+              <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
+                <span>META DE RECEITA DIÁRIA</span>
+                <span>ÚTEIS: {businessDays}d</span>
+              </div>
             </div>
           )}
 
