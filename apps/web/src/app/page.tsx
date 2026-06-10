@@ -117,6 +117,55 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   const percentualDeclarado = totalOperado > 0 ? (valorDeclarado / totalOperado) * 100 : 0;
   const percentualNaoDeclarado = totalOperado > 0 ? (valorNaoDeclarado / totalOperado) * 100 : 0;
 
+  // ---- CALCULO DO PONTO DE EQUILÍBRIO (BREAK-EVEN) ----
+  // Rentabilidade operacional (taxa de faturamento bruto sobre volume de operações)
+  const taxaRetorno = totalOperado > 0 ? (receitaBruta / totalOperado) * 100 : 0;
+  // Volume total necessário para igualar os custos manuais
+  const volumeNecessarioTotal = taxaRetorno > 0 ? (custoTotalManual / (taxaRetorno / 100)) : 0;
+
+  // Dias úteis e corridos do período selecionado
+  let calendarDays = 30;
+  let businessDays = 22;
+
+  if (monthParam && monthParam !== "all") {
+    const [year, month] = monthParam.split("-");
+    const y = Number(year);
+    const m = Number(month);
+    const startOfMonth = new Date(Date.UTC(y, m - 1, 1));
+    const endOfMonth = new Date(Date.UTC(y, m, 0));
+    calendarDays = endOfMonth.getUTCDate();
+
+    // Calcula dias úteis (Segunda a Sexta)
+    let count = 0;
+    let curDate = new Date(startOfMonth.getTime());
+    while (curDate <= endOfMonth) {
+      const dayOfWeek = curDate.getUTCDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0 = Domingo, 6 = Sábado
+        count++;
+      }
+      curDate.setUTCDate(curDate.getUTCDate() + 1);
+    }
+    businessDays = count;
+  } else {
+    // Para o ano inteiro de 2026
+    calendarDays = 365;
+    const startOfYear = new Date(Date.UTC(2026, 0, 1));
+    const endOfYear = new Date(Date.UTC(2026, 11, 31));
+    let count = 0;
+    let curDate = new Date(startOfYear.getTime());
+    while (curDate <= endOfYear) {
+      const dayOfWeek = curDate.getUTCDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        count++;
+      }
+      curDate.setUTCDate(curDate.getUTCDate() + 1);
+    }
+    businessDays = count;
+  }
+
+  const metaDiariaUteis = businessDays > 0 ? volumeNecessarioTotal / businessDays : 0;
+  const metaDiariaCalendario = calendarDays > 0 ? volumeNecessarioTotal / calendarDays : 0;
+
   // ==========================================
   // DADOS PARA O GRÁFICO (MÊS A MÊS) - UNIFICADO
   // ==========================================
@@ -207,6 +256,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
             <div className="glass-panel">
               <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Custos Totais</h3>
               <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(custoTotalManual)}</div>
+            </div>
+          )}
+
+          {!isComercial && (
+            <div className="glass-panel">
+              <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Meta Diária (0 a 0)</h3>
+              <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--accent-orange)" }}>{taxaRetorno > 0 ? formatCurrency(metaDiariaUteis) : "R$ 0,00"}</div>
+              <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
+                <span>DIAS ÚTEIS ({businessDays}d)</span>
+                <span>META MÊS: {taxaRetorno > 0 ? formatCurrency(volumeNecessarioTotal) : "R$ 0,00"}</span>
+              </div>
             </div>
           )}
 
