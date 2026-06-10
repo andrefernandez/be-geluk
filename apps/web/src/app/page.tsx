@@ -123,9 +123,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   // Volume total necessário para igualar os custos manuais
   const volumeNecessarioTotal = taxaRetorno > 0 ? (custoTotalManual / (taxaRetorno / 100)) : 0;
 
-  // Dias úteis e corridos do período selecionado
+  // Dias úteis e corridos do período selecionado (totais e decorridos)
   let calendarDays = 30;
   let businessDays = 22;
+  let businessDaysElapsed = 22;
+
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+  const currentDay = today.getDate();
 
   if (monthParam && monthParam !== "all") {
     const [year, month] = monthParam.split("-");
@@ -135,7 +141,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
     const endOfMonth = new Date(Date.UTC(y, m, 0));
     calendarDays = endOfMonth.getUTCDate();
 
-    // Calcula dias úteis (Segunda a Sexta)
+    // Calcula dias úteis totais (Segunda a Sexta)
     let count = 0;
     let curDate = new Date(startOfMonth.getTime());
     while (curDate <= endOfMonth) {
@@ -146,6 +152,27 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
       curDate.setUTCDate(curDate.getUTCDate() + 1);
     }
     businessDays = count;
+
+    // Calcula dias úteis decorridos no mês atual
+    if (y === currentYear && m === currentMonth) {
+      const endOfToday = new Date(Date.UTC(y, m - 1, currentDay));
+      let countElapsed = 0;
+      let curDateElapsed = new Date(startOfMonth.getTime());
+      while (curDateElapsed <= endOfToday) {
+        const dayOfWeek = curDateElapsed.getUTCDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          countElapsed++;
+        }
+        curDateElapsed.setUTCDate(curDateElapsed.getUTCDate() + 1);
+      }
+      businessDaysElapsed = countElapsed > 0 ? countElapsed : 1;
+    } else if (new Date(Date.UTC(y, m - 1, 1)) > today) {
+      // Mês futuro
+      businessDaysElapsed = 0;
+    } else {
+      // Mês passado
+      businessDaysElapsed = businessDays;
+    }
   } else {
     // Para o ano inteiro de 2026
     calendarDays = 365;
@@ -161,10 +188,29 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
       curDate.setUTCDate(curDate.getUTCDate() + 1);
     }
     businessDays = count;
+
+    if (currentYear === 2026) {
+      const endOfToday = new Date(Date.UTC(2026, today.getMonth(), currentDay));
+      let countElapsed = 0;
+      let curDateElapsed = new Date(startOfYear.getTime());
+      while (curDateElapsed <= endOfToday) {
+        const dayOfWeek = curDateElapsed.getUTCDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          countElapsed++;
+        }
+        curDateElapsed.setUTCDate(curDateElapsed.getUTCDate() + 1);
+      }
+      businessDaysElapsed = countElapsed > 0 ? countElapsed : 1;
+    } else if (currentYear < 2026) {
+      businessDaysElapsed = 0;
+    } else {
+      businessDaysElapsed = businessDays;
+    }
   }
 
   const metaDiariaUteis = businessDays > 0 ? volumeNecessarioTotal / businessDays : 0;
   const metaDiariaCalendario = calendarDays > 0 ? volumeNecessarioTotal / calendarDays : 0;
+  const lucroDiarioRealizado = businessDaysElapsed > 0 ? lucroLiquido / businessDaysElapsed : 0;
 
   // ==========================================
   // DADOS PARA O GRÁFICO (MÊS A MÊS) - UNIFICADO
@@ -249,6 +295,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
             <div style={{ fontSize: "1.75rem", fontWeight: 700, color: lucroLiquido >= 0 ? "var(--accent-primary)" : "var(--accent-red)" }}>{formatCurrency(lucroLiquido)}</div>
             <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
               RENT. LÍQUIDA: {formatPercent(rentabilidade)}
+            </div>
+          </div>
+
+          <div className="glass-panel">
+            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Líquido Diário</h3>
+            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: lucroDiarioRealizado >= 0 ? "var(--accent-primary)" : "var(--accent-red)" }}>{formatCurrency(lucroDiarioRealizado)}</div>
+            <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
+              <span>MÉDIA DIÁRIA REALIZADA</span>
+              <span>DECORRIDOS: {businessDaysElapsed}d</span>
             </div>
           </div>
 
