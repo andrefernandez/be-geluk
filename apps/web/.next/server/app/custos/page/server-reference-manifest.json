@@ -1,0 +1,50 @@
+{
+  "node": {
+    "40f824d7ae1f7efa07a815b0732f95fda61b286105": {
+      "workers": {
+        "app/custos/page": {
+          "moduleId": 91387,
+          "async": true,
+          "exportedName": "createCost",
+          "filename": "apps/web/src/app/custos/actions.ts"
+        }
+      },
+      "layer": {
+        "app/custos/page": "action-browser"
+      },
+      "exportedName": "createCost",
+      "filename": "apps/web/src/app/custos/actions.ts"
+    },
+    "60300ef31475db09d504bf8d1c56da5a5f264c69b3": {
+      "workers": {
+        "app/custos/page": {
+          "moduleId": 91387,
+          "async": true,
+          "exportedName": "updateCost",
+          "filename": "apps/web/src/app/custos/actions.ts"
+        }
+      },
+      "layer": {
+        "app/custos/page": "action-browser"
+      },
+      "exportedName": "updateCost",
+      "filename": "apps/web/src/app/custos/actions.ts"
+    },
+    "40e2e3a88b78da7c3ab99c173e107f6df95f77635a": {
+      "workers": {
+        "app/custos/page": {
+          "moduleId": 91387,
+          "async": true,
+          "exportedName": "deleteCost",
+          "filename": "apps/web/src/app/custos/actions.ts"
+        }
+      },
+      "layer": {
+        "app/custos/page": "action-browser"
+      },
+      "exportedName": "deleteCost",
+      "filename": "apps/web/src/app/custos/actions.ts"
+    }
+  },
+  "edge": {}
+}

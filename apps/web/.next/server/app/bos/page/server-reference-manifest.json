@@ -1,0 +1,50 @@
+{
+  "node": {
+    "40da1d2f543369dd5d0d496512198065cafb04a039": {
+      "workers": {
+        "app/bos/page": {
+          "moduleId": 65220,
+          "async": true,
+          "exportedName": "createBo",
+          "filename": "apps/web/src/app/bos/actions.ts"
+        }
+      },
+      "layer": {
+        "app/bos/page": "action-browser"
+      },
+      "exportedName": "createBo",
+      "filename": "apps/web/src/app/bos/actions.ts"
+    },
+    "40eab488a66a4c7d8b7d58ffeff57c1a29574bfde6": {
+      "workers": {
+        "app/bos/page": {
+          "moduleId": 65220,
+          "async": true,
+          "exportedName": "deleteBo",
+          "filename": "apps/web/src/app/bos/actions.ts"
+        }
+      },
+      "layer": {
+        "app/bos/page": "action-browser"
+      },
+      "exportedName": "deleteBo",
+      "filename": "apps/web/src/app/bos/actions.ts"
+    },
+    "606ddff2d4b0a3abf744da9560b7f2580c4a41e65d": {
+      "workers": {
+        "app/bos/page": {
+          "moduleId": 65220,
+          "async": true,
+          "exportedName": "toggleBoStatus",
+          "filename": "apps/web/src/app/bos/actions.ts"
+        }
+      },
+      "layer": {
+        "app/bos/page": "action-browser"
+      },
+      "exportedName": "toggleBoStatus",
+      "filename": "apps/web/src/app/bos/actions.ts"
+    }
+  },
+  "edge": {}
+}

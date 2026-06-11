@@ -1,0 +1,214 @@
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/mobile/:path*",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET,DELETE,PATCH,POST,PUT,OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+        }
+      ],
+      "regex": "^/api/mobile(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?(?:/)?$"
+    }
+  ],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/auth/[...nextauth]",
+      "regex": "^/api/auth/(.+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPnextauth": "nxtPnextauth"
+      },
+      "namedRegex": "^/api/auth/(?<nxtPnextauth>.+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/acordos",
+      "regex": "^/acordos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/acordos(?:/)?$"
+    },
+    {
+      "page": "/api/export",
+      "regex": "^/api/export(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/export(?:/)?$"
+    },
+    {
+      "page": "/api/mobile/agreements",
+      "regex": "^/api/mobile/agreements(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/mobile/agreements(?:/)?$"
+    },
+    {
+      "page": "/api/mobile/bos",
+      "regex": "^/api/mobile/bos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/mobile/bos(?:/)?$"
+    },
+    {
+      "page": "/api/mobile/clients",
+      "regex": "^/api/mobile/clients(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/mobile/clients(?:/)?$"
+    },
+    {
+      "page": "/api/mobile/dash",
+      "regex": "^/api/mobile/dash(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/mobile/dash(?:/)?$"
+    },
+    {
+      "page": "/api/mobile/investors",
+      "regex": "^/api/mobile/investors(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/mobile/investors(?:/)?$"
+    },
+    {
+      "page": "/api/mobile/login",
+      "regex": "^/api/mobile/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/mobile/login(?:/)?$"
+    },
+    {
+      "page": "/api/mobile/operations",
+      "regex": "^/api/mobile/operations(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/mobile/operations(?:/)?$"
+    },
+    {
+      "page": "/api/mobile/users",
+      "regex": "^/api/mobile/users(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/mobile/users(?:/)?$"
+    },
+    {
+      "page": "/api/setup",
+      "regex": "^/api/setup(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/setup(?:/)?$"
+    },
+    {
+      "page": "/bos",
+      "regex": "^/bos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/bos(?:/)?$"
+    },
+    {
+      "page": "/clientes",
+      "regex": "^/clientes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/clientes(?:/)?$"
+    },
+    {
+      "page": "/custos",
+      "regex": "^/custos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/custos(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    },
+    {
+      "page": "/investidores",
+      "regex": "^/investidores(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/investidores(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/operacoes",
+      "regex": "^/operacoes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/operacoes(?:/)?$"
+    },
+    {
+      "page": "/taxas-tarifas",
+      "regex": "^/taxas\\-tarifas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/taxas\\-tarifas(?:/)?$"
+    },
+    {
+      "page": "/usuarios",
+      "regex": "^/usuarios(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/usuarios(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

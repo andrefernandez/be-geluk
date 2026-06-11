@@ -1,0 +1,65 @@
+{
+  "node": {
+    "4036c26e2d0a224f8d189868e428fd867a1e31abd5": {
+      "workers": {
+        "app/clientes/page": {
+          "moduleId": 47636,
+          "async": true,
+          "exportedName": "createClient",
+          "filename": "apps/web/src/app/clientes/actions.ts"
+        }
+      },
+      "layer": {
+        "app/clientes/page": "action-browser"
+      },
+      "exportedName": "createClient",
+      "filename": "apps/web/src/app/clientes/actions.ts"
+    },
+    "60bbe86026d17e28d641e2f8a3d8990873d6732a1a": {
+      "workers": {
+        "app/clientes/page": {
+          "moduleId": 47636,
+          "async": true,
+          "exportedName": "updateClient",
+          "filename": "apps/web/src/app/clientes/actions.ts"
+        }
+      },
+      "layer": {
+        "app/clientes/page": "action-browser"
+      },
+      "exportedName": "updateClient",
+      "filename": "apps/web/src/app/clientes/actions.ts"
+    },
+    "400400ef41abfc5c0e56e3c6dd3b7d8b57e3e1edf4": {
+      "workers": {
+        "app/clientes/page": {
+          "moduleId": 47636,
+          "async": true,
+          "exportedName": "deleteClient",
+          "filename": "apps/web/src/app/clientes/actions.ts"
+        }
+      },
+      "layer": {
+        "app/clientes/page": "action-browser"
+      },
+      "exportedName": "deleteClient",
+      "filename": "apps/web/src/app/clientes/actions.ts"
+    },
+    "60a7cc80193f418f40871144851a1c65079bbc8733": {
+      "workers": {
+        "app/clientes/page": {
+          "moduleId": 47636,
+          "async": true,
+          "exportedName": "updateClientStatus",
+          "filename": "apps/web/src/app/clientes/actions.ts"
+        }
+      },
+      "layer": {
+        "app/clientes/page": "action-browser"
+      },
+      "exportedName": "updateClientStatus",
+      "filename": "apps/web/src/app/clientes/actions.ts"
+    }
+  },
+  "edge": {}
+}

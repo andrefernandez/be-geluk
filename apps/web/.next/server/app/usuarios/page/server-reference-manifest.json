@@ -1,0 +1,50 @@
+{
+  "node": {
+    "4093733f715ad2233faee70498989d9d83a91c5382": {
+      "workers": {
+        "app/usuarios/page": {
+          "moduleId": 5751,
+          "async": true,
+          "exportedName": "createUser",
+          "filename": "apps/web/src/app/usuarios/actions.ts"
+        }
+      },
+      "layer": {
+        "app/usuarios/page": "action-browser"
+      },
+      "exportedName": "createUser",
+      "filename": "apps/web/src/app/usuarios/actions.ts"
+    },
+    "606e80af25b258937bea372688d775a3a50915933b": {
+      "workers": {
+        "app/usuarios/page": {
+          "moduleId": 5751,
+          "async": true,
+          "exportedName": "updateUser",
+          "filename": "apps/web/src/app/usuarios/actions.ts"
+        }
+      },
+      "layer": {
+        "app/usuarios/page": "action-browser"
+      },
+      "exportedName": "updateUser",
+      "filename": "apps/web/src/app/usuarios/actions.ts"
+    },
+    "4016522d8365770d14347217c02f400335aa59c4c4": {
+      "workers": {
+        "app/usuarios/page": {
+          "moduleId": 5751,
+          "async": true,
+          "exportedName": "deleteUser",
+          "filename": "apps/web/src/app/usuarios/actions.ts"
+        }
+      },
+      "layer": {
+        "app/usuarios/page": "action-browser"
+      },
+      "exportedName": "deleteUser",
+      "filename": "apps/web/src/app/usuarios/actions.ts"
+    }
+  },
+  "edge": {}
+}

@@ -123,10 +123,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   // Volume total necessário para igualar os custos manuais
   const volumeNecessarioTotal = taxaRetorno > 0 ? (custoTotalManual / (taxaRetorno / 100)) : 0;
 
-  // Dias úteis e corridos do período selecionado (totais e decorridos)
+  // Dias úteis e corridos do período selecionado (totais, decorridos e restantes)
   let calendarDays = 30;
   let businessDays = 22;
   let businessDaysElapsed = 22;
+  let businessDaysRemaining = 0; // Se for passado, assume 0 (dividiremos pelo total)
 
   const today = new Date();
   const currentYear = today.getFullYear();
@@ -153,8 +154,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
     }
     businessDays = count;
 
-    // Calcula dias úteis decorridos no mês atual
+    // Se for o mês atual:
     if (y === currentYear && m === currentMonth) {
+      // Decorridos: até ontem/hoje
       const endOfToday = new Date(Date.UTC(y, m - 1, currentDay));
       let countElapsed = 0;
       let curDateElapsed = new Date(startOfMonth.getTime());
@@ -166,12 +168,27 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
         curDateElapsed.setUTCDate(curDateElapsed.getUTCDate() + 1);
       }
       businessDaysElapsed = countElapsed > 0 ? countElapsed : 1;
+
+      // Restantes: a partir de hoje (inclusive) até o final do mês
+      const startOfToday = new Date(Date.UTC(y, m - 1, currentDay));
+      let countRemaining = 0;
+      let curDateRemaining = new Date(startOfToday.getTime());
+      while (curDateRemaining <= endOfMonth) {
+        const dayOfWeek = curDateRemaining.getUTCDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          countRemaining++;
+        }
+        curDateRemaining.setUTCDate(curDateRemaining.getUTCDate() + 1);
+      }
+      businessDaysRemaining = countRemaining > 0 ? countRemaining : 1;
     } else if (new Date(Date.UTC(y, m - 1, 1)) > today) {
       // Mês futuro
       businessDaysElapsed = 0;
+      businessDaysRemaining = businessDays;
     } else {
       // Mês passado
       businessDaysElapsed = businessDays;
+      businessDaysRemaining = 0;
     }
   } else {
     // Para o ano inteiro de 2026
@@ -201,16 +218,50 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
         curDateElapsed.setUTCDate(curDateElapsed.getUTCDate() + 1);
       }
       businessDaysElapsed = countElapsed > 0 ? countElapsed : 1;
+
+      const startOfToday = new Date(Date.UTC(2026, today.getMonth(), currentDay));
+      let countRemaining = 0;
+      let curDateRemaining = new Date(startOfToday.getTime());
+      while (curDateRemaining <= endOfYear) {
+        const dayOfWeek = curDateRemaining.getUTCDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          countRemaining++;
+        }
+        curDateRemaining.setUTCDate(curDateRemaining.getUTCDate() + 1);
+      }
+      businessDaysRemaining = countRemaining > 0 ? countRemaining : 1;
     } else if (currentYear < 2026) {
       businessDaysElapsed = 0;
+      businessDaysRemaining = businessDays;
     } else {
       businessDaysElapsed = businessDays;
+      businessDaysRemaining = 0;
     }
   }
 
-  const metaDiariaUteis = businessDays > 0 ? volumeNecessarioTotal / businessDays : 0;
-  const metaDiariaCalendario = calendarDays > 0 ? volumeNecessarioTotal / calendarDays : 0;
-  const custoDiarioUteis = businessDays > 0 ? custoTotalManual / businessDays : 0;
+  // Define se o período selecionado é o período ativo (mês/ano atual)
+  let isActivePeriod = false;
+  if (monthParam && monthParam !== "all") {
+    const [year, month] = monthParam.split("-");
+    if (Number(year) === currentYear && Number(month) === currentMonth) {
+      isActivePeriod = true;
+    }
+  } else if (!monthParam || monthParam === "all") {
+    if (currentYear === 2026) {
+      isActivePeriod = true;
+    }
+  }
+
+  // Divisores baseados em se restam dias ou não
+  const divisorDiasUteis = businessDaysRemaining > 0 ? businessDaysRemaining : (businessDays > 0 ? businessDays : 1);
+
+  // Se o período estiver ativo (hoje faz parte dele), calculamos com base no custo/volume restante
+  const custoRestante = isActivePeriod ? Math.max(0, custoTotalManual - receitaBruta) : custoTotalManual;
+  const volumeRestante = isActivePeriod ? Math.max(0, volumeNecessarioTotal - totalOperado) : volumeNecessarioTotal;
+
+  const metaDiariaUteis = volumeRestante / divisorDiasUteis;
+  const metaDiariaCalendario = calendarDays > 0 ? volumeRestante / calendarDays : 0;
+  const custoDiarioUteis = custoRestante / divisorDiasUteis;
 
   // ==========================================
   // DADOS PARA O GRÁFICO (MÊS A MÊS) - UNIFICADO
@@ -311,7 +362,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
               <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--accent-orange)" }}>{formatCurrency(custoDiarioUteis)}</div>
               <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
                 <span>META DE RECEITA DIÁRIA</span>
-                <span>ÚTEIS: {businessDays}d</span>
+                <span>
+                  {businessDaysRemaining > 0 && businessDaysRemaining !== businessDays
+                    ? `RESTAM: ${businessDaysRemaining}d úteis`
+                    : `TOTAL: ${businessDays}d úteis`}
+                </span>
               </div>
             </div>
           )}
@@ -321,7 +376,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
               <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Meta Diária (0 a 0)</h3>
               <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--accent-orange)" }}>{taxaRetorno > 0 ? formatCurrency(metaDiariaUteis) : "R$ 0,00"}</div>
               <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
-                <span>DIAS ÚTEIS ({businessDays}d)</span>
+                <span>
+                  {businessDaysRemaining > 0 && businessDaysRemaining !== businessDays
+                    ? `RESTAM: ${businessDaysRemaining}d úteis`
+                    : `DIAS ÚTEIS: ${businessDays}d`}
+                </span>
                 <span>META MÊS: {taxaRetorno > 0 ? formatCurrency(volumeNecessarioTotal) : "R$ 0,00"}</span>
               </div>
             </div>

@@ -1,0 +1,35 @@
+{
+  "node": {
+    "000af69af4339b0ba1264e29999ea7ba126f96fef4": {
+      "workers": {
+        "app/taxas-tarifas/page": {
+          "moduleId": 11829,
+          "async": true,
+          "exportedName": "getGlobalSettings",
+          "filename": "apps/web/src/app/taxas-tarifas/actions.ts"
+        }
+      },
+      "layer": {
+        "app/taxas-tarifas/page": "rsc"
+      },
+      "exportedName": "getGlobalSettings",
+      "filename": "apps/web/src/app/taxas-tarifas/actions.ts"
+    },
+    "40fd0b7f5f177fd34ae8e981c191bc0d9ad7dea162": {
+      "workers": {
+        "app/taxas-tarifas/page": {
+          "moduleId": 11829,
+          "async": true,
+          "exportedName": "updateGlobalSettings",
+          "filename": "apps/web/src/app/taxas-tarifas/actions.ts"
+        }
+      },
+      "layer": {
+        "app/taxas-tarifas/page": "action-browser"
+      },
+      "exportedName": "updateGlobalSettings",
+      "filename": "apps/web/src/app/taxas-tarifas/actions.ts"
+    }
+  },
+  "edge": {}
+}

@@ -1,0 +1,95 @@
+{
+  "node": {
+    "406a638b0ada539dddf2e047e74a470ff2ccc9e45b": {
+      "workers": {
+        "app/investidores/page": {
+          "moduleId": 98245,
+          "async": true,
+          "exportedName": "createInvestor",
+          "filename": "apps/web/src/app/investidores/actions.ts"
+        }
+      },
+      "layer": {
+        "app/investidores/page": "action-browser"
+      },
+      "exportedName": "createInvestor",
+      "filename": "apps/web/src/app/investidores/actions.ts"
+    },
+    "60b52ab608906d8bf68f1e199275f6b2a9a229a6af": {
+      "workers": {
+        "app/investidores/page": {
+          "moduleId": 98245,
+          "async": true,
+          "exportedName": "updateInvestor",
+          "filename": "apps/web/src/app/investidores/actions.ts"
+        }
+      },
+      "layer": {
+        "app/investidores/page": "action-browser"
+      },
+      "exportedName": "updateInvestor",
+      "filename": "apps/web/src/app/investidores/actions.ts"
+    },
+    "602e7d8bc5fc65063f51a4ce8b7dd4619abeac64a6": {
+      "workers": {
+        "app/investidores/page": {
+          "moduleId": 98245,
+          "async": true,
+          "exportedName": "addTransaction",
+          "filename": "apps/web/src/app/investidores/actions.ts"
+        }
+      },
+      "layer": {
+        "app/investidores/page": "action-browser"
+      },
+      "exportedName": "addTransaction",
+      "filename": "apps/web/src/app/investidores/actions.ts"
+    },
+    "401b755ebf97c0a9ac820ca2eb88b8d75e3b8e7355": {
+      "workers": {
+        "app/investidores/page": {
+          "moduleId": 98245,
+          "async": true,
+          "exportedName": "deleteTransaction",
+          "filename": "apps/web/src/app/investidores/actions.ts"
+        }
+      },
+      "layer": {
+        "app/investidores/page": "action-browser"
+      },
+      "exportedName": "deleteTransaction",
+      "filename": "apps/web/src/app/investidores/actions.ts"
+    },
+    "40850008968a8869c213c58d8d17c67fcb76d5b886": {
+      "workers": {
+        "app/investidores/page": {
+          "moduleId": 98245,
+          "async": true,
+          "exportedName": "deleteInvestor",
+          "filename": "apps/web/src/app/investidores/actions.ts"
+        }
+      },
+      "layer": {
+        "app/investidores/page": "action-browser"
+      },
+      "exportedName": "deleteInvestor",
+      "filename": "apps/web/src/app/investidores/actions.ts"
+    },
+    "60b3a7d7d12b080b761d869425ee41f77b848c354b": {
+      "workers": {
+        "app/investidores/page": {
+          "moduleId": 98245,
+          "async": true,
+          "exportedName": "updateTransactionDate",
+          "filename": "apps/web/src/app/investidores/actions.ts"
+        }
+      },
+      "layer": {
+        "app/investidores/page": "action-browser"
+      },
+      "exportedName": "updateTransactionDate",
+      "filename": "apps/web/src/app/investidores/actions.ts"
+    }
+  },
+  "edge": {}
+}
