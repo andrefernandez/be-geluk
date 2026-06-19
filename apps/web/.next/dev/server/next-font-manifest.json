@@ -1,8 +1,5 @@
 {
   "app": {
-    "[project]/apps/web/src/app/custos/page": [
-      "static/media/ce62453a442c7f35-s.p.124b2306.woff2"
-    ],
     "[project]/apps/web/src/app/login/page": [
       "static/media/ce62453a442c7f35-s.p.124b2306.woff2"
     ],

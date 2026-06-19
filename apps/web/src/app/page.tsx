@@ -71,6 +71,38 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
     where: { date: dateFilter }
   });
 
+  // Busca operações realizadas no dia de hoje (UTC)
+  const todayDate = new Date();
+  const startOfToday = new Date(Date.UTC(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate(), 0, 0, 0, 0));
+  const endOfToday = new Date(Date.UTC(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate(), 23, 59, 59, 999));
+
+  const todayOperations = await prisma.operation.findMany({
+    where: {
+      date: {
+        gte: startOfToday,
+        lte: endOfToday
+      }
+    }
+  });
+
+  const todayCount = todayOperations.length;
+  const todayGross = todayOperations.reduce((acc, op) => acc + Math.round((Number(op.valorBruto) || 0) * 100), 0) / 100;
+  const todayNet = todayOperations.reduce((acc, op) => acc + Math.round((Number(op.valorLiquido) || 0) * 100), 0) / 100;
+
+  // Rendimento (yield) das operações de hoje
+  const todayYield = todayOperations.reduce((acc, op) => acc + Math.round((
+    (Number(op.fator) || 0) +
+    (Number(op.tarifas) || 0) +
+    (Number(op.adValorem) || 0)
+  ) * 100), 0) / 100;
+
+  const todayIof = todayOperations.reduce((acc, op) => acc + Math.round((
+    (Number(op.iof) || 0) +
+    (Number(op.iofAdicional) || 0)
+  ) * 100), 0) / 100;
+
+  const todayRevenue = todayYield + todayIof; // Receita Bruta de hoje
+
   // ---- FUNÇÃO DE SOMA SEGURA ----
   const safeSumOperations = (key: keyof typeof operations[0]) => {
     return operations.reduce((acc, op) => acc + Math.round((Number(op[key]) || 0) * 100), 0) / 100;
@@ -387,6 +419,42 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
               </div>
             </div>
           )}
+
+          <div className="glass-panel">
+            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Operações de Hoje</h3>
+            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{todayCount} {todayCount === 1 ? 'Operação' : 'Operações'}</div>
+            <div style={{ color: "var(--text-secondary)", fontSize: "0.8125rem", marginTop: "0.5rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Bruto:</span>
+                <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{formatCurrency(todayGross)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Líquido:</span>
+                <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{formatCurrency(todayNet)}</span>
+              </div>
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", margin: "0.5rem 0", paddingTop: "0.5rem" }}></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Volume vs Meta (0 a 0):</span>
+                <span style={{ fontWeight: 600, color: todayGross >= metaDiariaUteis ? "var(--accent-primary)" : "var(--accent-orange)" }}>
+                  {todayGross >= metaDiariaUteis ? "Batida!" : formatCurrency(metaDiariaUteis - todayGross)}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-tertiary)" }}>
+                <span>Progresso Volume:</span>
+                <span>{metaDiariaUteis > 0 ? ((todayGross / metaDiariaUteis) * 100).toFixed(2) : "0.00"}%</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.25rem" }}>
+                <span>Receita vs Meta:</span>
+                <span style={{ fontWeight: 600, color: todayRevenue >= custoDiarioUteis ? "var(--accent-primary)" : "var(--accent-orange)" }}>
+                  {todayRevenue >= custoDiarioUteis ? "Batida!" : formatCurrency(custoDiarioUteis - todayRevenue)}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-tertiary)" }}>
+                <span>Rendimento / Meta:</span>
+                <span>{custoDiarioUteis > 0 ? ((todayRevenue / custoDiarioUteis) * 100).toFixed(2) : "0.00"}%</span>
+              </div>
+            </div>
+          </div>
 
           <div className="glass-panel">
             <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Operações</h3>
