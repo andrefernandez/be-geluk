@@ -1,0 +1,50 @@
+{
+  "node": {
+    "40f8932d652059a6307705be32e17b1f841375de99": {
+      "workers": {
+        "app/custos/page": {
+          "moduleId": "[project]/apps/web/.next-internal/server/app/custos/page/actions.js { ACTIONS_MODULE0 => \"[project]/apps/web/src/app/custos/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "exportedName": "createCost",
+          "filename": "apps/web/src/app/custos/actions.ts"
+        }
+      },
+      "layer": {
+        "app/custos/page": "action-browser"
+      },
+      "exportedName": "createCost",
+      "filename": "apps/web/src/app/custos/actions.ts"
+    },
+    "601b6fd43f2dbe947a529ca2f2a9b58415f9db23c2": {
+      "workers": {
+        "app/custos/page": {
+          "moduleId": "[project]/apps/web/.next-internal/server/app/custos/page/actions.js { ACTIONS_MODULE0 => \"[project]/apps/web/src/app/custos/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "exportedName": "updateCost",
+          "filename": "apps/web/src/app/custos/actions.ts"
+        }
+      },
+      "layer": {
+        "app/custos/page": "action-browser"
+      },
+      "exportedName": "updateCost",
+      "filename": "apps/web/src/app/custos/actions.ts"
+    },
+    "40ee38266c39dff5b36756eb3d203b400eea2c47ba": {
+      "workers": {
+        "app/custos/page": {
+          "moduleId": "[project]/apps/web/.next-internal/server/app/custos/page/actions.js { ACTIONS_MODULE0 => \"[project]/apps/web/src/app/custos/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "exportedName": "deleteCost",
+          "filename": "apps/web/src/app/custos/actions.ts"
+        }
+      },
+      "layer": {
+        "app/custos/page": "action-browser"
+      },
+      "exportedName": "deleteCost",
+      "filename": "apps/web/src/app/custos/actions.ts"
+    }
+  },
+  "edge": {}
+}

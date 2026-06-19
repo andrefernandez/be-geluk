@@ -11,8 +11,8 @@ export async function GET(request: Request) {
     let dateFilter: any = undefined;
 
     if (day || monthParam || yearParam) {
-      let m = new Date().getMonth() + 1;
-      let y = new Date().getFullYear();
+      let m = new Date().getUTCMonth() + 1;
+      let y = new Date().getUTCFullYear();
       let d = day ? Number(day) : null;
 
       if (monthParam) {
@@ -31,13 +31,14 @@ export async function GET(request: Request) {
 
       if (d) {
         // Filter by specific day
-        const startOfDay = new Date(y, m - 1, d);
-        const endOfDay = new Date(y, m - 1, d, 23, 59, 59, 999);
+        const startOfDay = new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
+        const endOfDay = new Date(Date.UTC(y, m - 1, d, 23, 59, 59, 999));
         dateFilter = { gte: startOfDay, lte: endOfDay };
       } else {
         // Filter by entire month
-        const startOfMonth = new Date(y, m - 1, 1);
-        const endOfMonth = new Date(y, m, 0, 23, 59, 59, 999);
+        const startOfMonth = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0, 0));
+        const endOfMonth = new Date(Date.UTC(y, m, 1, 0, 0, 0, 0));
+        endOfMonth.setUTCMilliseconds(endOfMonth.getUTCMilliseconds() - 1);
         dateFilter = { gte: startOfMonth, lte: endOfMonth };
       }
     }

@@ -1,3 +1,6 @@
 {
-  "/api/mobile/dash/route": "app/api/mobile/dash/route.js"
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/custos/page": "app/custos/page.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js"
 }

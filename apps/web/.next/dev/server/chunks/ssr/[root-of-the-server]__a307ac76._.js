@@ -338,8 +338,8 @@ async function Home({ searchParams }) {
         monthParam = cookieStore.get("selectedMonth")?.value || "all"; // Default de "all"
     }
     if (monthParam === "all") {
-        const startOfYear = new Date(2026, 0, 1);
-        const endOfYear = new Date(2026, 11, 31, 23, 59, 59);
+        const startOfYear = new Date(Date.UTC(2026, 0, 1, 0, 0, 0, 0));
+        const endOfYear = new Date(Date.UTC(2026, 11, 31, 23, 59, 59, 999));
         dateFilter = {
             gte: startOfYear,
             lte: endOfYear
@@ -347,16 +347,19 @@ async function Home({ searchParams }) {
         displayTitle = "Resumo Geral 2026";
     } else {
         const [year, month] = monthParam.split("-");
-        const now = new Date(Number(year), Number(month) - 1, 15);
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        const y = Number(year);
+        const m = Number(month) - 1;
+        const startOfMonth = new Date(Date.UTC(y, m, 1, 0, 0, 0, 0));
+        const endOfMonth = new Date(Date.UTC(y, m + 1, 1, 0, 0, 0, 0));
+        endOfMonth.setUTCMilliseconds(endOfMonth.getUTCMilliseconds() - 1);
         dateFilter = {
             gte: startOfMonth,
             lte: endOfMonth
         };
-        displayTitle = `Resumo Mensal - ${now.toLocaleDateString("pt-BR", {
+        displayTitle = `Resumo Mensal - ${startOfMonth.toLocaleDateString("pt-BR", {
             month: "long",
-            year: "numeric"
+            year: "numeric",
+            timeZone: "UTC"
         })}`;
     }
     const isComercial = session?.user?.role === "COMERCIAL";
@@ -415,6 +418,139 @@ async function Home({ searchParams }) {
     const valorNaoDeclarado = operations.filter((op)=>!op.declarada).reduce((acc, op)=>acc + Math.round((Number(op.valorBruto) || 0) * 100), 0) / 100;
     const percentualDeclarado = totalOperado > 0 ? valorDeclarado / totalOperado * 100 : 0;
     const percentualNaoDeclarado = totalOperado > 0 ? valorNaoDeclarado / totalOperado * 100 : 0;
+    // ---- CALCULO DO PONTO DE EQUILÍBRIO (BREAK-EVEN) ----
+    // Rentabilidade operacional (taxa de faturamento bruto sobre volume de operações)
+    const taxaRetorno = totalOperado > 0 ? receitaBruta / totalOperado * 100 : 0;
+    // Volume total necessário para igualar os custos manuais
+    const volumeNecessarioTotal = taxaRetorno > 0 ? custoTotalManual / (taxaRetorno / 100) : 0;
+    // Dias úteis e corridos do período selecionado (totais, decorridos e restantes)
+    let calendarDays = 30;
+    let businessDays = 22;
+    let businessDaysElapsed = 22;
+    let businessDaysRemaining = 0; // Se for passado, assume 0 (dividiremos pelo total)
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+    const currentDay = today.getDate();
+    if (monthParam && monthParam !== "all") {
+        const [year, month] = monthParam.split("-");
+        const y = Number(year);
+        const m = Number(month);
+        const startOfMonth = new Date(Date.UTC(y, m - 1, 1));
+        const endOfMonth = new Date(Date.UTC(y, m, 0));
+        calendarDays = endOfMonth.getUTCDate();
+        // Calcula dias úteis totais (Segunda a Sexta)
+        let count = 0;
+        let curDate = new Date(startOfMonth.getTime());
+        while(curDate <= endOfMonth){
+            const dayOfWeek = curDate.getUTCDay();
+            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                count++;
+            }
+            curDate.setUTCDate(curDate.getUTCDate() + 1);
+        }
+        businessDays = count;
+        // Se for o mês atual:
+        if (y === currentYear && m === currentMonth) {
+            // Decorridos: até ontem/hoje
+            const endOfToday = new Date(Date.UTC(y, m - 1, currentDay));
+            let countElapsed = 0;
+            let curDateElapsed = new Date(startOfMonth.getTime());
+            while(curDateElapsed <= endOfToday){
+                const dayOfWeek = curDateElapsed.getUTCDay();
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    countElapsed++;
+                }
+                curDateElapsed.setUTCDate(curDateElapsed.getUTCDate() + 1);
+            }
+            businessDaysElapsed = countElapsed > 0 ? countElapsed : 1;
+            // Restantes: a partir de hoje (inclusive) até o final do mês
+            const startOfToday = new Date(Date.UTC(y, m - 1, currentDay));
+            let countRemaining = 0;
+            let curDateRemaining = new Date(startOfToday.getTime());
+            while(curDateRemaining <= endOfMonth){
+                const dayOfWeek = curDateRemaining.getUTCDay();
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    countRemaining++;
+                }
+                curDateRemaining.setUTCDate(curDateRemaining.getUTCDate() + 1);
+            }
+            businessDaysRemaining = countRemaining > 0 ? countRemaining : 1;
+        } else if (new Date(Date.UTC(y, m - 1, 1)) > today) {
+            // Mês futuro
+            businessDaysElapsed = 0;
+            businessDaysRemaining = businessDays;
+        } else {
+            // Mês passado
+            businessDaysElapsed = businessDays;
+            businessDaysRemaining = 0;
+        }
+    } else {
+        // Para o ano inteiro de 2026
+        calendarDays = 365;
+        const startOfYear = new Date(Date.UTC(2026, 0, 1));
+        const endOfYear = new Date(Date.UTC(2026, 11, 31));
+        let count = 0;
+        let curDate = new Date(startOfYear.getTime());
+        while(curDate <= endOfYear){
+            const dayOfWeek = curDate.getUTCDay();
+            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                count++;
+            }
+            curDate.setUTCDate(curDate.getUTCDate() + 1);
+        }
+        businessDays = count;
+        if (currentYear === 2026) {
+            const endOfToday = new Date(Date.UTC(2026, today.getMonth(), currentDay));
+            let countElapsed = 0;
+            let curDateElapsed = new Date(startOfYear.getTime());
+            while(curDateElapsed <= endOfToday){
+                const dayOfWeek = curDateElapsed.getUTCDay();
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    countElapsed++;
+                }
+                curDateElapsed.setUTCDate(curDateElapsed.getUTCDate() + 1);
+            }
+            businessDaysElapsed = countElapsed > 0 ? countElapsed : 1;
+            const startOfToday = new Date(Date.UTC(2026, today.getMonth(), currentDay));
+            let countRemaining = 0;
+            let curDateRemaining = new Date(startOfToday.getTime());
+            while(curDateRemaining <= endOfYear){
+                const dayOfWeek = curDateRemaining.getUTCDay();
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    countRemaining++;
+                }
+                curDateRemaining.setUTCDate(curDateRemaining.getUTCDate() + 1);
+            }
+            businessDaysRemaining = countRemaining > 0 ? countRemaining : 1;
+        } else if (currentYear < 2026) {
+            businessDaysElapsed = 0;
+            businessDaysRemaining = businessDays;
+        } else {
+            businessDaysElapsed = businessDays;
+            businessDaysRemaining = 0;
+        }
+    }
+    // Define se o período selecionado é o período ativo (mês/ano atual)
+    let isActivePeriod = false;
+    if (monthParam && monthParam !== "all") {
+        const [year, month] = monthParam.split("-");
+        if (Number(year) === currentYear && Number(month) === currentMonth) {
+            isActivePeriod = true;
+        }
+    } else if (!monthParam || monthParam === "all") {
+        if (currentYear === 2026) {
+            isActivePeriod = true;
+        }
+    }
+    // Divisores baseados em se restam dias ou não
+    const divisorDiasUteis = businessDaysRemaining > 0 ? businessDaysRemaining : businessDays > 0 ? businessDays : 1;
+    // Se o período estiver ativo (hoje faz parte dele), calculamos com base no custo/volume restante
+    const custoRestante = isActivePeriod ? Math.max(0, custoTotalManual - receitaBruta) : custoTotalManual;
+    const volumeRestante = isActivePeriod ? Math.max(0, volumeNecessarioTotal - totalOperado) : volumeNecessarioTotal;
+    const metaDiariaUteis = volumeRestante / divisorDiasUteis;
+    const metaDiariaCalendario = calendarDays > 0 ? volumeRestante / calendarDays : 0;
+    const custoDiarioUteis = custoRestante / divisorDiasUteis;
     // ==========================================
     // DADOS PARA O GRÁFICO (MÊS A MÊS) - UNIFICADO
     // ==========================================
@@ -490,7 +626,7 @@ async function Home({ searchParams }) {
                                 children: "DASHBOARD GERAL"
                             }, void 0, false, {
                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                lineNumber: 171,
+                                lineNumber: 319,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -500,13 +636,13 @@ async function Home({ searchParams }) {
                                 children: displayTitle
                             }, void 0, false, {
                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                lineNumber: 172,
+                                lineNumber: 320,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/apps/web/src/app/page.tsx",
-                        lineNumber: 170,
+                        lineNumber: 318,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -519,7 +655,7 @@ async function Home({ searchParams }) {
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$apps$2f$web$2f$src$2f$components$2f$MonthFilter$2e$tsx__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                lineNumber: 175,
+                                lineNumber: 323,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$react$2d$server$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"], {
@@ -536,19 +672,19 @@ async function Home({ searchParams }) {
                                 children: "NOVA OPERAÇÃO"
                             }, void 0, false, {
                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                lineNumber: 176,
+                                lineNumber: 324,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/apps/web/src/app/page.tsx",
-                        lineNumber: 174,
+                        lineNumber: 322,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/apps/web/src/app/page.tsx",
-                lineNumber: 169,
+                lineNumber: 317,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
@@ -577,7 +713,7 @@ async function Home({ searchParams }) {
                                         children: "Total Operado"
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 185,
+                                        lineNumber: 333,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -589,13 +725,13 @@ async function Home({ searchParams }) {
                                         children: formatCurrency(totalOperado)
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 186,
+                                        lineNumber: 334,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                lineNumber: 184,
+                                lineNumber: 332,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -613,7 +749,7 @@ async function Home({ searchParams }) {
                                         children: "Receita Bruta"
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 190,
+                                        lineNumber: 338,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -625,7 +761,7 @@ async function Home({ searchParams }) {
                                         children: formatCurrency(receitaBruta)
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 191,
+                                        lineNumber: 339,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -645,7 +781,7 @@ async function Home({ searchParams }) {
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                                lineNumber: 193,
+                                                lineNumber: 341,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -655,19 +791,19 @@ async function Home({ searchParams }) {
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                                lineNumber: 194,
+                                                lineNumber: 342,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 192,
+                                        lineNumber: 340,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                lineNumber: 189,
+                                lineNumber: 337,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -685,7 +821,7 @@ async function Home({ searchParams }) {
                                         children: "Lucro Líquido"
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 199,
+                                        lineNumber: 347,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -697,7 +833,7 @@ async function Home({ searchParams }) {
                                         children: formatCurrency(lucroLiquido)
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 200,
+                                        lineNumber: 348,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -713,13 +849,13 @@ async function Home({ searchParams }) {
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 201,
+                                        lineNumber: 349,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                lineNumber: 198,
+                                lineNumber: 346,
                                 columnNumber: 11
                             }, this),
                             !isComercial && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -737,7 +873,7 @@ async function Home({ searchParams }) {
                                         children: "Custos Totais"
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 208,
+                                        lineNumber: 356,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -749,13 +885,148 @@ async function Home({ searchParams }) {
                                         children: formatCurrency(custoTotalManual)
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 209,
+                                        lineNumber: 357,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                lineNumber: 207,
+                                lineNumber: 355,
+                                columnNumber: 13
+                            }, this),
+                            !isComercial && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "glass-panel",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                        style: {
+                                            color: "var(--text-tertiary)",
+                                            fontSize: "0.6875rem",
+                                            fontWeight: 700,
+                                            textTransform: "uppercase",
+                                            letterSpacing: "0.1em",
+                                            marginBottom: "0.75rem"
+                                        },
+                                        children: "Líquido Diário (Meta)"
+                                    }, void 0, false, {
+                                        fileName: "[project]/apps/web/src/app/page.tsx",
+                                        lineNumber: 363,
+                                        columnNumber: 15
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        style: {
+                                            fontSize: "1.75rem",
+                                            fontWeight: 700,
+                                            color: "var(--accent-orange)"
+                                        },
+                                        children: formatCurrency(custoDiarioUteis)
+                                    }, void 0, false, {
+                                        fileName: "[project]/apps/web/src/app/page.tsx",
+                                        lineNumber: 364,
+                                        columnNumber: 15
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        style: {
+                                            color: "var(--text-tertiary)",
+                                            fontSize: "0.75rem",
+                                            fontWeight: 600,
+                                            marginTop: "0.5rem",
+                                            display: "flex",
+                                            justifyContent: "space-between"
+                                        },
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                children: "META DE RECEITA DIÁRIA"
+                                            }, void 0, false, {
+                                                fileName: "[project]/apps/web/src/app/page.tsx",
+                                                lineNumber: 366,
+                                                columnNumber: 17
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                children: businessDaysRemaining > 0 && businessDaysRemaining !== businessDays ? `RESTAM: ${businessDaysRemaining}d úteis` : `TOTAL: ${businessDays}d úteis`
+                                            }, void 0, false, {
+                                                fileName: "[project]/apps/web/src/app/page.tsx",
+                                                lineNumber: 367,
+                                                columnNumber: 17
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/apps/web/src/app/page.tsx",
+                                        lineNumber: 365,
+                                        columnNumber: 15
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/apps/web/src/app/page.tsx",
+                                lineNumber: 362,
+                                columnNumber: 13
+                            }, this),
+                            !isComercial && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "glass-panel",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                        style: {
+                                            color: "var(--text-tertiary)",
+                                            fontSize: "0.6875rem",
+                                            fontWeight: 700,
+                                            textTransform: "uppercase",
+                                            letterSpacing: "0.1em",
+                                            marginBottom: "0.75rem"
+                                        },
+                                        children: "Meta Diária (0 a 0)"
+                                    }, void 0, false, {
+                                        fileName: "[project]/apps/web/src/app/page.tsx",
+                                        lineNumber: 378,
+                                        columnNumber: 15
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        style: {
+                                            fontSize: "1.75rem",
+                                            fontWeight: 700,
+                                            color: "var(--accent-orange)"
+                                        },
+                                        children: taxaRetorno > 0 ? formatCurrency(metaDiariaUteis) : "R$ 0,00"
+                                    }, void 0, false, {
+                                        fileName: "[project]/apps/web/src/app/page.tsx",
+                                        lineNumber: 379,
+                                        columnNumber: 15
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        style: {
+                                            color: "var(--text-tertiary)",
+                                            fontSize: "0.75rem",
+                                            fontWeight: 600,
+                                            marginTop: "0.5rem",
+                                            display: "flex",
+                                            justifyContent: "space-between"
+                                        },
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                children: businessDaysRemaining > 0 && businessDaysRemaining !== businessDays ? `RESTAM: ${businessDaysRemaining}d úteis` : `DIAS ÚTEIS: ${businessDays}d`
+                                            }, void 0, false, {
+                                                fileName: "[project]/apps/web/src/app/page.tsx",
+                                                lineNumber: 381,
+                                                columnNumber: 17
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                children: [
+                                                    "META MÊS: ",
+                                                    taxaRetorno > 0 ? formatCurrency(volumeNecessarioTotal) : "R$ 0,00"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/apps/web/src/app/page.tsx",
+                                                lineNumber: 386,
+                                                columnNumber: 17
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/apps/web/src/app/page.tsx",
+                                        lineNumber: 380,
+                                        columnNumber: 15
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/apps/web/src/app/page.tsx",
+                                lineNumber: 377,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -773,7 +1044,7 @@ async function Home({ searchParams }) {
                                         children: "Operações"
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 214,
+                                        lineNumber: 392,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -785,7 +1056,7 @@ async function Home({ searchParams }) {
                                         children: formatPercent(percentualDeclarado)
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 215,
+                                        lineNumber: 393,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -798,19 +1069,19 @@ async function Home({ searchParams }) {
                                         children: "VOLUME DECLARADO"
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 216,
+                                        lineNumber: 394,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                lineNumber: 213,
+                                lineNumber: 391,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/apps/web/src/app/page.tsx",
-                        lineNumber: 183,
+                        lineNumber: 331,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -833,7 +1104,7 @@ async function Home({ searchParams }) {
                                         children: "DESEMPENHO HISTÓRICO"
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 226,
+                                        lineNumber: 404,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -845,26 +1116,26 @@ async function Home({ searchParams }) {
                                         children: "Evolução mensal de volumes e margens institucionais"
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 227,
+                                        lineNumber: 405,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                lineNumber: 225,
+                                lineNumber: 403,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$apps$2f$web$2f$src$2f$components$2f$DashboardCharts$2e$tsx__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"], {
                                 data: chartData
                             }, void 0, false, {
                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                lineNumber: 229,
+                                lineNumber: 407,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/apps/web/src/app/page.tsx",
-                        lineNumber: 224,
+                        lineNumber: 402,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -887,7 +1158,7 @@ async function Home({ searchParams }) {
                                         children: "Estrutura DRE"
                                     }, void 0, false, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 237,
+                                        lineNumber: 415,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -940,7 +1211,7 @@ async function Home({ searchParams }) {
                                                             children: item.label
                                                         }, void 0, false, {
                                                             fileName: "[project]/apps/web/src/app/page.tsx",
-                                                            lineNumber: 247,
+                                                            lineNumber: 425,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -952,13 +1223,13 @@ async function Home({ searchParams }) {
                                                             children: formatCurrency(item.value)
                                                         }, void 0, false, {
                                                             fileName: "[project]/apps/web/src/app/page.tsx",
-                                                            lineNumber: 248,
+                                                            lineNumber: 426,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, idx, true, {
                                                     fileName: "[project]/apps/web/src/app/page.tsx",
-                                                    lineNumber: 246,
+                                                    lineNumber: 424,
                                                     columnNumber: 19
                                                 }, this)),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -977,7 +1248,7 @@ async function Home({ searchParams }) {
                                                         children: "LUCRO LÍQUIDO"
                                                     }, void 0, false, {
                                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                                        lineNumber: 252,
+                                                        lineNumber: 430,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -989,25 +1260,25 @@ async function Home({ searchParams }) {
                                                         children: formatCurrency(lucroLiquido)
                                                     }, void 0, false, {
                                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                                        lineNumber: 253,
+                                                        lineNumber: 431,
                                                         columnNumber: 19
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                                lineNumber: 251,
+                                                lineNumber: 429,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 238,
+                                        lineNumber: 416,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                lineNumber: 236,
+                                lineNumber: 414,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1033,7 +1304,7 @@ async function Home({ searchParams }) {
                                                 children: "Últimas Operações"
                                             }, void 0, false, {
                                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                                lineNumber: 262,
+                                                lineNumber: 440,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$react$2d$server$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"], {
@@ -1046,13 +1317,13 @@ async function Home({ searchParams }) {
                                                 children: "VER TODAS"
                                             }, void 0, false, {
                                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                                lineNumber: 263,
+                                                lineNumber: 441,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 261,
+                                        lineNumber: 439,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1085,7 +1356,7 @@ async function Home({ searchParams }) {
                                                                     children: "Data"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/apps/web/src/app/page.tsx",
-                                                                    lineNumber: 270,
+                                                                    lineNumber: 448,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1100,7 +1371,7 @@ async function Home({ searchParams }) {
                                                                     children: "Cedente"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/apps/web/src/app/page.tsx",
-                                                                    lineNumber: 271,
+                                                                    lineNumber: 449,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1115,7 +1386,7 @@ async function Home({ searchParams }) {
                                                                     children: "Valor Bruto"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/apps/web/src/app/page.tsx",
-                                                                    lineNumber: 272,
+                                                                    lineNumber: 450,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1130,18 +1401,18 @@ async function Home({ searchParams }) {
                                                                     children: "Valor Líquido"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/apps/web/src/app/page.tsx",
-                                                                    lineNumber: 273,
+                                                                    lineNumber: 451,
                                                                     columnNumber: 21
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/apps/web/src/app/page.tsx",
-                                                            lineNumber: 269,
+                                                            lineNumber: 447,
                                                             columnNumber: 19
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                                        lineNumber: 268,
+                                                        lineNumber: 446,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("tbody", {
@@ -1165,7 +1436,7 @@ async function Home({ searchParams }) {
                                                                         })
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                                                        lineNumber: 279,
+                                                                        lineNumber: 457,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -1178,7 +1449,7 @@ async function Home({ searchParams }) {
                                                                         children: op.client.name
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                                                        lineNumber: 280,
+                                                                        lineNumber: 458,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -1190,7 +1461,7 @@ async function Home({ searchParams }) {
                                                                         children: formatCurrency(op.valorBruto)
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                                                        lineNumber: 281,
+                                                                        lineNumber: 459,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -1204,24 +1475,24 @@ async function Home({ searchParams }) {
                                                                         children: formatCurrency(op.valorLiquido)
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                                                        lineNumber: 282,
+                                                                        lineNumber: 460,
                                                                         columnNumber: 23
                                                                     }, this)
                                                                 ]
                                                             }, op.id, true, {
                                                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                                                lineNumber: 278,
+                                                                lineNumber: 456,
                                                                 columnNumber: 21
                                                             }, this))
                                                     }, void 0, false, {
                                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                                        lineNumber: 276,
+                                                        lineNumber: 454,
                                                         columnNumber: 17
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                                lineNumber: 267,
+                                                lineNumber: 445,
                                                 columnNumber: 15
                                             }, this),
                                             operations.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1234,13 +1505,13 @@ async function Home({ searchParams }) {
                                                 children: "Sem operações registradas no período."
                                             }, void 0, false, {
                                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                                lineNumber: 288,
+                                                lineNumber: 466,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 266,
+                                        lineNumber: 444,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1281,12 +1552,12 @@ async function Home({ searchParams }) {
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                                                lineNumber: 297,
+                                                                lineNumber: 475,
                                                                 columnNumber: 21
                                                             }, this)
                                                         }, void 0, false, {
                                                             fileName: "[project]/apps/web/src/app/page.tsx",
-                                                            lineNumber: 296,
+                                                            lineNumber: 474,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1309,12 +1580,12 @@ async function Home({ searchParams }) {
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                                                lineNumber: 300,
+                                                                lineNumber: 478,
                                                                 columnNumber: 21
                                                             }, this)
                                                         }, void 0, false, {
                                                             fileName: "[project]/apps/web/src/app/page.tsx",
-                                                            lineNumber: 299,
+                                                            lineNumber: 477,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1333,12 +1604,12 @@ async function Home({ searchParams }) {
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                                                lineNumber: 303,
+                                                                lineNumber: 481,
                                                                 columnNumber: 21
                                                             }, this)
                                                         }, void 0, false, {
                                                             fileName: "[project]/apps/web/src/app/page.tsx",
-                                                            lineNumber: 302,
+                                                            lineNumber: 480,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1358,18 +1629,18 @@ async function Home({ searchParams }) {
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                                                lineNumber: 306,
+                                                                lineNumber: 484,
                                                                 columnNumber: 21
                                                             }, this)
                                                         }, void 0, false, {
                                                             fileName: "[project]/apps/web/src/app/page.tsx",
-                                                            lineNumber: 305,
+                                                            lineNumber: 483,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, `mob-${op.id}`, true, {
                                                     fileName: "[project]/apps/web/src/app/page.tsx",
-                                                    lineNumber: 295,
+                                                    lineNumber: 473,
                                                     columnNumber: 17
                                                 }, this)),
                                             operations.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1382,37 +1653,37 @@ async function Home({ searchParams }) {
                                                 children: "Sem operações registradas no período."
                                             }, void 0, false, {
                                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                                lineNumber: 311,
+                                                lineNumber: 489,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/apps/web/src/app/page.tsx",
-                                        lineNumber: 293,
+                                        lineNumber: 471,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/apps/web/src/app/page.tsx",
-                                lineNumber: 260,
+                                lineNumber: 438,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/apps/web/src/app/page.tsx",
-                        lineNumber: 233,
+                        lineNumber: 411,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/apps/web/src/app/page.tsx",
-                lineNumber: 180,
+                lineNumber: 328,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/apps/web/src/app/page.tsx",
-        lineNumber: 168,
+        lineNumber: 316,
         columnNumber: 5
     }, this);
 }

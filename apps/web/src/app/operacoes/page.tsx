@@ -29,18 +29,21 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
     let dateFilter: any = {};
 
     if (monthParam === "all") {
-        const startOfYear = new Date(2026, 0, 1);
-        const endOfYear = new Date(2026, 11, 31, 23, 59, 59);
+        const startOfYear = new Date(Date.UTC(2026, 0, 1, 0, 0, 0, 0));
+        const endOfYear = new Date(Date.UTC(2026, 11, 31, 23, 59, 59, 999));
         dateFilter = { gte: startOfYear, lte: endOfYear };
     } else if (monthParam) {
         const [year, month] = monthParam.split("-");
-        now = new Date(Number(year), Number(month) - 1, 15);
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        const y = Number(year);
+        const m = Number(month) - 1;
+        const startOfMonth = new Date(Date.UTC(y, m, 1, 0, 0, 0, 0));
+        const endOfMonth = new Date(Date.UTC(y, m + 1, 1, 0, 0, 0, 0));
+        endOfMonth.setUTCMilliseconds(endOfMonth.getUTCMilliseconds() - 1);
         dateFilter = { gte: startOfMonth, lte: endOfMonth };
     } else {
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+        const endOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0, 0));
+        endOfMonth.setUTCMilliseconds(endOfMonth.getUTCMilliseconds() - 1);
         dateFilter = { gte: startOfMonth, lte: endOfMonth };
     }
 

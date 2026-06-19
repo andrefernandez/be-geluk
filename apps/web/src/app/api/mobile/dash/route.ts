@@ -9,14 +9,16 @@ export async function GET(request: Request) {
     let dateFilter: any = {};
 
     if (monthParam === "all") {
-      const startOfYear = new Date(2026, 0, 1);
-      const endOfYear = new Date(2026, 11, 31, 23, 59, 59);
+      const startOfYear = new Date(Date.UTC(2026, 0, 1, 0, 0, 0, 0));
+      const endOfYear = new Date(Date.UTC(2026, 11, 31, 23, 59, 59, 999));
       dateFilter = { gte: startOfYear, lte: endOfYear };
     } else {
       const [year, month] = monthParam.split("-");
-      const now = new Date(Number(year), Number(month) - 1, 15);
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      const y = Number(year);
+      const m = Number(month) - 1;
+      const startOfMonth = new Date(Date.UTC(y, m, 1, 0, 0, 0, 0));
+      const endOfMonth = new Date(Date.UTC(y, m + 1, 1, 0, 0, 0, 0));
+      endOfMonth.setUTCMilliseconds(endOfMonth.getUTCMilliseconds() - 1);
       dateFilter = { gte: startOfMonth, lte: endOfMonth };
     }
 
@@ -78,8 +80,9 @@ export async function GET(request: Request) {
     for (let i = 5; i >= 0; i--) {
       const d = new Date(); // Usando a data atual como base para os últimos 6 meses
       d.setMonth(d.getMonth() - i);
-      const start = new Date(d.getFullYear(), d.getMonth(), 1);
-      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+      const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 0, 0, 0, 0));
+      const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1, 0, 0, 0, 0));
+      end.setUTCMilliseconds(end.getUTCMilliseconds() - 1);
 
       const monthOps = await prisma.operation.findMany({
         where: { date: { gte: start, lte: end } }
@@ -92,8 +95,8 @@ export async function GET(request: Request) {
       const shortMonths = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
       history.push({
-        label: shortMonths[start.getMonth()],
-        value: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`,
+        label: shortMonths[start.getUTCMonth()],
+        value: `${start.getUTCFullYear()}-${String(start.getUTCMonth() + 1).padStart(2, '0')}`,
         totalOperado: metrics.totalOperado,
         lucroLiquido: metrics.lucroLiquido,
         rentabilidade: metrics.rentabilidadeLiquida

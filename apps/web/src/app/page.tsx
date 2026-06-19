@@ -39,17 +39,19 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   }
 
   if (monthParam === "all") {
-    const startOfYear = new Date(2026, 0, 1);
-    const endOfYear = new Date(2026, 11, 31, 23, 59, 59);
+    const startOfYear = new Date(Date.UTC(2026, 0, 1, 0, 0, 0, 0));
+    const endOfYear = new Date(Date.UTC(2026, 11, 31, 23, 59, 59, 999));
     dateFilter = { gte: startOfYear, lte: endOfYear };
     displayTitle = "Resumo Geral 2026";
   } else {
     const [year, month] = monthParam.split("-");
-    const now = new Date(Number(year), Number(month) - 1, 15);
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const y = Number(year);
+    const m = Number(month) - 1;
+    const startOfMonth = new Date(Date.UTC(y, m, 1, 0, 0, 0, 0));
+    const endOfMonth = new Date(Date.UTC(y, m + 1, 1, 0, 0, 0, 0));
+    endOfMonth.setUTCMilliseconds(endOfMonth.getUTCMilliseconds() - 1);
     dateFilter = { gte: startOfMonth, lte: endOfMonth };
-    displayTitle = `Resumo Mensal - ${now.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`;
+    displayTitle = `Resumo Mensal - ${startOfMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" })}`;
   }
 
   const isComercial = (session?.user as any)?.role === "COMERCIAL";
