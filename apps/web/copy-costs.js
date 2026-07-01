@@ -2,60 +2,61 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function run() {
-    // 1. Clean up the previous bad copies
-    console.log("Cleaning up incorrect June/July copies...");
+    // 1. Clean up the previous bad copies in July 2026
+    console.log("Cleaning up incorrect July copies...");
     const deleteResult = await prisma.cost.deleteMany({
         where: {
             date: {
-                gte: new Date('2026-06-01T00:00:00.000Z')
+                gte: new Date('2026-07-01T00:00:00.000Z'),
+                lte: new Date('2026-07-31T23:59:59.999Z')
             }
         }
     });
-    console.log(`Deleted ${deleteResult.count} incorrect cost records.`);
+    console.log(`Deleted ${deleteResult.count} incorrect cost records in July.`);
 
-    // 2. Fetch costs for May 2026 in UTC
-    console.log("Fetching costs for May 2026...");
-    const startMay = new Date('2026-05-01T00:00:00.000Z');
-    const endMay = new Date('2026-05-31T23:59:59.999Z');
+    // 2. Fetch costs for June 2026 in UTC
+    console.log("Fetching costs for June 2026...");
+    const startJune = new Date('2026-06-01T00:00:00.000Z');
+    const endJune = new Date('2026-06-30T23:59:59.999Z');
     
-    const mayCosts = await prisma.cost.findMany({
+    const juneCosts = await prisma.cost.findMany({
         where: {
             date: {
-                gte: startMay,
-                lte: endMay
+                gte: startJune,
+                lte: endJune
             }
         }
     });
 
-    console.log(`Found ${mayCosts.length} costs in May 2026 in UTC.`);
+    console.log(`Found ${juneCosts.length} costs in June 2026 in UTC.`);
 
-    if (mayCosts.length === 0) {
-        console.log("No costs found in May 2026 to copy!");
+    if (juneCosts.length === 0) {
+        console.log("No costs found in June 2026 to copy!");
         return;
     }
 
-    // 3. Map costs to June using setUTCMonth to avoid timezone issues
-    const juneCostsData = mayCosts.map(cost => {
+    // 3. Map costs to July using setUTCMonth to avoid timezone issues
+    const julyCostsData = juneCosts.map(cost => {
         const originalDate = new Date(cost.date);
-        const juneDate = new Date(originalDate);
-        // Change month from May (4) to June (5) in UTC
-        juneDate.setUTCMonth(5); 
+        const julyDate = new Date(originalDate);
+        // Change month from June (5) to July (6) in UTC
+        julyDate.setUTCMonth(6); 
 
         return {
             name: cost.name,
             amount: cost.amount,
             type: cost.type,
             category: cost.category,
-            date: juneDate
+            date: julyDate
         };
     });
 
-    console.log("Copying costs to June 2026 (using UTC)...");
+    console.log("Copying costs to July 2026 (using UTC)...");
     const result = await prisma.cost.createMany({
-        data: juneCostsData
+        data: julyCostsData
     });
 
-    console.log(`Successfully copied ${result.count} costs to June 2026.`);
+    console.log(`Successfully copied ${result.count} costs to July 2026.`);
 }
 
 run()

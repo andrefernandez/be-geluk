@@ -71,6 +71,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
     where: { date: dateFilter }
   });
 
+  // Busca todas as operações e custos para cálculos históricos e fallbacks
+  const allOperations = await prisma.operation.findMany({ orderBy: { date: 'asc' } });
+  const allCosts = await prisma.cost.findMany();
+
   // Busca operações realizadas no dia de hoje (UTC)
   const todayDate = new Date();
   const startOfToday = new Date(Date.UTC(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate(), 0, 0, 0, 0));
@@ -153,7 +157,31 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
 
   // ---- CALCULO DO PONTO DE EQUILÍBRIO (BREAK-EVEN) ----
   // Rentabilidade operacional (taxa de faturamento bruto sobre volume de operações)
-  const taxaRetorno = totalOperado > 0 ? (receitaBruta / totalOperado) * 100 : 0;
+  let taxaRetorno = totalOperado > 0 ? (receitaBruta / totalOperado) * 100 : 0;
+
+  // Fallback se não houver operações no período selecionado (ex: início de mês sem operações registradas)
+  if (taxaRetorno === 0 && allOperations.length > 0) {
+    const totalOperadoAll = allOperations.reduce((acc, op) => acc + Math.round((Number(op.valorBruto) || 0) * 100), 0) / 100;
+    if (totalOperadoAll > 0) {
+      const yieldTotalAll = allOperations.reduce((acc, op) => acc + Math.round((
+        (Number(op.fator) || 0) +
+        (Number(op.tarifas) || 0) +
+        (Number(op.adValorem) || 0)
+      ) * 100), 0) / 100;
+      const iofTotalAll = allOperations.reduce((acc, op) => acc + Math.round((
+        (Number(op.iof) || 0) +
+        (Number(op.iofAdicional) || 0)
+      ) * 100), 0) / 100;
+      const receitaBrutaAll = yieldTotalAll + iofTotalAll;
+      taxaRetorno = (receitaBrutaAll / totalOperadoAll) * 100;
+    }
+  }
+
+  // Se ainda assim for 0 (sem nenhuma operação no banco), usa fallback de 15%
+  if (taxaRetorno === 0) {
+    taxaRetorno = 15;
+  }
+
   // Volume total necessário para igualar os custos manuais
   const volumeNecessarioTotal = taxaRetorno > 0 ? (custoTotalManual / (taxaRetorno / 100)) : 0;
 
@@ -300,8 +328,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   // ==========================================
   // DADOS PARA O GRÁFICO (MÊS A MÊS) - UNIFICADO
   // ==========================================
-  const allOperations = await prisma.operation.findMany({ orderBy: { date: 'asc' } });
-  const allCosts = await prisma.cost.findMany();
 
   const groupedByMonth: Record<string, { month: string; rawDate: Date; ops: any[]; costs: any[] }> = {};
 
@@ -457,10 +483,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
           </div>
 
           <div className="glass-panel">
-            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Operações</h3>
-            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--accent-primary)" }}>{formatPercent(percentualDeclarado)}</div>
+            <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Volume Declarado</h3>
+            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--accent-primary)" }}>{formatCurrency(valorDeclarado)}</div>
             <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
-                VOLUME DECLARADO
+                DECLARADO: {formatPercent(percentualDeclarado)}
             </div>
           </div>
         </div>

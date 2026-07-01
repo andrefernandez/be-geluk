@@ -69,6 +69,7 @@ export async function GET(request: Request) {
         custos: custoTotal,
         rentabilidadeBruta,
         rentabilidadeLiquida,
+        valorDeclarado,
         percentualDeclarado
       };
     };

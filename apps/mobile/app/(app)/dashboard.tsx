@@ -151,11 +151,11 @@ export default function DashboardScreen() {
 
               {/* Operações (Volume) */}
               <View className="bg-white w-[48%] rounded-[28px] p-5 shadow-sm shadow-zinc-200/50 border border-zinc-100">
-                <Text className="text-zinc-400 text-[10px] font-bold uppercase mb-2">Operações</Text>
+                <Text className="text-zinc-400 text-[10px] font-bold uppercase mb-2">Volume Declarado</Text>
                 <Text className="text-[#0284c7] font-extrabold text-[18px]" numberOfLines={1} adjustsFontSizeToFit>
-                  {dashData?.percentualDeclarado?.toFixed(2)}%
+                  {formatCurrency(dashData?.valorDeclarado)}
                 </Text>
-                <Text className="text-zinc-500 text-[10px] mt-3">Volume Declarado</Text>
+                <Text className="text-zinc-500 text-[10px] mt-3">Declarado: {dashData?.percentualDeclarado?.toFixed(2)}%</Text>
               </View>
             </View>
 

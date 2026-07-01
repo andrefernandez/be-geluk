@@ -551,13 +551,26 @@ export default function OperationTable({ initialOperations, clients, currentUser
                     <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("valorLiquido"))}</span>
                 </div>
                 <div className="glass-card" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Taxa Média</span>
-                    <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>{formatPercent(calculateWeightedAveragePercent("percentual"))}</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Fator Total</span>
+                    <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>{formatCurrency(sumColumn("fator"))}</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>
+                        Média: {formatPercent(calculateWeightedAveragePercent("percentual"))}
+                    </span>
                 </div>
                 <div className="glass-card" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Taxa Total Média</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Total Custos</span>
                     <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>
-                        {formatPercent(
+                        {formatCurrency(
+                            sumColumn("fator") +
+                            sumColumn("tarifas") +
+                            sumColumn("adValorem") +
+                            sumColumn("iof") +
+                            sumColumn("iofAdicional") +
+                            sumColumn("irpj")
+                        )}
+                    </span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>
+                        Média: {formatPercent(
                             calculateWeightedAveragePercent("percentual") +
                             calculateWeightedAveragePercent("percentualTarifas") +
                             calculateWeightedAveragePercent("percentualAdValorem")
