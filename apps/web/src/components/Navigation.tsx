@@ -69,10 +69,6 @@ export function Navigation() {
                                 href={item.path} 
                                 onClick={() => setIsMobileMenuOpen(false)} 
                                 className={`nav-link ${isActive ? 'active' : ''}`}
-                                style={{
-                                    paddingLeft: '2.5rem',
-                                    ...(isActive ? { backgroundColor: 'rgba(255, 255, 255, 0.7)', color: '#1c1c1f', borderColor: 'transparent', fontWeight: 700 } : {})
-                                }}
                             >
                                 <span className="nav-text">{item.name}</span>
                             </Link>
@@ -99,8 +95,9 @@ export function Navigation() {
             <style jsx>{`
                 .nav-sidebar {
                     width: 260px;
-                    background: var(--bg-tertiary);
-                    border-right: 1px solid var(--card-border);
+                    background: rgba(10, 10, 16, 0.7);
+                    backdrop-filter: blur(24px);
+                    border-right: 1px solid rgba(255, 255, 255, 0.03);
                     display: flex;
                     flex-direction: column;
                     padding: 2.5rem 0;
@@ -125,7 +122,7 @@ export function Navigation() {
                 .nav-links {
                     display: flex;
                     flex-direction: column;
-                    gap: 0.5rem;
+                    gap: 0.25rem;
                     flex: 1;
                 }
 
@@ -133,34 +130,32 @@ export function Navigation() {
                     display: flex;
                     align-items: center;
                     gap: 0.75rem;
-                    padding: 1.125rem 1.25rem 1.125rem 2.5rem; /* top right bottom left */
-                    border-radius: 0;
-                    color: var(--text-tertiary);
-                    font-size: 0.8125rem;
-                    font-weight: 600;
+                    padding: 1rem 1.25rem 1rem 2.25rem;
+                    border-left: 3px solid transparent;
+                    color: var(--text-secondary);
+                    font-size: 0.75rem;
+                    font-weight: 700;
                     text-transform: uppercase;
-                    letter-spacing: 0.025em;
+                    letter-spacing: 0.05em;
                     transition: all var(--transition-fast);
-                    border: 1px solid transparent;
                 }
 
                 .nav-link:hover {
                     color: var(--text-primary);
-                    background: rgba(255, 255, 255, 0.05);
+                    background: rgba(255, 255, 255, 0.02);
                 }
 
                 .nav-link.active {
-                    color: var(--accent-primary) !important;
-                    background: rgba(16, 185, 129, 0.2) !important;
-                    border-color: rgba(16, 185, 129, 0.4) !important;
+                    color: var(--text-primary) !important;
+                    background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.01) 100%) !important;
+                    border-left-color: var(--accent-primary) !important;
+                    font-weight: 800;
                 }
-
-
 
                 .nav-footer {
                     margin-top: 2rem;
                     padding: 2rem 1.25rem 0 1.25rem;
-                    border-top: 1px solid var(--card-border);
+                    border-top: 1px solid rgba(255, 255, 255, 0.03);
                     display: flex;
                     flex-direction: column;
                     gap: 1.25rem;
@@ -176,8 +171,8 @@ export function Navigation() {
                     width: 32px;
                     height: 32px;
                     border-radius: 50%;
-                    background: var(--bg-primary);
-                    border: 1px solid var(--card-border);
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -206,13 +201,13 @@ export function Navigation() {
                     font-size: 0.75rem;
                     font-weight: 700;
                     text-transform: uppercase;
-                    border: 1px solid rgba(239, 68, 68, 0.2);
+                    border: 1px solid rgba(244, 63, 94, 0.2);
                     transition: all var(--transition-fast);
                 }
 
                 .logout-btn:hover {
-                    background: rgba(239, 68, 68, 0.1);
-                    border-color: rgba(239, 68, 68, 0.4);
+                    background: rgba(244, 63, 94, 0.1);
+                    border-color: rgba(244, 63, 94, 0.4);
                 }
 
                 @media (max-width: 1024px) {
@@ -224,9 +219,9 @@ export function Navigation() {
                         left: 0;
                         flex-direction: column;
                         justify-content: flex-start;
-                        background: rgba(20, 20, 22, 0.98);
-                        backdrop-filter: blur(16px);
-                        border-right: 1px solid var(--card-border);
+                        background: rgba(10, 10, 16, 0.98);
+                        backdrop-filter: blur(24px);
+                        border-right: 1px solid rgba(255, 255, 255, 0.05);
                         border-top: none;
                         z-index: 10001;
                         padding: 2.5rem 0;
@@ -256,28 +251,24 @@ export function Navigation() {
                         flex-direction: column;
                         justify-content: flex-start;
                         align-items: stretch;
-                        gap: 0.75rem;
+                        gap: 0.25rem;
                         overflow-y: auto;
                     }
 
                     .nav-link {
-                         padding: 1.125rem 1.25rem 1.125rem 2.5rem;
+                         padding: 1rem 1.25rem 1rem 2.25rem;
                          flex-direction: row;
                          justify-content: flex-start;
                          height: auto;
                          flex: none;
-                         font-size: 0.8125rem;
+                         font-size: 0.75rem;
                          text-align: left;
                          gap: 0.75rem;
                     }
 
-                    .nav-icon {
-                        display: none !important;
-                    }
-
                     .nav-link.active {
-                        background: rgba(16, 185, 129, 0.2) !important;
-                        color: var(--accent-primary) !important;
+                        background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.01) 100%) !important;
+                        color: var(--text-primary) !important;
                     }
                 }
 
@@ -291,9 +282,9 @@ export function Navigation() {
                     align-items: center;
                     justify-content: center;
                     padding: 0;
-                    background: rgba(20, 20, 22, 0.95);
-                    backdrop-filter: blur(10px);
-                    border-bottom: 1px solid var(--card-border);
+                    background: rgba(10, 10, 16, 0.95);
+                    backdrop-filter: blur(20px);
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
                     z-index: 9990;
                 }
 
