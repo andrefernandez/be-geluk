@@ -754,7 +754,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
           )}
 
           {/* Table */}
-          <div className="glass-panel" style={{ padding: "2rem" }}>
+          <div style={{ padding: "2rem 0" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
               <h2 style={{ fontSize: "0.875rem", fontWeight: 800, textTransform: "uppercase" }}>Últimas Operações</h2>
               <Link href="/operacoes" style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--accent-primary)" }}>VER TODAS</Link>
@@ -811,7 +811,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
           </div>
 
           {/* Projections & Client Rankings Section */}
-          <div className="glass-panel" style={{ padding: "2rem", display: "flex", flexDirection: "column", gap: "2.5rem" }}>
+          <div style={{ padding: "2rem 0", display: "flex", flexDirection: "column", gap: "2.5rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1.5rem" }}>
               <div>
                 <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--text-primary)" }}>PROJEÇÕES DE FECHAMENTO & DESEMPENHO (2026)</h2>

@@ -110,7 +110,7 @@ button {
 }
 
 .responsive-p {
-  padding: 2.5rem;
+  padding: 2.5rem 0;
 }
 
 /* Minimal Panel/Card Styles */
@@ -308,7 +308,7 @@ table tr:hover {
   }
   
   .responsive-p {
-    padding: 1.25rem 1rem;
+    padding: 1.25rem 0;
   }
 
   .form-grid-2, .form-grid-3, .form-grid-4 {
