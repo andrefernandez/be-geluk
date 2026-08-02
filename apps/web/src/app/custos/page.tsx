@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import MonthFilter from "@/components/MonthFilter";
 import { cookies } from "next/headers";
 
-export default async function CustosPage({ searchParams }: { searchParams: Promise<{ month?: string | string[] }> }) {
+export default async function CustosPage({ searchParams }: { searchParams: Promise<{ month?: string | string[], startDate?: string | string[], endDate?: string | string[] }> }) {
     const session = await getServerSession(authOptions);
 
     if (!session) {
@@ -20,18 +20,30 @@ export default async function CustosPage({ searchParams }: { searchParams: Promi
     let now = new Date();
     const resolvedParams = await searchParams;
     let monthParam = typeof resolvedParams?.month === 'string' ? resolvedParams.month : Array.isArray(resolvedParams?.month) ? resolvedParams.month[0] : null;
+    let startDateParam = typeof resolvedParams?.startDate === 'string' ? resolvedParams.startDate : Array.isArray(resolvedParams?.startDate) ? resolvedParams.startDate[0] : null;
+    let endDateParam = typeof resolvedParams?.endDate === 'string' ? resolvedParams.endDate : Array.isArray(resolvedParams?.endDate) ? resolvedParams.endDate[0] : null;
 
+    const cookieStore = await cookies();
     if (!monthParam) {
-        const cookieStore = await cookies();
         monthParam = cookieStore.get("selectedMonth")?.value || null;
     }
 
     let dateFilter: any = {};
-    if (monthParam === "all") {
+    if (monthParam === "custom") {
+        if (!startDateParam) {
+            startDateParam = cookieStore.get("startDate")?.value || "2026-01-01";
+        }
+        if (!endDateParam) {
+            endDateParam = cookieStore.get("endDate")?.value || "2026-12-31";
+        }
+        const startCustom = new Date(startDateParam + "T00:00:00.000Z");
+        const endCustom = new Date(endDateParam + "T23:59:59.999Z");
+        dateFilter = { gte: startCustom, lte: endCustom };
+    } else if (monthParam === "all") {
         const startOfYear = new Date(Date.UTC(2026, 0, 1, 0, 0, 0, 0));
         const endOfYear = new Date(Date.UTC(2026, 11, 31, 23, 59, 59, 999));
         dateFilter = { gte: startOfYear, lte: endOfYear };
-    } else if (monthParam) {
+    } else if (monthParam && monthParam.includes("-")) {
         const [year, month] = monthParam.split("-");
         const y = Number(year);
         const m = Number(month) - 1;

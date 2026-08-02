@@ -7,7 +7,7 @@ import MonthFilter from "@/components/MonthFilter";
 import { cookies } from "next/headers";
 import DashboardCharts from "@/components/DashboardCharts";
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ month?: string | string[] }> }) {
+export default async function Home({ searchParams }: { searchParams: Promise<{ month?: string | string[], startDate?: string | string[], endDate?: string | string[] }> }) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -32,13 +32,31 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
 
   const resolvedParams = await searchParams;
   let monthParam = typeof resolvedParams?.month === 'string' ? resolvedParams.month : Array.isArray(resolvedParams?.month) ? resolvedParams.month[0] : null;
+  let startDateParam = typeof resolvedParams?.startDate === 'string' ? resolvedParams.startDate : Array.isArray(resolvedParams?.startDate) ? resolvedParams.startDate[0] : null;
+  let endDateParam = typeof resolvedParams?.endDate === 'string' ? resolvedParams.endDate : Array.isArray(resolvedParams?.endDate) ? resolvedParams.endDate[0] : null;
 
+  const cookieStore = await cookies();
   if (!monthParam) {
-    const cookieStore = await cookies();
     monthParam = cookieStore.get("selectedMonth")?.value || "all"; // Default de "all"
   }
 
-  if (monthParam === "all") {
+  if (monthParam === "custom") {
+    if (!startDateParam) {
+      startDateParam = cookieStore.get("startDate")?.value || "2026-01-01";
+    }
+    if (!endDateParam) {
+      endDateParam = cookieStore.get("endDate")?.value || "2026-12-31";
+    }
+    const startCustom = new Date(startDateParam + "T00:00:00.000Z");
+    const endCustom = new Date(endDateParam + "T23:59:59.999Z");
+    dateFilter = { gte: startCustom, lte: endCustom };
+    
+    const formatDatePt = (dateStr: string) => {
+      const [y, m, d] = dateStr.split("-");
+      return `${d}/${m}/${y}`;
+    };
+    displayTitle = `Período: ${formatDatePt(startDateParam)} até ${formatDatePt(endDateParam)}`;
+  } else if (monthParam === "all") {
     const startOfYear = new Date(Date.UTC(2026, 0, 1, 0, 0, 0, 0));
     const endOfYear = new Date(Date.UTC(2026, 11, 31, 23, 59, 59, 999));
     dateFilter = { gte: startOfYear, lte: endOfYear };
@@ -195,8 +213,41 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1;
   const currentDay = today.getDate();
+  const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
 
-  if (monthParam && monthParam !== "all") {
+  if (monthParam === "custom") {
+    const startCustom = new Date((startDateParam || "2026-01-01") + "T00:00:00.000Z");
+    const endCustom = new Date((endDateParam || "2026-12-31") + "T23:59:59.999Z");
+    
+    const diffTime = Math.abs(endCustom.getTime() - startCustom.getTime());
+    calendarDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+    
+    let countTotal = 0;
+    let countElapsed = 0;
+    let countRemaining = 0;
+    
+    let curDate = new Date(startCustom.getTime());
+    while (curDate <= endCustom) {
+      const dayOfWeek = curDate.getUTCDay();
+      const isBusinessDay = dayOfWeek !== 0 && dayOfWeek !== 6;
+      
+      if (isBusinessDay) {
+        countTotal++;
+        
+        const curDateOnly = new Date(Date.UTC(curDate.getUTCFullYear(), curDate.getUTCMonth(), curDate.getUTCDate()));
+        if (curDateOnly <= todayUTC) {
+          countElapsed++;
+        } else {
+          countRemaining++;
+        }
+      }
+      curDate.setUTCDate(curDate.getUTCDate() + 1);
+    }
+    
+    businessDays = countTotal;
+    businessDaysElapsed = countElapsed;
+    businessDaysRemaining = countRemaining;
+  } else if (monthParam && monthParam !== "all") {
     const [year, month] = monthParam.split("-");
     const y = Number(year);
     const m = Number(month);
@@ -303,7 +354,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
 
   // Define se o período selecionado é o período ativo (mês/ano atual)
   let isActivePeriod = false;
-  if (monthParam && monthParam !== "all") {
+  if (monthParam === "custom") {
+    const startCustom = new Date((startDateParam || "2026-01-01") + "T00:00:00.000Z");
+    const endCustom = new Date((endDateParam || "2026-12-31") + "T23:59:59.999Z");
+    if (todayUTC >= startCustom && todayUTC <= endCustom) {
+      isActivePeriod = true;
+    }
+  } else if (monthParam && monthParam !== "all") {
     const [year, month] = monthParam.split("-");
     if (Number(year) === currentYear && Number(month) === currentMonth) {
       isActivePeriod = true;
