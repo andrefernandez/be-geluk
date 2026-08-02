@@ -388,7 +388,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
 
   const groupedByMonth: Record<string, { month: string; rawDate: Date; ops: any[]; costs: any[] }> = {};
 
-  [...allOperations, ...allCosts].forEach(item => {
+  [...operations, ...costs].forEach(item => {
     const d = new Date(item.date);
     const mStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
     if (!groupedByMonth[mStr]) {
