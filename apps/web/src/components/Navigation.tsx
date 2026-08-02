@@ -95,9 +95,8 @@ export function Navigation() {
             <style jsx>{`
                 .nav-sidebar {
                     width: 260px;
-                    background: rgba(10, 10, 16, 0.7);
-                    backdrop-filter: blur(24px);
-                    border-right: 1px solid rgba(255, 255, 255, 0.03);
+                    background: #ffffff;
+                    border-right: 1px solid var(--card-border);
                     display: flex;
                     flex-direction: column;
                     padding: 2.5rem 0;
@@ -142,20 +141,20 @@ export function Navigation() {
 
                 .nav-link:hover {
                     color: var(--text-primary);
-                    background: rgba(255, 255, 255, 0.02);
+                    background: var(--bg-secondary);
                 }
 
                 .nav-link.active {
                     color: var(--text-primary) !important;
-                    background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.01) 100%) !important;
-                    border-left-color: var(--accent-primary) !important;
+                    background: var(--bg-tertiary) !important;
+                    border-left-color: var(--text-primary) !important;
                     font-weight: 800;
                 }
 
                 .nav-footer {
                     margin-top: 2rem;
                     padding: 2rem 1.25rem 0 1.25rem;
-                    border-top: 1px solid rgba(255, 255, 255, 0.03);
+                    border-top: 1px solid var(--card-border);
                     display: flex;
                     flex-direction: column;
                     gap: 1.25rem;
@@ -171,14 +170,14 @@ export function Navigation() {
                     width: 32px;
                     height: 32px;
                     border-radius: 50%;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    background: var(--bg-secondary);
+                    border: 1px solid var(--card-border);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     font-weight: 700;
                     font-size: 0.75rem;
-                    color: var(--accent-primary);
+                    color: var(--text-primary);
                 }
 
                 .user-name {
@@ -201,13 +200,13 @@ export function Navigation() {
                     font-size: 0.75rem;
                     font-weight: 700;
                     text-transform: uppercase;
-                    border: 1px solid rgba(244, 63, 94, 0.2);
+                    border: 1px solid rgba(225, 29, 72, 0.2);
                     transition: all var(--transition-fast);
                 }
 
                 .logout-btn:hover {
-                    background: rgba(244, 63, 94, 0.1);
-                    border-color: rgba(244, 63, 94, 0.4);
+                    background: rgba(225, 29, 72, 0.05);
+                    border-color: rgba(225, 29, 72, 0.4);
                 }
 
                 @media (max-width: 1024px) {
@@ -219,9 +218,8 @@ export function Navigation() {
                         left: 0;
                         flex-direction: column;
                         justify-content: flex-start;
-                        background: rgba(10, 10, 16, 0.98);
-                        backdrop-filter: blur(24px);
-                        border-right: 1px solid rgba(255, 255, 255, 0.05);
+                        background: #ffffff;
+                        border-right: 1px solid var(--card-border);
                         border-top: none;
                         z-index: 10001;
                         padding: 2.5rem 0;
@@ -267,7 +265,7 @@ export function Navigation() {
                     }
 
                     .nav-link.active {
-                        background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.01) 100%) !important;
+                        background: var(--bg-tertiary) !important;
                         color: var(--text-primary) !important;
                     }
                 }
@@ -282,9 +280,8 @@ export function Navigation() {
                     align-items: center;
                     justify-content: center;
                     padding: 0;
-                    background: rgba(10, 10, 16, 0.95);
-                    backdrop-filter: blur(20px);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+                    background: #ffffff;
+                    border-bottom: 1px solid var(--card-border);
                     z-index: 9990;
                 }
 
@@ -319,7 +316,7 @@ export function Navigation() {
                 }
 
                 .menu-btn:hover, .close-btn:hover {
-                    background: rgba(255, 255, 255, 0.05);
+                    background: rgba(0, 0, 0, 0.05);
                 }
 
                 .drawer-backdrop {
@@ -328,7 +325,7 @@ export function Navigation() {
                     left: 0;
                     width: 100%;
                     height: 100vh;
-                    background: rgba(0, 0, 0, 0.6);
+                    background: rgba(0, 0, 0, 0.4);
                     backdrop-filter: blur(2px);
                     z-index: 10000;
                     opacity: 1;
