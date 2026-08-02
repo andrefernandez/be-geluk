@@ -422,6 +422,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
       }
     });
 
+  // Calcula rentabilidades médias
+  const totalOperadoHistorico = chartData.reduce((sum, item) => sum + item.totalOperado, 0);
+  const totalLucroHistorico = chartData.reduce((sum, item) => sum + item.lucroLiquido, 0);
+  const rentabilidadeMediaHistorica = totalOperadoHistorico > 0 ? (totalLucroHistorico / totalOperadoHistorico) * 100 : 0;
+  
+  const mesesComOperacao = chartData.filter(item => item.totalOperado > 0);
+  const rentabilidadeMediaMensal = mesesComOperacao.length > 0
+    ? mesesComOperacao.reduce((sum, item) => sum + item.rentabilidade, 0) / mesesComOperacao.length
+    : 0;
+
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   };
@@ -551,9 +561,26 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
 
         {/* Chart Section */}
         <div className="glass-panel" style={{ padding: "2rem" }}>
-          <div style={{ marginBottom: "2rem" }}>
-            <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--text-primary)" }}>DESEMPENHO HISTÓRICO</h2>
-            <p style={{ color: "var(--text-tertiary)", fontSize: "0.8125rem", marginTop: "0.25rem" }}>Evolução mensal de volumes e margens institucionais</p>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1.5rem", marginBottom: "2rem" }}>
+            <div>
+              <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--text-primary)" }}>DESEMPENHO HISTÓRICO</h2>
+              <p style={{ color: "var(--text-tertiary)", fontSize: "0.8125rem", marginTop: "0.25rem" }}>Evolução mensal de volumes e margens institucionais</p>
+            </div>
+            
+            <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
+              <div className="glass-card" style={{ padding: "0.5rem 1rem", border: "1px solid var(--card-border)", borderRadius: "var(--radius-xs)" }}>
+                <div style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase" }}>Rentabilidade Média Geral</div>
+                <div style={{ fontSize: "1.125rem", fontWeight: 700, color: rentabilidadeMediaHistorica >= 0 ? "var(--accent-primary)" : "var(--accent-red)", marginTop: "0.125rem" }}>
+                  {rentabilidadeMediaHistorica.toFixed(2)}%
+                </div>
+              </div>
+              <div className="glass-card" style={{ padding: "0.5rem 1rem", border: "1px solid var(--card-border)", borderRadius: "var(--radius-xs)" }}>
+                <div style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase" }}>Rentabilidade Média Mensal</div>
+                <div style={{ fontSize: "1.125rem", fontWeight: 700, color: rentabilidadeMediaMensal >= 0 ? "var(--accent-primary)" : "var(--accent-red)", marginTop: "0.125rem" }}>
+                  {rentabilidadeMediaMensal.toFixed(2)}%
+                </div>
+              </div>
+            </div>
           </div>
           <DashboardCharts data={chartData} />
         </div>
