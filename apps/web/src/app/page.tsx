@@ -879,8 +879,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
               </div>
             </div>
 
-            {/* Split Screen projections tables */}
-            <div className="responsive-grid-1-2" style={{ display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: "2.5rem" }}>
+            {/* Projections tables (Stacked for Full Width) */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "3.5rem" }}>
               
               {/* Monthly Forecast Table */}
               <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
@@ -925,8 +925,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
                 </div>
               </div>
 
-              {/* Client Performance rankings */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+              {/* Client Performance rankings (Side-by-Side under the table) */}
+              <div className="responsive-grid-1-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2.5rem" }}>
                 
                 {/* Ranking 1 */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
