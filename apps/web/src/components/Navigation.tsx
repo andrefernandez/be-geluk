@@ -38,8 +38,8 @@ export function Navigation() {
 
     return (
         <div style={{ display: 'contents' }}>
-            {/* Mobile Topbar */}
-            <div className="mobile-only mobile-topbar">
+            {/* Unified Topbar */}
+            <div className="mobile-topbar">
                 <img src="https://www.gelukbank.com.br/logo.svg" alt="Geluk Logo" className="logo-img-mobile" />
                 <button onClick={() => setIsMobileMenuOpen(true)} className="menu-btn" aria-label="Abrir menu">
                     <Menu size={24} color="var(--text-primary)" />
@@ -48,14 +48,14 @@ export function Navigation() {
 
             {/* Drawer Backdrop */}
             {isMobileMenuOpen && (
-                <div className="mobile-only drawer-backdrop" onClick={() => setIsMobileMenuOpen(false)}></div>
+                <div className="drawer-backdrop" onClick={() => setIsMobileMenuOpen(false)}></div>
             )}
 
             {/* Sidebar / Drawer */}
             <nav className={`nav-sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
                 <div className="nav-logo flex-between" style={{ alignItems: "center" }}>
                     <img src="https://www.gelukbank.com.br/logo.svg" alt="Geluk Logo" className="logo-img" />
-                    <button onClick={() => setIsMobileMenuOpen(false)} className="mobile-only close-btn" aria-label="Fechar menu">
+                    <button onClick={() => setIsMobileMenuOpen(false)} className="close-btn" aria-label="Fechar menu">
                         <X size={24} color="var(--text-primary)" />
                     </button>
                 </div>
@@ -90,47 +90,55 @@ export function Navigation() {
                         Sair
                     </button>
                 </div>
-            </nav>
-
-            <style jsx>{`
+            </nav>            <style jsx>{`
                 .nav-sidebar {
-                    width: 260px;
+                    width: 280px;
                     background: #ffffff;
                     border-right: 1px solid var(--card-border);
                     display: flex;
                     flex-direction: column;
                     padding: 2.5rem 0;
-                    position: sticky;
+                    position: fixed;
                     top: 0;
+                    left: 0;
                     height: 100vh;
-                    z-index: 100;
+                    z-index: 10001;
+                    transform: translateX(-100%);
+                    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .nav-sidebar.open {
+                    transform: translateX(0);
                 }
 
                 .nav-logo {
-                    margin-bottom: 3rem;
+                    margin-bottom: 2.5rem;
                     display: flex;
-                    justify-content: center;
-                    padding: 0 1.25rem;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0 1.5rem;
                 }
 
                 .logo-img {
                     width: 80px;
                     height: auto;
+                    filter: brightness(0); /* Make white logo solid black */
                 }
 
                 .nav-links {
                     display: flex;
                     flex-direction: column;
-                    gap: 0.25rem;
+                    gap: 0.5rem;
                     flex: 1;
+                    padding: 0 1.25rem;
                 }
 
                 .nav-link {
                     display: flex;
                     align-items: center;
                     gap: 0.75rem;
-                    padding: 1rem 1.25rem 1rem 2.25rem;
-                    border-left: 3px solid transparent;
+                    padding: 0.875rem 1.25rem;
+                    border-radius: var(--radius-sm);
                     color: var(--text-secondary);
                     font-size: 0.75rem;
                     font-weight: 700;
@@ -147,13 +155,12 @@ export function Navigation() {
                 .nav-link.active {
                     color: var(--text-primary) !important;
                     background: var(--bg-tertiary) !important;
-                    border-left-color: var(--text-primary) !important;
                     font-weight: 800;
                 }
 
                 .nav-footer {
                     margin-top: 2rem;
-                    padding: 2rem 1.25rem 0 1.25rem;
+                    padding: 2rem 1.5rem 0 1.5rem;
                     border-top: 1px solid var(--card-border);
                     display: flex;
                     flex-direction: column;
@@ -209,67 +216,6 @@ export function Navigation() {
                     border-color: rgba(225, 29, 72, 0.4);
                 }
 
-                @media (max-width: 1024px) {
-                    .nav-sidebar {
-                        width: 280px;
-                        height: 100vh;
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        flex-direction: column;
-                        justify-content: flex-start;
-                        background: #ffffff;
-                        border-right: 1px solid var(--card-border);
-                        border-top: none;
-                        z-index: 10001;
-                        padding: 2.5rem 0;
-                        transform: translateX(-100%);
-                        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    }
-
-                    .nav-sidebar.open {
-                        transform: translateX(0);
-                    }
-
-                    .nav-logo, .nav-footer {
-                        display: flex;
-                        padding-left: 1.25rem;
-                        padding-right: 1.25rem;
-                    }
-                    
-                    .nav-logo {
-                        margin-bottom: 3rem;
-                        justify-content: space-between;
-                        width: 100%;
-                    }
-
-                    .nav-links {
-                        width: 100%;
-                        height: auto;
-                        flex-direction: column;
-                        justify-content: flex-start;
-                        align-items: stretch;
-                        gap: 0.25rem;
-                        overflow-y: auto;
-                    }
-
-                    .nav-link {
-                         padding: 1rem 1.25rem 1rem 2.25rem;
-                         flex-direction: row;
-                         justify-content: flex-start;
-                         height: auto;
-                         flex: none;
-                         font-size: 0.75rem;
-                         text-align: left;
-                         gap: 0.75rem;
-                    }
-
-                    .nav-link.active {
-                        background: var(--bg-tertiary) !important;
-                        color: var(--text-primary) !important;
-                    }
-                }
-
                 .mobile-topbar {
                     position: fixed;
                     top: 0;
@@ -292,6 +238,7 @@ export function Navigation() {
                     left: 50%;
                     top: 50%;
                     transform: translate(-50%, -50%);
+                    filter: brightness(0); /* Make white logo solid black */
                 }
 
                 .menu-btn {

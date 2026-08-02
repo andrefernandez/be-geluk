@@ -316,25 +316,29 @@ table tr:hover {
   }
 }
 
+/* Glass panel override for borderless tables */
+.glass-panel:has(table) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
 /* Layout Primitives */
 .main-layout {
-  display: flex;
+  display: block; /* no longer side-by-side flex layout since navigation is drawer-based */
   min-height: 100vh;
 }
 
 .main-content {
-  flex: 1;
-  padding: 2.5rem 2rem;
+  width: 100%;
+  padding: 90px 2rem 2.5rem 2rem; /* padded at top for navigation bar */
   overflow-y: auto;
   position: relative;
   background-color: var(--bg-secondary);
 }
 
 @media (max-width: 1024px) {
-  .main-layout {
-    flex-direction: column;
-  }
-
   .main-content {
     padding: 90px 1rem 1.5rem 1rem;
     overflow-x: hidden;
