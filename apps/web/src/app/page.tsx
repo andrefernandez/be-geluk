@@ -7,7 +7,7 @@ import MonthFilter from "@/components/MonthFilter";
 import { cookies } from "next/headers";
 import DashboardCharts from "@/components/DashboardCharts";
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ month?: string | string[], startDate?: string | string[], endDate?: string | string[] }> }) {
+export default async function Home({ searchParams }: { searchParams: Promise<{ month?: string | string[], startDate?: string | string[], endDate?: string | string[], scenario?: string | string[] }> }) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -90,8 +90,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   });
 
   // Busca todas as operações e custos para cálculos históricos e fallbacks
-  const allOperations = await prisma.operation.findMany({ orderBy: { date: 'asc' } });
+  const allOperations = await prisma.operation.findMany({ include: { client: true }, orderBy: { date: 'asc' } });
   const allCosts = await prisma.cost.findMany();
+
+  const scenario = typeof resolvedParams?.scenario === 'string' ? resolvedParams.scenario : Array.isArray(resolvedParams?.scenario) ? resolvedParams?.scenario[0] : "conservador";
 
   // Busca operações realizadas no dia de hoje (UTC)
   const todayDate = new Date();
@@ -432,6 +434,145 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
     ? mesesComOperacao.reduce((sum, item) => sum + item.rentabilidade, 0) / mesesComOperacao.length
     : 0;
 
+  // ==========================================
+  // MODELAGEM PREDITIVA E RANKINGS DE CEDENTES (2026)
+  // ==========================================
+  const operations2026 = allOperations.filter(o => {
+    const yr = new Date(o.date).getUTCFullYear();
+    return yr === 2026;
+  });
+  const costs2026 = allCosts.filter(c => {
+    const yr = new Date(c.date).getUTCFullYear();
+    return yr === 2026;
+  });
+
+  const nowTime = new Date();
+  const currentMonthIdx = nowTime.getUTCFullYear() === 2026 ? nowTime.getUTCMonth() : 7;
+
+  const completedMonths: any[] = [];
+  for (let m = 0; m < currentMonthIdx; m++) {
+    const opsInMonth = operations2026.filter(o => new Date(o.date).getUTCMonth() === m);
+    const costsInMonth = costs2026.filter(c => new Date(c.date).getUTCMonth() === m);
+
+    const totalOperado = opsInMonth.reduce((sum, o) => sum + o.valorBruto, 0);
+    const receita = opsInMonth.reduce((sum, o) => sum + (o.fator + o.tarifas + o.adValorem + (o.iof || 0) + (o.iofAdicional || 0)), 0);
+    const custo = costsInMonth.reduce((sum, c) => sum + c.amount, 0);
+    const lucroLiquido = receita - custo;
+
+    completedMonths.push({ m, totalOperado, receita, custo, lucroLiquido });
+  }
+
+  const numCompleted = completedMonths.length || 1;
+  const avgOperado = completedMonths.reduce((sum, x) => sum + x.totalOperado, 0) / numCompleted;
+  const avgReceita = completedMonths.reduce((sum, x) => sum + x.receita, 0) / numCompleted;
+  const avgCusto = completedMonths.reduce((sum, x) => sum + x.custo, 0) / numCompleted;
+
+  let monthlyGrowth = 0;
+  let costGrowth = 0;
+
+  if (scenario === "moderado") {
+    monthlyGrowth = 0.05;
+    costGrowth = 0.01;
+  } else if (scenario === "otimista") {
+    monthlyGrowth = 0.10;
+    costGrowth = 0.02;
+  }
+
+  const projectedMonths: any[] = [];
+  for (let m = currentMonthIdx; m < 12; m++) {
+    const steps = m - currentMonthIdx + 1;
+    const factor = Math.pow(1 + monthlyGrowth, steps);
+    const costFactor = Math.pow(1 + costGrowth, steps);
+
+    const totalOperado = avgOperado * factor;
+    const receita = avgReceita * factor;
+    const custo = avgCusto * costFactor;
+    const lucroLiquido = receita - custo;
+
+    projectedMonths.push({ m, totalOperado, receita, custo, lucroLiquido });
+  }
+
+  const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  const fullYearProjections = [];
+
+  for (let m = 0; m < 12; m++) {
+    const isProjected = m >= currentMonthIdx;
+    if (isProjected) {
+      const p = projectedMonths.find(x => x.m === m);
+      fullYearProjections.push({
+        name: monthNames[m],
+        status: "PROJETADO",
+        totalOperado: p.totalOperado,
+        receita: p.receita,
+        custo: p.custo,
+        lucroLiquido: p.lucroLiquido,
+        rentabilidade: p.totalOperado > 0 ? (p.lucroLiquido / p.totalOperado) * 100 : 0
+      });
+    } else {
+      const c = completedMonths.find(x => x.m === m);
+      fullYearProjections.push({
+        name: monthNames[m],
+        status: "REALIZADO",
+        totalOperado: c.totalOperado,
+        receita: c.receita,
+        custo: c.custo,
+        lucroLiquido: c.lucroLiquido,
+        rentabilidade: c.totalOperado > 0 ? (c.lucroLiquido / c.totalOperado) * 100 : 0
+      });
+    }
+  }
+
+  const totalVolumeAnoProj = fullYearProjections.reduce((sum, x) => sum + x.totalOperado, 0);
+  const totalReceitaAnoProj = fullYearProjections.reduce((sum, x) => sum + x.receita, 0);
+  const totalLucroAnoProj = fullYearProjections.reduce((sum, x) => sum + x.lucroLiquido, 0);
+  const rentabilidadeMediaAnoProj = totalVolumeAnoProj > 0 ? (totalLucroAnoProj / totalVolumeAnoProj) * 100 : 0;
+
+  const totalVolumeRealizadoProj = completedMonths.reduce((sum, x) => sum + x.totalOperado, 0);
+  const totalLucroRealizadoProj = completedMonths.reduce((sum, x) => sum + x.lucroLiquido, 0);
+
+  // Rankings de Cedentes baseados em operações de 2026
+  const clientPerformanceMap: Record<string, {
+    id: string;
+    name: string;
+    totalVolume: number;
+    totalRevenue: number;
+    totalTarifas: number;
+    numOps: number;
+  }> = {};
+
+  operations2026.forEach(o => {
+    const cId = o.clientId;
+    const cName = o.client.name;
+    const revenue = o.fator + o.tarifas + o.adValorem + (o.iof || 0) + (o.iofAdicional || 0);
+
+    if (!clientPerformanceMap[cId]) {
+      clientPerformanceMap[cId] = {
+        id: cId,
+        name: cName,
+        totalVolume: 0,
+        totalRevenue: 0,
+        totalTarifas: 0,
+        numOps: 0
+      };
+    }
+
+    clientPerformanceMap[cId].totalVolume += o.valorBruto;
+    clientPerformanceMap[cId].totalRevenue += revenue;
+    clientPerformanceMap[cId].totalTarifas += o.tarifas;
+    clientPerformanceMap[cId].numOps += 1;
+  });
+
+  const clientPerformanceList = Object.values(clientPerformanceMap).map(c => {
+    return {
+      ...c,
+      rentabilidadePercent: c.totalVolume > 0 ? (c.totalRevenue / c.totalVolume) * 100 : 0,
+      tarifaMedia: c.numOps > 0 ? c.totalTarifas / c.numOps : 0
+    };
+  });
+
+  const revenueRanking = [...clientPerformanceList].sort((a, b) => b.totalRevenue - a.totalRevenue);
+  const tarifasRanking = [...clientPerformanceList].sort((a, b) => b.totalTarifas - a.totalTarifas);
+
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   };
@@ -667,6 +808,186 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
                 <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-tertiary)", fontSize: "0.875rem" }}>Sem operações registradas no período.</div>
               )}
             </div>
+          </div>
+
+          {/* Projections & Client Rankings Section */}
+          <div className="glass-panel" style={{ padding: "2rem", display: "flex", flexDirection: "column", gap: "2.5rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1.5rem" }}>
+              <div>
+                <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--text-primary)" }}>PROJEÇÕES DE FECHAMENTO & DESEMPENHO (2026)</h2>
+                <p style={{ color: "var(--text-tertiary)", fontSize: "0.8125rem", marginTop: "0.25rem" }}>
+                  Simulação baseada na média mensal realizada de {currentMonthIdx} meses para prever o encerramento em Dez/2026
+                </p>
+              </div>
+
+              {/* Scenario Selector */}
+              <div style={{ display: "flex", background: "var(--bg-tertiary)", padding: "0.25rem", borderRadius: "var(--radius-sm)", gap: "0.25rem" }}>
+                {[
+                  { id: "conservador", label: "Conservador" },
+                  { id: "moderado", label: "Moderado (+5%)" },
+                  { id: "otimista", label: "Otimista (+10%)" }
+                ].map(s => {
+                  const isSelected = scenario === s.id;
+                  const currentMonthQuery = monthParam ? `month=${monthParam}` : "";
+                  const startDateQuery = startDateParam ? `&startDate=${startDateParam}` : "";
+                  const endDateQuery = endDateParam ? `&endDate=${endDateParam}` : "";
+                  return (
+                    <Link
+                      key={s.id}
+                      href={`/?scenario=${s.id}${currentMonthQuery ? `&${currentMonthQuery}` : ""}${startDateQuery}${endDateQuery}`}
+                      style={{
+                        padding: "0.4rem 0.8rem",
+                        borderRadius: "var(--radius-xs)",
+                        fontSize: "0.6875rem",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.025em",
+                        background: isSelected ? "#000000" : "transparent",
+                        color: isSelected ? "#ffffff" : "var(--text-secondary)",
+                        transition: "all var(--transition-fast)"
+                      }}
+                    >
+                      {s.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Projections Stats Grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.5rem" }}>
+              <div className="glass-card" style={{ padding: "1.25rem" }}>
+                <h4 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>Volume Projetado (Dez/2026)</h4>
+                <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", marginTop: "0.5rem" }}>{formatCurrency(totalVolumeAnoProj)}</div>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", marginTop: "0.25rem" }}>
+                  Realizado até agora: {formatCurrency(totalVolumeRealizadoProj)}
+                </p>
+              </div>
+              <div className="glass-card" style={{ padding: "1.25rem" }}>
+                <h4 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>Lucro Projetado (Dez/2026)</h4>
+                <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--accent-primary)", marginTop: "0.5rem" }}>{formatCurrency(totalLucroAnoProj)}</div>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", marginTop: "0.25rem" }}>
+                  Realizado até agora: {formatCurrency(totalLucroRealizadoProj)}
+                </p>
+              </div>
+              <div className="glass-card" style={{ padding: "1.25rem" }}>
+                <h4 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>Rentabilidade Projetada (Média)</h4>
+                <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--accent-secondary)", marginTop: "0.5rem" }}>{formatPercent(rentabilidadeMediaAnoProj)}</div>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", marginTop: "0.25rem" }}>
+                  Eficiência média estimada
+                </p>
+              </div>
+            </div>
+
+            {/* Split Screen projections tables */}
+            <div className="responsive-grid-1-2" style={{ display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: "2.5rem" }}>
+              
+              {/* Monthly Forecast Table */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                <h3 style={{ fontSize: "0.875rem", fontWeight: 800, textTransform: "uppercase" }}>Tabela Mensal 2026</h3>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid var(--card-border)" }}>
+                        <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem" }}>Mês</th>
+                        <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem" }}>Status</th>
+                        <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right" }}>Volume</th>
+                        <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right" }}>Receita</th>
+                        <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right" }}>Lucro Líq.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fullYearProjections.map((m, index) => {
+                        const isProj = m.status === "PROJETADO";
+                        return (
+                          <tr key={index} style={{ borderBottom: "1px solid rgba(0,0,0,0.02)" }}>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", fontWeight: 700 }}>{m.name}</td>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem" }}>
+                              <span style={{
+                                fontSize: "0.5625rem",
+                                fontWeight: 800,
+                                padding: "0.125rem 0.375rem",
+                                borderRadius: "4px",
+                                background: isProj ? "rgba(217, 119, 6, 0.1)" : "rgba(16, 185, 129, 0.1)",
+                                color: isProj ? "var(--accent-orange)" : "var(--accent-primary)"
+                              }}>
+                                {m.status}
+                              </span>
+                            </td>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right" }}>{formatCurrency(m.totalOperado)}</td>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right" }}>{formatCurrency(m.receita)}</td>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right", fontWeight: 700, color: m.lucroLiquido >= 0 ? "var(--accent-primary)" : "var(--accent-red)" }}>{formatCurrency(m.lucroLiquido)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Client Performance rankings */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+                
+                {/* Ranking 1 */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  <h3 style={{ fontSize: "0.875rem", fontWeight: 800, textTransform: "uppercase" }}>Melhores Cedentes (Rentabilidade / Receita)</h3>
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                      <thead>
+                        <tr style={{ borderBottom: "1px solid var(--card-border)" }}>
+                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", width: "40px" }}>Pos</th>
+                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem" }}>Cedente</th>
+                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right" }}>Volume</th>
+                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right" }}>Receita</th>
+                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right" }}>Rentab %</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {revenueRanking.slice(0, 5).map((client, idx) => (
+                          <tr key={client.id} style={{ borderBottom: "1px solid rgba(0,0,0,0.02)" }}>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", fontWeight: 800, color: "var(--text-tertiary)" }}>{idx + 1}º</td>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", fontWeight: 700 }}>{client.name}</td>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right" }}>{formatCurrency(client.totalVolume)}</td>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right", fontWeight: 700, color: "var(--accent-primary)" }}>{formatCurrency(client.totalRevenue)}</td>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right" }}>{formatPercent(client.rentabilidadePercent)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Ranking 2 */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  <h3 style={{ fontSize: "0.875rem", fontWeight: 800, textTransform: "uppercase" }}>Melhores Cedentes (Tarifas Flat Arrecadadas)</h3>
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                      <thead>
+                        <tr style={{ borderBottom: "1px solid var(--card-border)" }}>
+                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", width: "40px" }}>Pos</th>
+                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem" }}>Cedente</th>
+                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right" }}>Nº Ops</th>
+                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right" }}>Total Tarifas</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tarifasRanking.slice(0, 5).map((client, idx) => (
+                          <tr key={client.id} style={{ borderBottom: "1px solid rgba(0,0,0,0.02)" }}>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", fontWeight: 800, color: "var(--text-tertiary)" }}>{idx + 1}º</td>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", fontWeight: 700 }}>{client.name}</td>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right" }}>{client.numOps} ops</td>
+                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right", fontWeight: 700, color: "var(--accent-secondary)" }}>{formatCurrency(client.totalTarifas)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
           </div>
         </div>
       </main>
