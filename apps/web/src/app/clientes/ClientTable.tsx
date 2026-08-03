@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient, updateClient, deleteClient, updateClientStatus } from "./actions";
 import { NumericFormat } from 'react-number-format';
 
@@ -43,6 +43,14 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
 
     const isAdminOrManager = currentUserRole === "ADMIN" || currentUserRole === "MANAGER";
     const isComercial = currentUserRole === "COMERCIAL";
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("action") === "new") {
+            handleOpenModal();
+        }
+    }, []);
+
     const [searchTerm, setSearchTerm] = useState("");
 
     const filteredInitialClients = initialClients.filter(c => 

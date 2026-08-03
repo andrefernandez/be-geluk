@@ -792,18 +792,29 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     <span>
                                         O emitente do XML <strong>{xmlWarning.name}</strong> {xmlWarning.cnpj !== "Não informado" && <> (CNPJ: {xmlWarning.cnpj})</>} não foi localizado na base de dados de clientes.
                                     </span>
-                                    <a href="/clientes" target="_blank" rel="noopener noreferrer" style={{
-                                        color: "var(--accent-primary)",
-                                        fontWeight: 700,
-                                        textDecoration: "underline",
-                                        marginTop: "0.25rem",
-                                        alignSelf: "flex-start",
-                                        display: "inline-flex",
-                                        alignItems: "center",
-                                        gap: "0.25rem"
-                                    }}>
-                                        Ir para o Cadastro de Cedentes &rarr;
-                                    </a>
+                                    <div style={{ display: "flex", gap: "1rem", marginTop: "0.25rem", flexWrap: "wrap" }}>
+                                        <a href="/clientes" target="_blank" rel="noopener noreferrer" style={{
+                                            color: "var(--accent-primary)",
+                                            fontWeight: 700,
+                                            textDecoration: "underline",
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "0.25rem"
+                                        }}>
+                                            🔍 Procurar Cedente
+                                        </a>
+                                        <span style={{ color: "var(--text-tertiary)" }}>|</span>
+                                        <a href="/clientes?action=new" target="_blank" rel="noopener noreferrer" style={{
+                                            color: "var(--accent-primary)",
+                                            fontWeight: 700,
+                                            textDecoration: "underline",
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "0.25rem"
+                                        }}>
+                                            ➕ Cadastrar Cedente
+                                        </a>
+                                    </div>
                                 </div>
                             )}
 
