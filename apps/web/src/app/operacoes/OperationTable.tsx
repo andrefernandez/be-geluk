@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { createOperation, deleteOperation, updateOperation } from "./actions";
 import { NumericFormat } from 'react-number-format';
 
-export default function OperationTable({ initialOperations, clients, currentUserRole, clientHistoryMaxRates, globalSettings }: { initialOperations: any[], clients: any[], currentUserRole: string, clientHistoryMaxRates?: Record<string, any>, globalSettings?: any }) {
+export default function OperationTable({ initialOperations, clients, currentUserRole, clientHistoryMaxRates, clientLastOperationRate, globalSettings }: { initialOperations: any[], clients: any[], currentUserRole: string, clientHistoryMaxRates?: Record<string, any>, clientLastOperationRate?: Record<string, { percentual: number, percentualAdValorem: number }>, globalSettings?: any }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -131,7 +131,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
 
         // Fator
         const currentFRate = (!force && state.percentual) ? parseFloat(state.percentual) : null;
-        const fRate = currentFRate !== null ? currentFRate : (maxH && maxH.f != null ? maxH.f : (c.taxaFator != null ? c.taxaFator : 8.5));
+        const fRate = currentFRate !== null ? currentFRate : (c.taxaFator != null ? c.taxaFator : (maxH && maxH.f != null ? maxH.f : 8.5));
         let newFator = state.fator;
         let newPercentual = state.percentual;
         if (fRate != null) {
@@ -142,7 +142,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
 
         // Ad Valorem
         const currentARate = (!force && state.percentualAdValorem) ? parseFloat(state.percentualAdValorem) : null;
-        const aRate = currentARate !== null ? currentARate : (maxH && maxH.a != null ? maxH.a : c.taxaAdValorem);
+        const aRate = currentARate !== null ? currentARate : (c.taxaAdValorem != null ? c.taxaAdValorem : (maxH && maxH.a != null ? maxH.a : 0));
         let newAdValorem = state.adValorem;
         let newPercentualAdValorem = state.percentualAdValorem;
         if (aRate != null) {
@@ -176,13 +176,14 @@ export default function OperationTable({ initialOperations, clients, currentUser
 
         // IOF
         const currentIofRate = (!force && state.percentualIof) ? parseFloat(state.percentualIof) : null;
+        const iofRate = currentIofRate !== null ? currentIofRate : (c.taxaIof != null ? c.taxaIof : null);
         let newIof = state.iof;
         let newPercentualIof = state.percentualIof;
         
-        if (currentIofRate !== null) {
-            const iofVal = bruto * (currentIofRate / 100);
+        if (iofRate !== null) {
+            const iofVal = bruto * (iofRate / 100);
             newIof = iofVal > 0 ? iofVal.toFixed(2) : "";
-            newPercentualIof = currentIofRate.toString();
+            newPercentualIof = iofRate.toString();
         } else if (maxH && maxH.iof != null) {
             newIof = maxH.iof.toString();
             if (bruto > 0) newPercentualIof = ((maxH.iof / bruto) * 100).toString();
@@ -190,13 +191,14 @@ export default function OperationTable({ initialOperations, clients, currentUser
 
         // IOF Adicional
         const currentIofaRate = (!force && state.percentualIofAdicional) ? parseFloat(state.percentualIofAdicional) : null;
+        const iofaRate = currentIofaRate !== null ? currentIofaRate : (c.taxaIofAdicional != null ? c.taxaIofAdicional : null);
         let newIofAdicional = state.iofAdicional;
         let newPercentualIofAdicional = state.percentualIofAdicional;
 
-        if (currentIofaRate !== null) {
-            const iofaVal = bruto * (currentIofaRate / 100);
+        if (iofaRate !== null) {
+            const iofaVal = bruto * (iofaRate / 100);
             newIofAdicional = iofaVal > 0 ? iofaVal.toFixed(2) : "";
-            newPercentualIofAdicional = currentIofaRate.toString();
+            newPercentualIofAdicional = iofaRate.toString();
         } else if (maxH && maxH.iofAdicional != null) {
             newIofAdicional = maxH.iofAdicional.toString();
             if (bruto > 0) newPercentualIofAdicional = ((maxH.iofAdicional / bruto) * 100).toString();
@@ -554,6 +556,41 @@ export default function OperationTable({ initialOperations, clients, currentUser
             ]
         }));
     };
+
+    const comparisonInfo = useMemo(() => {
+        if (!formData.clientId || !clientLastOperationRate) return null;
+        const lastOp = clientLastOperationRate[formData.clientId];
+        if (!lastOp) return null;
+        
+        const currentRate = parseFloat(formData.percentual) || 0;
+        const lastRate = lastOp.percentual || 0;
+        
+        if (currentRate === 0 || lastRate === 0) return null;
+        
+        const diff = Number((currentRate - lastRate).toFixed(4));
+        if (diff > 0) {
+            return {
+                type: "ACIMA",
+                diff: `+${diff.toLocaleString('pt-BR')}%`,
+                text: `cobrando ACIMA do histórico (${diff.toLocaleString('pt-BR')}% superior)`,
+                color: "var(--accent-red)"
+            };
+        } else if (diff < 0) {
+            return {
+                type: "ABAIXO",
+                diff: `${diff.toLocaleString('pt-BR')}%`,
+                text: `cobrando ABAIXO do histórico (${Math.abs(diff).toLocaleString('pt-BR')}% inferior)`,
+                color: "var(--accent-primary)"
+            };
+        } else {
+            return {
+                type: "IGUAL",
+                diff: "0%",
+                text: "cobrando o mesmo valor do histórico",
+                color: "var(--text-secondary)"
+            };
+        }
+    }, [formData.clientId, formData.percentual, clientLastOperationRate]);
 
     return (
         <div className="responsive-p">
@@ -916,6 +953,37 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     }} />
                                 </div>
                             </div>
+
+                            {comparisonInfo && (
+                                <div style={{
+                                    padding: "0.75rem 1rem",
+                                    backgroundColor: comparisonInfo.type === "ACIMA" ? "rgba(239, 68, 68, 0.05)" : comparisonInfo.type === "ABAIXO" ? "rgba(16, 185, 129, 0.05)" : "rgba(255, 255, 255, 0.03)",
+                                    border: `1px solid ${comparisonInfo.type === "ACIMA" ? "var(--accent-red)" : comparisonInfo.type === "ABAIXO" ? "var(--accent-primary)" : "var(--glass-border)"}`,
+                                    borderRadius: "var(--radius-sm)",
+                                    fontSize: "0.8125rem",
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    marginTop: "-0.5rem",
+                                    marginBottom: "0.5rem"
+                                }}>
+                                    <span style={{ color: "var(--text-secondary)" }}>Comparação de Fator:</span>
+                                    <span style={{
+                                        fontWeight: 700,
+                                        color: comparisonInfo.color,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "0.25rem"
+                                    }}>
+                                        {comparisonInfo.type === "ACIMA" ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                                        ) : comparisonInfo.type === "ABAIXO" ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                        ) : null}
+                                        {comparisonInfo.text}
+                                    </span>
+                                </div>
+                            )}
 
                             <div style={{ padding: "1rem", backgroundColor: "rgba(255, 255, 255, 0.02)", border: "1px dashed var(--glass-border)", borderRadius: "var(--radius-sm)", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

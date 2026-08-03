@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function createClient(data: { name: string, cnpj?: string, status?: string, representativeId?: string, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number }) {
+export async function createClient(data: { name: string, cnpj?: string, status?: string, representativeId?: string, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number, taxaIof?: number, taxaIofAdicional?: number }) {
     try {
         const existing = await prisma.client.findUnique({ where: { name: data.name } });
         if (existing) {
@@ -19,6 +19,8 @@ export async function createClient(data: { name: string, cnpj?: string, status?:
                 taxaFator: data.taxaFator,
                 taxaAdValorem: data.taxaAdValorem,
                 taxaTarifa: data.taxaTarifa,
+                taxaIof: data.taxaIof,
+                taxaIofAdicional: data.taxaIofAdicional,
             } as any,
         });
         revalidatePath("/clientes");
@@ -28,7 +30,7 @@ export async function createClient(data: { name: string, cnpj?: string, status?:
     }
 }
 
-export async function updateClient(id: string, data: { name: string, cnpj?: string, status?: string, representativeId?: string, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number }) {
+export async function updateClient(id: string, data: { name: string, cnpj?: string, status?: string, representativeId?: string, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number, taxaIof?: number, taxaIofAdicional?: number }) {
     try {
         const existing = await prisma.client.findUnique({ where: { name: data.name } });
         if (existing && existing.id !== id) {
@@ -45,6 +47,8 @@ export async function updateClient(id: string, data: { name: string, cnpj?: stri
                 taxaFator: data.taxaFator,
                 taxaAdValorem: data.taxaAdValorem,
                 taxaTarifa: data.taxaTarifa,
+                taxaIof: data.taxaIof,
+                taxaIofAdicional: data.taxaIofAdicional,
             } as any,
         });
         revalidatePath("/clientes");

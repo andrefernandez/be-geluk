@@ -73,10 +73,70 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
         orderBy: { date: "asc" },
     });
 
-    const clients = await prisma.client.findMany({
+    const rawClients = await prisma.client.findMany({
         where: isComercial ? { representativeId: (session.user as any).id } : {},
         orderBy: { name: "asc" }
     });
+
+    const clients = await Promise.all(rawClients.map(async (c) => {
+        let updated = false;
+        const updateData: any = {};
+
+        const clientOps = await prisma.operation.findMany({
+            where: { clientId: c.id },
+            select: {
+                percentualAdValorem: true,
+                iof: true,
+                iofAdicional: true,
+                valorBruto: true
+            }
+        });
+
+        if (clientOps.length > 0) {
+            if (c.taxaAdValorem == null) {
+                const maxAdValorem = Math.max(...clientOps.map(op => op.percentualAdValorem || 0));
+                if (maxAdValorem > 0) {
+                    updateData.taxaAdValorem = maxAdValorem;
+                    c.taxaAdValorem = maxAdValorem;
+                    updated = true;
+                }
+            }
+
+            if ((c as any).taxaIof == null) {
+                const maxIofPercent = Math.max(...clientOps.map(op => {
+                    const bruto = op.valorBruto || 0;
+                    const iofVal = op.iof || 0;
+                    return bruto > 0 ? (iofVal / bruto) * 100 : 0;
+                }));
+                if (maxIofPercent > 0) {
+                    updateData.taxaIof = Number(maxIofPercent.toFixed(4));
+                    (c as any).taxaIof = Number(maxIofPercent.toFixed(4));
+                    updated = true;
+                }
+            }
+
+            if ((c as any).taxaIofAdicional == null) {
+                const maxIofAdicPercent = Math.max(...clientOps.map(op => {
+                    const bruto = op.valorBruto || 0;
+                    const iofAdicVal = op.iofAdicional || 0;
+                    return bruto > 0 ? (iofAdicVal / bruto) * 100 : 0;
+                }));
+                if (maxIofAdicPercent > 0) {
+                    updateData.taxaIofAdicional = Number(maxIofAdicPercent.toFixed(4));
+                    (c as any).taxaIofAdicional = Number(maxIofAdicPercent.toFixed(4));
+                    updated = true;
+                }
+            }
+
+            if (updated) {
+                await prisma.client.update({
+                    where: { id: c.id },
+                    data: updateData as any
+                });
+            }
+        }
+        return c;
+    }));
 
     const globalSettings = await prisma.globalSettings.findFirst();
 
@@ -89,7 +149,9 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
             tarifas: true,
             iof: true,
             iofAdicional: true,
-            irpj: true
+            irpj: true,
+            valorBruto: true,
+            date: true
         }
     });
 
@@ -111,9 +173,18 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
         }
     }
 
+    const clientLastOperationRate: Record<string, { percentual: number, percentualAdValorem: number }> = {};
+    const sortedOps = [...allHistoryOperations].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    for (const op of sortedOps) {
+        clientLastOperationRate[op.clientId] = {
+            percentual: Number(op.percentual) || 0,
+            percentualAdValorem: Number(op.percentualAdValorem) || 0
+        };
+    }
+
     return (
-        <div className="responsive-p" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-            <header className="responsive-header-flex">
+        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", padding: "2rem 0" }}>
+            <header className="responsive-header-flex" style={{ padding: "0 2rem", marginBottom: "2rem" }}>
                 <div>
                     <h1 className="text-gradient" style={{ fontSize: "2rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Operações</h1>
                 </div>
@@ -122,13 +193,14 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
                 </div>
             </header>
 
-            <main style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2rem" }}>
-                <div className="glass-panel" style={{ flex: 1, padding: "2rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            <main style={{ flex: 1, display: "flex", flexDirection: "column", width: "100%" }}>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", width: "100%" }}>
                     <OperationTable
                         initialOperations={operations as any}
                         clients={clients as any}
                         currentUserRole={(session.user as any).role}
                         clientHistoryMaxRates={clientHistoryMaxRates}
+                        clientLastOperationRate={clientLastOperationRate}
                         globalSettings={globalSettings}
                     />
                 </div>

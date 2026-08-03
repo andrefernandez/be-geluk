@@ -15,6 +15,8 @@ type Client = {
     taxaFator?: number | null;
     taxaAdValorem?: number | null;
     taxaTarifa?: number | null;
+    taxaIof?: number | null;
+    taxaIofAdicional?: number | null;
     _count: { 
         operations: number;
         agreements: number;
@@ -34,6 +36,8 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
     const [taxaFator, setTaxaFator] = useState("");
     const [taxaAdValorem, setTaxaAdValorem] = useState("");
     const [taxaTarifa, setTaxaTarifa] = useState("");
+    const [taxaIof, setTaxaIof] = useState("");
+    const [taxaIofAdicional, setTaxaIofAdicional] = useState("");
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
 
@@ -59,6 +63,8 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
             setTaxaFator(client.taxaFator ? client.taxaFator.toString() : "");
             setTaxaAdValorem(client.taxaAdValorem ? client.taxaAdValorem.toString() : "");
             setTaxaTarifa(client.taxaTarifa ? client.taxaTarifa.toString() : "");
+            setTaxaIof(client.taxaIof ? client.taxaIof.toString() : "");
+            setTaxaIofAdicional(client.taxaIofAdicional ? client.taxaIofAdicional.toString() : "");
         } else {
             setEditingClient(null);
             setName("");
@@ -67,6 +73,8 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
             setTaxaFator("");
             setTaxaAdValorem("");
             setTaxaTarifa("");
+            setTaxaIof("");
+            setTaxaIofAdicional("");
         }
         setConfirmingId(null);
         setIsModalOpen(true);
@@ -83,11 +91,13 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
         const tFator = taxaFator ? parseFloat(taxaFator) : undefined;
         const tAdValorem = taxaAdValorem ? parseFloat(taxaAdValorem) : undefined;
         const tTarifa = taxaTarifa ? parseFloat(taxaTarifa) : undefined;
+        const tIof = taxaIof ? parseFloat(taxaIof) : undefined;
+        const tIofAdicional = taxaIofAdicional ? parseFloat(taxaIofAdicional) : undefined;
 
         if (editingClient) {
-            res = await updateClient(editingClient.id, { name, cnpj, status, representativeId, taxaFator: tFator, taxaAdValorem: tAdValorem, taxaTarifa: tTarifa });
+            res = await updateClient(editingClient.id, { name, cnpj, status, representativeId, taxaFator: tFator, taxaAdValorem: tAdValorem, taxaTarifa: tTarifa, taxaIof: tIof, taxaIofAdicional: tIofAdicional });
         } else {
-            res = await createClient({ name, cnpj, status, representativeId, taxaFator: tFator, taxaAdValorem: tAdValorem, taxaTarifa: tTarifa });
+            res = await createClient({ name, cnpj, status, representativeId, taxaFator: tFator, taxaAdValorem: tAdValorem, taxaTarifa: tTarifa, taxaIof: tIof, taxaIofAdicional: tIofAdicional });
         }
 
         if (!res.success) {
@@ -416,6 +426,17 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Tarifas / XML (R$)</label>
                                     <NumericFormat className="glass-input" value={taxaTarifa} thousandSeparator="." decimalSeparator="," decimalScale={2} placeholder="Ex: 3,50" onValueChange={(v: any) => setTaxaTarifa(v.floatValue !== undefined ? String(v.floatValue) : "")} />
+                                </div>
+                            </div>
+
+                            <div style={{ display: "flex", gap: "1rem" }}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IOF (%)</label>
+                                    <NumericFormat className="glass-input" value={taxaIof} thousandSeparator="." decimalSeparator="," decimalScale={4} placeholder="Ex: 0,38" onValueChange={(v: any) => setTaxaIof(v.floatValue !== undefined ? String(v.floatValue) : "")} />
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IOF Adicional (%)</label>
+                                    <NumericFormat className="glass-input" value={taxaIofAdicional} thousandSeparator="." decimalSeparator="," decimalScale={4} placeholder="Ex: 0,05" onValueChange={(v: any) => setTaxaIofAdicional(v.floatValue !== undefined ? String(v.floatValue) : "")} />
                                 </div>
                             </div>
 
