@@ -11,6 +11,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
     const [clientSearch, setClientSearch] = useState("");
     const [dateSearch, setDateSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [xmlWarning, setXmlWarning] = useState<{ name: string, cnpj: string } | null>(null);
 
     const filteredOperations = initialOperations.filter(op => {
         const matchesClient = op.client.name.toLowerCase().includes(clientSearch.toLowerCase());
@@ -254,6 +255,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
 
     const handleOpenModal = () => {
         setEditingId(null);
+        setXmlWarning(null);
         let initialData = {
             clientId: clients.length > 0 ? clients[0].id : "",
             date: new Date().toISOString().split("T")[0],
@@ -277,6 +279,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
 
     const handleEdit = (op: any) => {
         setEditingId(op.id);
+        setXmlWarning(null);
         const dateStr = new Date(op.date).toISOString().split("T")[0];
         setFormData({
             clientId: op.clientId,
@@ -367,6 +370,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
         if (!files.length) return;
         
         let extractedCedenteName = "";
+        let extractedCedenteCnpj = "";
         let extractedSacados: any[] = [];
 
         Promise.all(files.map(file => {
@@ -381,7 +385,11 @@ export default function OperationTable({ initialOperations, clients, currentUser
                     const emit = xmlDoc.getElementsByTagName("emit")[0];
                     if (emit) {
                         const xNome = emit.getElementsByTagName("xNome")[0]?.textContent || "";
-                        if (!extractedCedenteName) extractedCedenteName = xNome;
+                        const cnpj = emit.getElementsByTagName("CNPJ")[0]?.textContent || "";
+                        if (!extractedCedenteName) {
+                            extractedCedenteName = xNome;
+                            extractedCedenteCnpj = cnpj;
+                        }
                     }
                     
                     const dest = xmlDoc.getElementsByTagName("dest")[0];
@@ -430,7 +438,18 @@ export default function OperationTable({ initialOperations, clients, currentUser
                 reader.readAsText(file);
             });
         })).then(() => {
-            const matchedClient = clients.find(c => c.name.toLowerCase() === extractedCedenteName.toLowerCase() || (extractedCedenteName && c.name.toLowerCase().includes(extractedCedenteName.toLowerCase())));
+            const cleanCnpj = extractedCedenteCnpj.replace(/\D/g, '');
+            const matchedClient = clients.find(c => 
+                (c.cnpj && c.cnpj.replace(/\D/g, '') === cleanCnpj) ||
+                c.name.toLowerCase() === extractedCedenteName.toLowerCase() || 
+                (extractedCedenteName && c.name.toLowerCase().includes(extractedCedenteName.toLowerCase()))
+            );
+
+            if (!matchedClient) {
+                setXmlWarning({ name: extractedCedenteName, cnpj: extractedCedenteCnpj || "Não informado" });
+            } else {
+                setXmlWarning(null);
+            }
             
             setFormData((prev: any) => {
                 const combinedSacados = [...prev.sacados, ...extractedSacados];
@@ -717,6 +736,40 @@ export default function OperationTable({ initialOperations, clients, currentUser
                         <h3 style={{ fontSize: "1.25rem", fontWeight: 600 }}>{editingId ? "Editar Operação" : "Nova Operação"}</h3>
 
                         <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                            {xmlWarning && (
+                                <div style={{
+                                    padding: "1rem",
+                                    backgroundColor: "rgba(239, 68, 68, 0.08)",
+                                    border: "1px solid var(--accent-red)",
+                                    borderRadius: "var(--radius-sm)",
+                                    fontSize: "0.875rem",
+                                    color: "var(--text-primary)",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "0.5rem"
+                                }}>
+                                    <div style={{ fontWeight: 700, color: "var(--accent-red)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                        Cedente Não Encontrado!
+                                    </div>
+                                    <span>
+                                        O emitente do XML <strong>{xmlWarning.name}</strong> {xmlWarning.cnpj !== "Não informado" && <> (CNPJ: {xmlWarning.cnpj})</>} não foi localizado na base de dados de clientes.
+                                    </span>
+                                    <a href="/clientes" target="_blank" rel="noopener noreferrer" style={{
+                                        color: "var(--accent-primary)",
+                                        fontWeight: 700,
+                                        textDecoration: "underline",
+                                        marginTop: "0.25rem",
+                                        alignSelf: "flex-start",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "0.25rem"
+                                    }}>
+                                        Ir para o Cadastro de Cedentes &rarr;
+                                    </a>
+                                </div>
+                            )}
+
                             <div className="form-grid-2">
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Data</label>
@@ -733,17 +786,12 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     }} />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Cedente</label>
-                                        <label style={{ fontSize: "0.75rem", color: "var(--accent-primary)", cursor: "pointer", fontWeight: 600 }}>
-                                            + Importar NFe (XML)
-                                            <input type="file" multiple accept=".xml" style={{ display: "none" }} onChange={handleFileUpload} />
-                                        </label>
-                                    </div>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Cedente</label>
                                     <select required className="glass-input" value={formData.clientId} onChange={e => {
                                         let newState = { ...formData, clientId: e.target.value };
                                         newState = applyClientRates(e.target.value, newState, true);
                                         setFormData(newState);
+                                        setXmlWarning(null);
                                     }}>
                                         {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                     </select>
