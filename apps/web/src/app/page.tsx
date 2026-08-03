@@ -809,9 +809,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
               )}
             </div>
           </div>
+        </div>
 
-          {/* Projections & Client Rankings Section */}
-          <div style={{ padding: "2rem 0", display: "flex", flexDirection: "column", gap: "2.5rem" }}>
+        {/* Projections & Client Rankings Section */}
+        <div style={{ padding: "2rem 0", display: "flex", flexDirection: "column", gap: "2.5rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1.5rem" }}>
               <div>
                 <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--text-primary)" }}>PROJEÇÕES DE FECHAMENTO & DESEMPENHO (2026)</h2>
@@ -989,7 +990,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
             </div>
 
           </div>
-        </div>
       </main>
     </div>
   );
