@@ -475,6 +475,27 @@ export default function OperationTable({ initialOperations, clients, currentUser
         });
     };
 
+    const deleteSacado = (id: string) => {
+        setFormData(prev => {
+            const newSacados = prev.sacados.filter((s: any) => s.id !== id);
+            const totalActiveBruto = newSacados.filter((s: any) => s.active).reduce((sum: number, s: any) => sum + (Number(s.valor)||0), 0);
+            const calcDias = calculatePrazoMedio(newSacados, prev.date);
+            
+            let newState = {
+                ...prev,
+                valorBruto: String(totalActiveBruto),
+                sacados: newSacados,
+                dias: calcDias || prev.dias
+            };
+
+            if (newState.clientId && newState.dias) {
+                newState = applyClientRates(newState.clientId, newState, false);
+            }
+
+            return newState;
+        });
+    };
+
     const toggleTarifa = (id: string) => {
         setFormData(prev => {
             const newList = prev.tarifasList.map((t: any) => t.id === id ? { ...t, active: !t.active } : t);
@@ -529,10 +550,17 @@ export default function OperationTable({ initialOperations, clients, currentUser
                     </div>
                 </div>
                 {isAdminOrManager && (
-                    <div style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: "1.5rem" }}>
+                    <div style={{ width: "100%", display: "flex", justifyContent: "center", gap: "1rem", marginTop: "1.5rem" }}>
                         <button className="btn-primary" onClick={handleOpenModal} style={{ padding: "0.75rem 1.5rem", fontSize: "0.875rem", height: "auto", width: "auto" }}>
                             + Nova Operação
                         </button>
+                        <button className="btn-secondary" onClick={() => document.getElementById('main-xml-uploader')?.click()} style={{ padding: "0.75rem 1.5rem", fontSize: "0.875rem", height: "auto", width: "auto", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            Importar XMLs
+                        </button>
+                        <input id="main-xml-uploader" type="file" multiple accept=".xml" style={{ display: "none" }} onChange={(e) => {
+                            handleOpenModal();
+                            handleFileUpload(e);
+                        }} />
                     </div>
                 )}
             </div>
@@ -736,6 +764,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                                     <th style={{ padding: "0.5rem", fontSize: "0.75rem", color: "var(--text-secondary)" }}>Sacado</th>
                                                     <th style={{ padding: "0.5rem", fontSize: "0.75rem", color: "var(--text-secondary)" }}>Vencimento</th>
                                                     <th style={{ padding: "0.5rem", fontSize: "0.75rem", color: "var(--text-secondary)", textAlign: "right" }}>Valor</th>
+                                                    <th style={{ padding: "0.5rem", width: "45px" }}></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -757,6 +786,28 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                                         </td>
                                                         <td style={{ padding: "0.5rem", fontSize: "0.75rem", fontWeight: 600, color: "var(--text-primary)", textAlign: "right" }}>
                                                             {formatCurrency(s.valor)}
+                                                        </td>
+                                                        <td style={{ padding: "0.5rem", textAlign: "center" }}>
+                                                            <button 
+                                                                type="button" 
+                                                                onClick={() => deleteSacado(s.id)}
+                                                                style={{ 
+                                                                    background: "transparent", 
+                                                                    border: "none", 
+                                                                    cursor: "pointer", 
+                                                                    color: "var(--accent-red)",
+                                                                    padding: "2px",
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    justifyContent: "center"
+                                                                }}
+                                                                title="Excluir parcela"
+                                                            >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                                </svg>
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 ))}
