@@ -15,6 +15,8 @@ export default function OperationTable({ initialOperations, clients, currentUser
     const [activeStepTab, setActiveStepTab] = useState<string>("CONFIRMACAO");
     const [fileUploading, setFileUploading] = useState(false);
     const [fileUploadError, setFileUploadError] = useState("");
+    const [inlineSearchQuery, setInlineSearchQuery] = useState("");
+    const [showInlineSearch, setShowInlineSearch] = useState(false);
 
     const filteredOperations = initialOperations.filter(op => {
         const matchesClient = op.client.name.toLowerCase().includes(clientSearch.toLowerCase());
@@ -1040,9 +1042,15 @@ export default function OperationTable({ initialOperations, clients, currentUser
             </div>
 
             {isModalOpen && (
-                <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
-                    <div className="glass-card" style={{ width: "100%", maxWidth: "800px", padding: "2rem", display: "flex", flexDirection: "column", gap: "1.5rem", maxHeight: "90vh", overflowY: "auto" }}>
-                        <h3 style={{ fontSize: "1.25rem", fontWeight: 600 }}>{editingId ? "Editar Operação" : "Nova Operação"}</h3>
+                <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+                    <div className="glass-card" style={{ width: "100vw", height: "100vh", maxWidth: "100vw", maxHeight: "100vh", padding: "2rem 4rem", display: "flex", flexDirection: "column", gap: "1.5rem", overflowY: "auto", borderRadius: 0, border: "none" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--glass-border-light)", paddingBottom: "1rem" }}>
+                            <h3 style={{ fontSize: "1.5rem", fontWeight: 700 }} className="text-gradient">{editingId ? "Editar Operação" : "Nova Operação"}</h3>
+                            <button type="button" onClick={() => setIsModalOpen(false)} style={{ background: "transparent", border: "none", color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.25rem", fontSize: "0.875rem", fontWeight: 600 }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                Fechar
+                            </button>
+                        </div>
 
                         {editingId ? (
                             <div style={{
@@ -1152,17 +1160,22 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     <span>
                                         O emitente do XML <strong>{xmlWarning.name}</strong> {xmlWarning.cnpj !== "Não informado" && <> (CNPJ: {xmlWarning.cnpj})</>} não foi localizado na base de dados de clientes.
                                     </span>
-                                    <div style={{ display: "flex", gap: "1rem", marginTop: "0.25rem", flexWrap: "wrap" }}>
-                                        <a href="/clientes" target="_blank" rel="noopener noreferrer" style={{
+                                    <div style={{ display: "flex", gap: "1rem", marginTop: "0.25rem", flexWrap: "wrap", alignItems: "center" }}>
+                                        <button type="button" onClick={() => { setShowInlineSearch(prev => !prev); setInlineSearchQuery(""); }} style={{
+                                            background: "transparent",
+                                            border: "none",
                                             color: "var(--accent-primary)",
                                             fontWeight: 700,
                                             textDecoration: "underline",
                                             display: "inline-flex",
                                             alignItems: "center",
-                                            gap: "0.25rem"
+                                            gap: "0.25rem",
+                                            cursor: "pointer",
+                                            fontSize: "0.875rem",
+                                            padding: 0
                                         }}>
                                             🔍 Procurar Cedente
-                                        </a>
+                                        </button>
                                         <span style={{ color: "var(--text-tertiary)" }}>|</span>
                                         <a href="/clientes?action=new" target="_blank" rel="noopener noreferrer" style={{
                                             color: "var(--accent-primary)",
@@ -1175,6 +1188,79 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                             ➕ Cadastrar Cedente
                                         </a>
                                     </div>
+
+                                    {showInlineSearch && (
+                                        <div style={{ marginTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                            <label style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text-secondary)" }}>Pesquisar Cedente Cadastrado:</label>
+                                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                                                <input 
+                                                    type="text" 
+                                                    className="glass-input" 
+                                                    placeholder="Digite o nome ou CNPJ..." 
+                                                    value={inlineSearchQuery} 
+                                                    onChange={e => setInlineSearchQuery(e.target.value)}
+                                                    style={{ flex: 1, padding: "0.4rem 0.75rem", fontSize: "0.8125rem" }}
+                                                    autoFocus
+                                                />
+                                                <button type="button" className="btn-secondary" onClick={() => setShowInlineSearch(false)} style={{ padding: "0.4rem 0.75rem", fontSize: "0.8125rem", height: "auto" }}>
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                            {inlineSearchQuery.trim().length > 0 && (
+                                                <div style={{
+                                                    maxHeight: "150px",
+                                                    overflowY: "auto",
+                                                    backgroundColor: "rgba(0,0,0,0.5)",
+                                                    border: "1px solid var(--glass-border)",
+                                                    borderRadius: "var(--radius-sm)",
+                                                    display: "flex",
+                                                    flexDirection: "column"
+                                                }}>
+                                                    {clients
+                                                        .filter(c => 
+                                                            c.name.toLowerCase().includes(inlineSearchQuery.toLowerCase()) || 
+                                                            (c.cnpj && c.cnpj.includes(inlineSearchQuery))
+                                                        )
+                                                        .map(c => (
+                                                            <button
+                                                                key={c.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    let newState = { ...formData, clientId: c.id };
+                                                                    newState = applyClientRates(c.id, newState, true);
+                                                                    setFormData(newState);
+                                                                    setShowInlineSearch(false);
+                                                                    setXmlWarning(null); // Clear the warning since a client was linked!
+                                                                }}
+                                                                style={{
+                                                                    padding: "0.5rem 0.75rem",
+                                                                    textAlign: "left",
+                                                                    background: "transparent",
+                                                                    border: "none",
+                                                                    borderBottom: "1px solid var(--glass-border-light)",
+                                                                    color: "var(--text-primary)",
+                                                                    cursor: "pointer",
+                                                                    fontSize: "0.8125rem",
+                                                                    transition: "background 0.2s"
+                                                                }}
+                                                                className="hover-row"
+                                                            >
+                                                                <strong>{c.name}</strong> {c.cnpj ? `(CNPJ: ${c.cnpj})` : ""}
+                                                            </button>
+                                                        ))
+                                                    }
+                                                    {clients.filter(c => 
+                                                        c.name.toLowerCase().includes(inlineSearchQuery.toLowerCase()) || 
+                                                        (c.cnpj && c.cnpj.includes(inlineSearchQuery))
+                                                    ).length === 0 && (
+                                                        <span style={{ padding: "0.5rem 0.75rem", fontSize: "0.8125rem", color: "var(--text-tertiary)", fontStyle: "italic" }}>
+                                                            Nenhum cedente localizado com esse termo.
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
