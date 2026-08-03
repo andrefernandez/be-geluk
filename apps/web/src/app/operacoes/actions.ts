@@ -24,6 +24,10 @@ export async function createOperation(data: any) {
                 valorLiquido: data.valorLiquido,
                 recompra: data.recompra,
                 declarada: data.declarada ?? false,
+                status: data.status || "CONFIRMACAO",
+                comprovanteConfirmacao: data.comprovanteConfirmacao || null,
+                comprovanteAssinatura: data.comprovanteAssinatura || null,
+                comprovantePagamento: data.comprovantePagamento || null,
                 sacados: {
                     create: data.sacados?.map((s: any) => ({
                         nome: s.nome,
@@ -73,6 +77,10 @@ export async function updateOperation(id: string, data: any) {
                 valorLiquido: data.valorLiquido,
                 recompra: data.recompra,
                 declarada: data.declarada ?? false,
+                status: data.status || "CONFIRMACAO",
+                comprovanteConfirmacao: data.comprovanteConfirmacao || null,
+                comprovanteAssinatura: data.comprovanteAssinatura || null,
+                comprovantePagamento: data.comprovantePagamento || null,
                 sacados: {
                     deleteMany: {},
                     create: data.sacados?.map((s: any) => ({
@@ -88,5 +96,68 @@ export async function updateOperation(id: string, data: any) {
     } catch (error) {
         console.log(error);
         return { success: false, error: "Erro ao atualizar operação" };
+    }
+}
+
+export async function uploadOperationFile(operationId: string, stage: string, formData: FormData) {
+    try {
+        const file = formData.get("file") as File;
+        if (!file) {
+            return { success: false, error: "Arquivo não enviado." };
+        }
+
+        const { writeFile, mkdir } = require("fs/promises");
+        const { join } = require("path");
+
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+
+        const uploadDir = join(process.cwd(), "public", "uploads", stage);
+        await mkdir(uploadDir, { recursive: true });
+
+        const ext = file.name.split(".").pop();
+        const filename = `${operationId}-${Date.now()}.${ext}`;
+        const filePath = join(uploadDir, filename);
+
+        await writeFile(filePath, buffer);
+
+        const relativePath = `/uploads/${stage}/${filename}`;
+
+        const updateData: any = {};
+        if (stage === "confirmacoes") {
+            updateData.comprovanteConfirmacao = relativePath;
+            updateData.status = "ASSINATURA";
+        } else if (stage === "assinaturas") {
+            updateData.comprovanteAssinatura = relativePath;
+            updateData.status = "PAGAMENTO";
+        } else if (stage === "pagamentos") {
+            updateData.comprovantePagamento = relativePath;
+            updateData.status = "CONCLUIDA";
+        }
+
+        await prisma.operation.update({
+            where: { id: operationId },
+            data: updateData
+        });
+
+        revalidatePath("/operacoes");
+        return { success: true, path: relativePath };
+    } catch (error: any) {
+        console.error("Erro no upload do arquivo:", error);
+        return { success: false, error: error.message || "Erro no upload do arquivo." };
+    }
+}
+
+export async function updateOperationStatus(operationId: string, status: string) {
+    try {
+        await prisma.operation.update({
+            where: { id: operationId },
+            data: { status }
+        });
+        revalidatePath("/operacoes");
+        return { success: true };
+    } catch (error: any) {
+        console.error("Erro ao atualizar status:", error);
+        return { success: false, error: error.message };
     }
 }

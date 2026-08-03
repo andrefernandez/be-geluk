@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { createOperation, deleteOperation, updateOperation } from "./actions";
+import { createOperation, deleteOperation, updateOperation, uploadOperationFile, updateOperationStatus } from "./actions";
 import { NumericFormat } from 'react-number-format';
 
 export default function OperationTable({ initialOperations, clients, currentUserRole, clientHistoryMaxRates, clientLastOperationRate, globalSettings }: { initialOperations: any[], clients: any[], currentUserRole: string, clientHistoryMaxRates?: Record<string, any>, clientLastOperationRate?: Record<string, { percentual: number, percentualAdValorem: number }>, globalSettings?: any }) {
@@ -12,6 +12,9 @@ export default function OperationTable({ initialOperations, clients, currentUser
     const [dateSearch, setDateSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [xmlWarning, setXmlWarning] = useState<{ name: string, cnpj: string } | null>(null);
+    const [activeStepTab, setActiveStepTab] = useState<string>("CONFIRMACAO");
+    const [fileUploading, setFileUploading] = useState(false);
+    const [fileUploadError, setFileUploadError] = useState("");
 
     const filteredOperations = initialOperations.filter(op => {
         const matchesClient = op.client.name.toLowerCase().includes(clientSearch.toLowerCase());
@@ -20,6 +23,230 @@ export default function OperationTable({ initialOperations, clients, currentUser
     });
 
     const operations = filteredOperations;
+
+    const renderStatusBadge = (status: string) => {
+        const statusStyles: Record<string, { label: string, bg: string, color: string }> = {
+            CONFIRMACAO: { label: "1. Confirmação", bg: "rgba(245, 158, 11, 0.1)", color: "#f59e0b" },
+            ASSINATURA: { label: "2. Assinatura", bg: "rgba(249, 115, 22, 0.1)", color: "#f97316" },
+            PAGAMENTO: { label: "3. Envio $", bg: "rgba(59, 130, 246, 0.1)", color: "#3b82f6" },
+            CONCLUIDA: { label: "✔ Concluída", bg: "rgba(16, 185, 129, 0.1)", color: "#10b981" }
+        };
+        const style = statusStyles[status] || { label: "1. Confirmação", bg: "rgba(245, 158, 11, 0.1)", color: "#f59e0b" };
+        return (
+            <span style={{
+                padding: "0.25rem 0.6rem",
+                borderRadius: "9999px",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                backgroundColor: style.bg,
+                color: style.color,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.25rem"
+            }}>
+                {style.label}
+            </span>
+        );
+    };
+
+    const steps = [
+        { key: "CONFIRMACAO", label: "1. Confirmação", stage: "confirmacoes", pathKey: "comprovanteConfirmacao", desc: "Confirmação da operação com o sacado (e-mail, ligação, WhatsApp, etc.)." },
+        { key: "ASSINATURA", label: "2. Assinatura", stage: "assinaturas", pathKey: "comprovanteAssinatura", desc: "Coleta de assinaturas do contrato/aditivo gerado." },
+        { key: "PAGAMENTO", label: "3. Envio do $", stage: "pagamentos", pathKey: "comprovantePagamento", desc: "Pagamento ao cedente (TED ou PIX) e envio do comprovante bancário." },
+        { key: "CONCLUIDA", label: "4. Concluída", stage: null, pathKey: null, desc: "Operação liquidada e finalizada com sucesso." }
+    ];
+
+    const isStepCompleted = (stepKey: string, currentStatus: string) => {
+        const order = ["CONFIRMACAO", "ASSINATURA", "PAGAMENTO", "CONCLUIDA"];
+        const stepIndex = order.indexOf(stepKey);
+        const currentIndex = order.indexOf(currentStatus);
+        return stepIndex < currentIndex;
+    };
+
+    const handleStepUpload = async (stage: string, file: File) => {
+        if (!editingId) return;
+        setFileUploading(true);
+        setFileUploadError("");
+        try {
+            const formDataObj = new FormData();
+            formDataObj.append("file", file);
+            const res = await uploadOperationFile(editingId, stage, formDataObj);
+            if (res.success && res.path) {
+                setFormData(prev => {
+                    const updateData: any = { ...prev };
+                    if (stage === "confirmacoes") {
+                        updateData.comprovanteConfirmacao = res.path;
+                        updateData.status = "ASSINATURA";
+                        setActiveStepTab("ASSINATURA");
+                    } else if (stage === "assinaturas") {
+                        updateData.comprovanteAssinatura = res.path;
+                        updateData.status = "PAGAMENTO";
+                        setActiveStepTab("PAGAMENTO");
+                    } else if (stage === "pagamentos") {
+                        updateData.comprovantePagamento = res.path;
+                        updateData.status = "CONCLUIDA";
+                        setActiveStepTab("CONCLUIDA");
+                    }
+                    return updateData;
+                });
+            } else {
+                setFileUploadError(res.error || "Erro ao fazer upload do arquivo.");
+            }
+        } catch (err: any) {
+            setFileUploadError(err.message || "Erro de conexão.");
+        } finally {
+            setFileUploading(false);
+        }
+    };
+
+    const handleStatusUpdate = async (newStatus: string) => {
+        if (!editingId) return;
+        setLoading(true);
+        try {
+            const res = await updateOperationStatus(editingId, newStatus);
+            if (res.success) {
+                setFormData(prev => ({ ...prev, status: newStatus }));
+                setActiveStepTab(newStatus);
+            } else {
+                alert(res.error || "Erro ao atualizar status.");
+            }
+        } catch (err: any) {
+            alert(err.message || "Erro de conexão.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const renderStepPanel = () => {
+        const step = steps.find(s => s.key === activeStepTab);
+        if (!step) return null;
+
+        const currentStatus = formData.status || "CONFIRMACAO";
+        const isCompleted = isStepCompleted(step.key, currentStatus);
+        const isActive = currentStatus === step.key;
+        const docPath = (formData as any)[step.pathKey || ""];
+
+        return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div>
+                        <h4 style={{ fontSize: "0.875rem", fontWeight: 700, color: "var(--text-primary)" }}>{step.label}</h4>
+                        <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "0.25rem" }}>{step.desc}</p>
+                    </div>
+                    {isCompleted ? (
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--accent-primary)", display: "flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.5rem", backgroundColor: "rgba(16, 185, 129, 0.05)", borderRadius: "var(--radius-sm)" }}>
+                            ✔ Concluída
+                        </span>
+                    ) : isActive ? (
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#f59e0b", display: "flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.5rem", backgroundColor: "rgba(245, 158, 11, 0.05)", borderRadius: "var(--radius-sm)" }}>
+                            ⌛ Aguardando Ação
+                        </span>
+                    ) : (
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", padding: "0.25rem 0.5rem", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "var(--radius-sm)" }}>
+                            Aguardando etapas anteriores
+                        </span>
+                    )}
+                </div>
+
+                {step.pathKey && (
+                    <div style={{
+                        padding: "0.75rem",
+                        backgroundColor: "rgba(255,255,255,0.02)",
+                        border: "1px dashed var(--glass-border)",
+                        borderRadius: "var(--radius-sm)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.75rem"
+                    }}>
+                        {docPath ? (
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Comprovante anexado</span>
+                                </div>
+                                <a href={docPath} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{
+                                    padding: "0.25rem 0.5rem",
+                                    fontSize: "0.75rem",
+                                    height: "auto",
+                                    textDecoration: "none",
+                                    display: "inline-flex",
+                                    alignItems: "center"
+                                }}>
+                                    Visualizar Documento
+                                </a>
+                            </div>
+                        ) : (
+                            <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", fontStyle: "italic" }}>
+                                Nenhum comprovante anexado ainda.
+                            </span>
+                        )}
+
+                        {isActive && (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "0.25rem" }}>
+                                <label style={{
+                                    padding: "0.5rem 0.75rem",
+                                    backgroundColor: "rgba(16, 185, 129, 0.1)",
+                                    color: "var(--accent-primary)",
+                                    border: "1px solid var(--accent-primary)",
+                                    borderRadius: "var(--radius-sm)",
+                                    fontSize: "0.75rem",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    textAlign: "center",
+                                    display: "inline-block",
+                                    transition: "all var(--transition-fast)"
+                                }}>
+                                    {fileUploading ? "Enviando arquivo..." : "Anexar Comprovante"}
+                                    <input
+                                        type="file"
+                                        accept=".pdf,image/*,.doc,.docx"
+                                        disabled={fileUploading}
+                                        style={{ display: "none" }}
+                                        onChange={e => {
+                                            const file = e.target.files?.[0];
+                                            if (file) handleStepUpload(step.stage!, file);
+                                        }}
+                                    />
+                                </label>
+                                {fileUploadError && (
+                                    <span style={{ fontSize: "0.75rem", color: "var(--accent-red)" }}>{fileUploadError}</span>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {editingId && (
+                    <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", flexWrap: "wrap" }}>
+                        {step.key !== "CONCLUIDA" && isActive && (
+                            <button
+                                type="button"
+                                className="btn-primary"
+                                style={{ padding: "0.35rem 0.75rem", fontSize: "0.75rem", height: "auto" }}
+                                onClick={() => {
+                                    const order = ["CONFIRMACAO", "ASSINATURA", "PAGAMENTO", "CONCLUIDA"];
+                                    const nextStatus = order[order.indexOf(step.key) + 1];
+                                    handleStatusUpdate(nextStatus);
+                                }}
+                            >
+                                Avançar Etapa sem Comprovante
+                            </button>
+                        )}
+                        {!isActive && (
+                            <button
+                                type="button"
+                                className="btn-secondary"
+                                style={{ padding: "0.35rem 0.75rem", fontSize: "0.75rem", height: "auto" }}
+                                onClick={() => handleStatusUpdate(step.key)}
+                            >
+                                Definir Operação Nesta Etapa
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     const toggleSelection = (id: string) => {
         const newSet = new Set(selectedIds);
@@ -50,6 +277,10 @@ export default function OperationTable({ initialOperations, clients, currentUser
         valorLiquido: "",
         recompra: "",
         declarada: true,
+        status: "CONFIRMACAO",
+        comprovanteConfirmacao: "",
+        comprovanteAssinatura: "",
+        comprovantePagamento: "",
         sacados: [] as any[],
         tarifasList: globalSettings?.defaultTarifas && globalSettings.defaultTarifas.length > 0 ? globalSettings.defaultTarifas : [
             { id: '1', nome: "Entrada de título", valor: "85", active: false },
@@ -263,7 +494,9 @@ export default function OperationTable({ initialOperations, clients, currentUser
             date: new Date().toISOString().split("T")[0],
             valorBruto: "", fator: "", percentual: "", percentualPrazo: "", dias: "",
             tarifas: "", percentualTarifas: "", adValorem: "", percentualAdValorem: "",
-            irpj: "", iof: "", percentualIof: "", iofAdicional: "", percentualIofAdicional: "", valorLiquido: "", recompra: "", declarada: true, sacados: [],
+            irpj: "", iof: "", percentualIof: "", iofAdicional: "", percentualIofAdicional: "", valorLiquido: "", recompra: "", declarada: true,
+            status: "CONFIRMACAO", comprovanteConfirmacao: "", comprovanteAssinatura: "", comprovantePagamento: "",
+            sacados: [],
             tarifasList: globalSettings?.defaultTarifas && globalSettings.defaultTarifas.length > 0 ? globalSettings.defaultTarifas : [
                 { id: '1', nome: "Entrada de título", valor: "85", active: false },
                 { id: '2', nome: "Instrução bancária de título", valor: "10", active: false },
@@ -276,6 +509,8 @@ export default function OperationTable({ initialOperations, clients, currentUser
         if (initialData.clientId) initialData = applyClientRates(initialData.clientId, initialData, true);
         
         setFormData(initialData);
+        setActiveStepTab("CONFIRMACAO");
+        setFileUploadError("");
         setIsModalOpen(true);
     };
 
@@ -303,6 +538,10 @@ export default function OperationTable({ initialOperations, clients, currentUser
             valorLiquido: op.valorLiquido?.toString() || "",
             recompra: op.recompra?.toString() || "",
             declarada: op.declarada ?? false,
+            status: op.status || "CONFIRMACAO",
+            comprovanteConfirmacao: op.comprovanteConfirmacao || "",
+            comprovanteAssinatura: op.comprovanteAssinatura || "",
+            comprovantePagamento: op.comprovantePagamento || "",
             sacados: op.sacados.map((s:any) => ({...s, active: true})) || [],
             tarifasList: [
                 { id: '1', nome: "Entrada de título", valor: "85", active: false },
@@ -313,6 +552,8 @@ export default function OperationTable({ initialOperations, clients, currentUser
                 { id: '6', nome: "Tarifa de contrato", valor: "200", active: false }
             ]
         });
+        setActiveStepTab(op.status || "CONFIRMACAO");
+        setFileUploadError("");
         setIsModalOpen(true);
     };
 
@@ -673,6 +914,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                         <tr style={{ borderBottom: "1px solid var(--glass-border-light)", fontSize: "0.75rem", textTransform: "uppercase" }}>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Data</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Cedente</th>
+                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Etapa</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, borderLeft: "1px dashed var(--glass-border)" }}>Bruto Operação</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Fator</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Dias</th>
@@ -690,6 +932,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                             <tr key={op.id} onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) toggleSelection(op.id); }} style={{ cursor: "pointer", backgroundColor: selectedIds.has(op.id) ? "rgba(16, 185, 129, 0.1)" : "transparent", borderBottom: "1px solid var(--glass-border)", transition: "background var(--transition-fast)", fontSize: "0.875rem" }} className="hover-row">
                                 <td style={{ padding: "0.75rem 1rem", color: "var(--text-secondary)" }}>{new Date(op.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</td>
                                 <td style={{ padding: "0.75rem 1rem", fontWeight: 500 }}>{op.client.name}</td>
+                                <td style={{ padding: "0.75rem 1rem" }}>{renderStatusBadge(op.status)}</td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(op.valorBruto)}</td>
                                 <td style={{ padding: "0.75rem 1rem", color: "var(--text-tertiary)" }}>{formatCurrency(op.fator)}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{op.dias}</td>
@@ -713,7 +956,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                     {operations.length > 0 && (
                         <tfoot>
                             <tr style={{ borderTop: "2px solid var(--glass-border)", fontWeight: 600 }}>
-                                <td style={{ padding: "0.75rem 1rem" }} colSpan={2}>Total</td>
+                                <td style={{ padding: "0.75rem 1rem" }} colSpan={3}>Total</td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(sumColumn("valorBruto"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("fator"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{calculateAverageDays().toFixed(1)} d</td>
@@ -727,7 +970,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                             </tr>
                             {selectedIds.size > 0 && (
                                 <tr style={{ borderTop: "1px dashed var(--glass-border)", fontWeight: 600, backgroundColor: "rgba(16, 185, 129, 0.05)" }}>
-                                    <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }} colSpan={2}>Sel. ({selectedIds.size} itens)</td>
+                                    <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }} colSpan={3}>Sel. ({selectedIds.size} itens)</td>
                                     <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("valorBruto", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("fator", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{calculateAverageDays(true).toFixed(1)} d</td>
@@ -748,8 +991,9 @@ export default function OperationTable({ initialOperations, clients, currentUser
             <div className="mobile-only" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 {operations.map(op => (
                     <div key={op.id} className="glass-card" onClick={() => isAdminOrManager && handleEdit(op)} style={{ padding: "1.25rem", cursor: isAdminOrManager ? "pointer" : "default", display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                        <div style={{ display: "flex", flexDirection: "column" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <span style={{ fontSize: "0.875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Cedente: {op.client.name}</span>
+                            {renderStatusBadge(op.status)}
                         </div>
                         <div style={{ display: "flex", flexDirection: "column" }}>
                             <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Data: {new Date(op.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</span>
@@ -771,6 +1015,94 @@ export default function OperationTable({ initialOperations, clients, currentUser
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
                     <div className="glass-card" style={{ width: "100%", maxWidth: "800px", padding: "2rem", display: "flex", flexDirection: "column", gap: "1.5rem", maxHeight: "90vh", overflowY: "auto" }}>
                         <h3 style={{ fontSize: "1.25rem", fontWeight: 600 }}>{editingId ? "Editar Operação" : "Nova Operação"}</h3>
+
+                        {editingId ? (
+                            <div style={{
+                                padding: "1.25rem",
+                                backgroundColor: "rgba(255, 255, 255, 0.02)",
+                                border: "1px solid var(--glass-border)",
+                                borderRadius: "var(--radius-md)",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "1rem"
+                            }}>
+                                <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-secondary)" }}>Etapas da Operação</span>
+                                
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", padding: "0 0.5rem" }}>
+                                    <div style={{
+                                        position: "absolute",
+                                        top: "50%",
+                                        left: "2rem",
+                                        right: "2rem",
+                                        height: "2px",
+                                        backgroundColor: "var(--glass-border)",
+                                        zIndex: 1,
+                                        transform: "translateY(-50%)"
+                                    }} />
+                                    
+                                    {steps.map((st, idx) => {
+                                        const isCompleted = isStepCompleted(st.key, formData.status || "CONFIRMACAO");
+                                        const isActive = (formData.status || "CONFIRMACAO") === st.key;
+                                        const isSelected = activeStepTab === st.key;
+                                        
+                                        return (
+                                            <div key={st.key} style={{
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                alignItems: "center",
+                                                gap: "0.25rem",
+                                                zIndex: 2,
+                                                cursor: "pointer"
+                                            }} onClick={() => setActiveStepTab(st.key)}>
+                                                <div style={{
+                                                    width: "2.25rem",
+                                                    height: "2.25rem",
+                                                    borderRadius: "50%",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    fontSize: "0.875rem",
+                                                    fontWeight: 700,
+                                                    border: `2px solid ${isSelected ? "var(--accent-primary)" : isActive ? "var(--accent-primary)" : isCompleted ? "var(--accent-primary)" : "var(--glass-border)"}`,
+                                                    backgroundColor: isCompleted ? "var(--accent-primary)" : isSelected ? "rgba(16, 185, 129, 0.2)" : isActive ? "rgba(16, 185, 129, 0.1)" : "var(--bg-secondary)",
+                                                    color: isCompleted ? "#000" : isSelected || isActive ? "var(--accent-primary)" : "var(--text-tertiary)",
+                                                    transition: "all var(--transition-fast)"
+                                                }}>
+                                                    {isCompleted ? "✔" : idx + 1}
+                                                </div>
+                                                <span style={{
+                                                    fontSize: "0.75rem",
+                                                    fontWeight: isSelected || isActive ? 700 : 500,
+                                                    color: isSelected || isActive ? "var(--text-primary)" : "var(--text-secondary)"
+                                                }}>{st.label.split(". ")[1]}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div style={{
+                                    padding: "1rem",
+                                    backgroundColor: "rgba(255,255,255,0.01)",
+                                    border: "1px dashed var(--glass-border)",
+                                    borderRadius: "var(--radius-sm)",
+                                    marginTop: "0.5rem"
+                                }}>
+                                    {renderStepPanel()}
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={{
+                                padding: "1rem",
+                                backgroundColor: "rgba(255, 255, 255, 0.01)",
+                                border: "1px dashed var(--glass-border)",
+                                borderRadius: "var(--radius-md)",
+                                fontSize: "0.75rem",
+                                color: "var(--text-tertiary)",
+                                textAlign: "center"
+                            }}>
+                                💡 Após salvar esta nova operação, você poderá anexar os comprovantes das etapas de Confirmação, Assinatura e Envio do $.
+                            </div>
+                        )}
 
                         <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                             {xmlWarning && (
