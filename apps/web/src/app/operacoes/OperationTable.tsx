@@ -159,21 +159,49 @@ export default function OperationTable({ initialOperations, clients, currentUser
                         gap: "0.75rem"
                     }}>
                         {docPath ? (
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Comprovante anexado</span>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                        <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Comprovante anexado</span>
+                                    </div>
+                                    <a href={docPath} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{
+                                        padding: "0.25rem 0.5rem",
+                                        fontSize: "0.75rem",
+                                        height: "auto",
+                                        textDecoration: "none",
+                                        display: "inline-flex",
+                                        alignItems: "center"
+                                    }}>
+                                        Visualizar Tela Cheia &rarr;
+                                    </a>
                                 </div>
-                                <a href={docPath} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{
-                                    padding: "0.25rem 0.5rem",
-                                    fontSize: "0.75rem",
-                                    height: "auto",
-                                    textDecoration: "none",
-                                    display: "inline-flex",
-                                    alignItems: "center"
-                                }}>
-                                    Visualizar Documento
-                                </a>
+                                
+                                {/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(docPath) && (
+                                    <div style={{
+                                        position: "relative",
+                                        width: "100%",
+                                        maxHeight: "300px",
+                                        overflow: "hidden",
+                                        borderRadius: "var(--radius-sm)",
+                                        border: "1px solid var(--glass-border)",
+                                        backgroundColor: "rgba(0,0,0,0.2)",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center"
+                                    }}>
+                                        <img 
+                                            src={docPath} 
+                                            alt="Comprovante" 
+                                            style={{ 
+                                                maxWidth: "100%", 
+                                                maxHeight: "300px", 
+                                                objectFit: "contain",
+                                                display: "block"
+                                            }} 
+                                        />
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", fontStyle: "italic" }}>
