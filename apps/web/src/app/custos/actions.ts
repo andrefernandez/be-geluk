@@ -11,6 +11,8 @@ export async function createCost(formData: FormData) {
         const type = (formData.get("type") as string) || "GERAL";
         const category = formData.get("category") as string;
         const barcode = formData.get("barcode") as string;
+        const paymentMethod = formData.get("paymentMethod") as string;
+        const pixKey = formData.get("pixKey") as string;
         const file = formData.get("file") as File | null;
 
         const amount = parseFloat(amountStr) || 0;
@@ -24,6 +26,8 @@ export async function createCost(formData: FormData) {
                 category,
                 type,
                 barcode: barcode || null,
+                paymentMethod: paymentMethod || null,
+                pixKey: pixKey || null,
             },
         });
 
@@ -67,6 +71,8 @@ export async function updateCost(id: string, formData: FormData) {
         const type = (formData.get("type") as string) || "GERAL";
         const category = formData.get("category") as string;
         const barcode = formData.get("barcode") as string;
+        const paymentMethod = formData.get("paymentMethod") as string;
+        const pixKey = formData.get("pixKey") as string;
         const file = formData.get("file") as File | null;
         const removeAttachment = formData.get("removeAttachment") === "true";
 
@@ -107,6 +113,8 @@ export async function updateCost(id: string, formData: FormData) {
                 category,
                 type,
                 barcode: barcode || null,
+                paymentMethod: paymentMethod || null,
+                pixKey: pixKey || null,
                 ...(attachmentPath !== undefined ? { attachment: attachmentPath } : {})
             },
         });
