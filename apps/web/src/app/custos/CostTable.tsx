@@ -11,6 +11,8 @@ type Cost = {
     date: Date;
     category: string;
     type: string;
+    barcode?: string | null;
+    attachment?: string | null;
 };
 
 export default function CostTable({ initialCosts, currentUserRole }: { initialCosts: Cost[], currentUserRole: string }) {
@@ -33,7 +35,9 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
         return toSum.reduce((acc, c) => acc + Math.round((Number(c.amount) || 0) * 100), 0) / 100;
     };
 
-    const [formData, setFormData] = useState({ name: "", amount: "", date: new Date().toISOString().split("T")[0], category: "FIXO", type: "GERAL" });
+    const [formData, setFormData] = useState({ name: "", amount: "", date: new Date().toISOString().split("T")[0], category: "FIXO", type: "GERAL", barcode: "", attachment: "" });
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [removeAttachment, setRemoveAttachment] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const isAdminOrManager = currentUserRole === "ADMIN" || currentUserRole === "MANAGER";
@@ -43,6 +47,8 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
     };
 
     const handleOpenModal = (cost?: Cost) => {
+        setSelectedFile(null);
+        setRemoveAttachment(false);
         if (cost) {
             setEditingCost(cost);
             setFormData({
@@ -50,11 +56,21 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                 amount: String(cost.amount),
                 date: new Date(cost.date).toISOString().split("T")[0],
                 category: cost.category,
-                type: cost.type
+                type: cost.type,
+                barcode: cost.barcode || "",
+                attachment: cost.attachment || ""
             });
         } else {
             setEditingCost(null);
-            setFormData({ name: "", amount: "", date: new Date().toISOString().split("T")[0], category: "FIXO", type: "GERAL" });
+            setFormData({
+                name: "",
+                amount: "",
+                date: new Date().toISOString().split("T")[0],
+                category: "FIXO",
+                type: "GERAL",
+                barcode: "",
+                attachment: ""
+            });
         }
         setIsModalOpen(true);
     };
@@ -63,17 +79,25 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
         e.preventDefault();
         setLoading(true);
 
-        const dataToSave = {
-            ...formData,
-            amount: Number(formData.amount),
-            date: new Date(formData.date),
-        };
+        const formDataObj = new FormData();
+        formDataObj.append("name", formData.name);
+        formDataObj.append("amount", formData.amount);
+        formDataObj.append("date", formData.date);
+        formDataObj.append("category", formData.category);
+        formDataObj.append("type", formData.type);
+        formDataObj.append("barcode", formData.barcode);
+        if (selectedFile) {
+            formDataObj.append("file", selectedFile);
+        }
+        if (editingCost && removeAttachment) {
+            formDataObj.append("removeAttachment", "true");
+        }
 
         let result;
         if (editingCost) {
-            result = await updateCost(editingCost.id, dataToSave);
+            result = await updateCost(editingCost.id, formDataObj);
         } else {
-            result = await createCost(dataToSave);
+            result = await createCost(formDataObj);
         }
 
         if (result && result.success) {
@@ -142,7 +166,22 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
 
                             return (
                                 <tr key={cost.id} style={{ borderBottom: "1px solid var(--glass-border)", transition: "background var(--transition-fast)" }} className="hover-row">
-                                    <td style={{ padding: "1rem", fontWeight: 500 }}>{cost.name} <br /><span style={{ fontSize: '0.75rem', color: "var(--text-tertiary)" }}>{cost.type}</span></td>
+                                    <td style={{ padding: "1rem", fontWeight: 500 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                            <span>{cost.name}</span>
+                                            {cost.attachment && (
+                                                <a href={cost.attachment} target="_blank" rel="noopener noreferrer" title="Visualizar Comprovante/Anexo" style={{ display: "inline-flex", alignItems: "center", color: "var(--accent-primary)", textDecoration: "none" }}>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                                                </a>
+                                            )}
+                                        </div>
+                                        {cost.barcode && (
+                                            <span style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "0.25rem" }}>
+                                                Boleto: <code style={{ backgroundColor: "rgba(255,255,255,0.05)", padding: "0.1rem 0.25rem", borderRadius: "2px" }}>{cost.barcode}</code>
+                                            </span>
+                                        )}
+                                        <span style={{ fontSize: '0.75rem', color: "var(--text-tertiary)", display: "block", marginTop: "0.15rem" }}>{cost.type}</span>
+                                    </td>
                                     <td style={{ padding: "1rem" }}>
                                         <span style={{
                                             backgroundColor: categoryBg,
@@ -213,7 +252,19 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                         <div key={cost.id} className="glass-card" onClick={() => isAdminOrManager && handleOpenModal(cost)} style={{ padding: "1.25rem", cursor: isAdminOrManager ? "pointer" : "default" }}>
                             <div className="flex-between" style={{ alignItems: "flex-start", marginBottom: "0.75rem" }}>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                                    <span style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-primary)" }}>{cost.name}</span>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                        <span style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-primary)" }}>{cost.name}</span>
+                                        {cost.attachment && (
+                                            <a href={cost.attachment} onClick={e => e.stopPropagation()} target="_blank" rel="noopener noreferrer" title="Visualizar Comprovante/Anexo" style={{ display: "inline-flex", alignItems: "center", color: "var(--accent-primary)" }}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                                            </a>
+                                        )}
+                                    </div>
+                                    {cost.barcode && (
+                                        <span style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "0.1rem" }}>
+                                            Boleto: <code style={{ backgroundColor: "rgba(255,255,255,0.05)", padding: "0.1rem 0.25rem", borderRadius: "2px" }}>{cost.barcode}</code>
+                                        </span>
+                                    )}
                                     <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>{new Date(cost.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</span>
                                 </div>
                                 <span style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text-primary)" }}>{formatCurrency(cost.amount)}</span>
@@ -287,6 +338,36 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                                             <option value="INVESTIDORES">Investidores</option>
                                         </select>
                                     </div>
+                                </div>
+
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Linha Digitável do Boleto</label>
+                                    <input className="glass-input" value={formData.barcode} onChange={e => setFormData({ ...formData, barcode: e.target.value })} placeholder="Ex: 34191.79001 01043.513184..." />
+                                </div>
+
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Comprovante / Anexo (PDF ou Imagem)</label>
+                                    {formData.attachment && !removeAttachment ? (
+                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.5rem", backgroundColor: "rgba(255, 255, 255, 0.02)", border: "1px dashed var(--glass-border)", borderRadius: "var(--radius-sm)" }}>
+                                            <a href={formData.attachment} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.75rem", color: "var(--accent-primary)", display: "inline-flex", alignItems: "center", gap: "0.25rem", textDecoration: "underline" }}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                                                Visualizar Anexo Atual
+                                            </a>
+                                            <button type="button" onClick={() => setRemoveAttachment(true)} style={{ background: "transparent", border: "none", color: "var(--accent-red)", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600 }}>
+                                                Remover Anexo
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <input type="file" accept="image/*,application/pdf" onChange={e => setSelectedFile(e.target.files ? e.target.files[0] : null)} style={{
+                                            fontSize: "0.75rem",
+                                            color: "var(--text-secondary)",
+                                            backgroundColor: "rgba(255, 255, 255, 0.01)",
+                                            border: "1px dashed var(--glass-border)",
+                                            padding: "0.5rem",
+                                            borderRadius: "var(--radius-sm)",
+                                            cursor: "pointer"
+                                        }} />
+                                    )}
                                 </div>
 
                                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1rem" }}>

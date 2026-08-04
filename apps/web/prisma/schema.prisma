@@ -73,6 +73,8 @@ model Cost {
   date      DateTime
   type      String
   category  String
+  barcode   String?
+  attachment String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
