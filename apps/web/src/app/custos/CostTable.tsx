@@ -128,19 +128,12 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
         }
     };
 
-    const handleExportExcel = () => {
-        // Read the month parameter from URL to matching export
-        const params = new URLSearchParams(window.location.search);
-        let month = params.get("month");
-        
-        // If no month in URL, try to get from cookies pattern or default
-        if (!month) {
-            const match = document.cookie.match(/(^| )selectedMonth=([^;]+)/);
-            if (match) month = match[2];
+    const toggleSelectAll = () => {
+        if (selectedIds.size === costs.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(costs.map(c => c.id)));
         }
-
-        const url = `/api/export${month ? "?month=" + month : ""}`;
-        window.location.href = url;
     };
 
     return (
@@ -148,9 +141,8 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
                 <h2 style={{ fontSize: "1.25rem", fontWeight: 600 }}>Lançamentos</h2>
                 <div style={{ display: "flex", gap: "0.75rem" }}>
-                    <button className="btn-secondary" onClick={handleExportExcel} style={{ padding: "0.5rem 1rem", fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        Exportar Excel
+                    <button type="button" className="btn-secondary" onClick={toggleSelectAll} style={{ padding: "0.5rem 1rem", fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        {selectedIds.size === costs.length && costs.length > 0 ? "Desmarcar Todos" : "Selecionar Todos"}
                     </button>
                     {isAdminOrManager && (
                         <button className="btn-primary" onClick={() => handleOpenModal()} style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }}>
