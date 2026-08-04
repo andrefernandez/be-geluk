@@ -15,6 +15,7 @@ type Cost = {
     attachment?: string | null;
     paymentMethod?: string | null;
     pixKey?: string | null;
+    paid?: boolean;
 };
 
 export default function CostTable({ initialCosts, currentUserRole }: { initialCosts: Cost[], currentUserRole: string }) {
@@ -37,7 +38,7 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
         return toSum.reduce((acc, c) => acc + Math.round((Number(c.amount) || 0) * 100), 0) / 100;
     };
 
-    const [formData, setFormData] = useState({ name: "", amount: "", date: new Date().toISOString().split("T")[0], category: "FIXO", type: "GERAL", barcode: "", attachment: "", paymentMethod: "BOLETO", pixKey: "" });
+    const [formData, setFormData] = useState({ name: "", amount: "", date: new Date().toISOString().split("T")[0], category: "FIXO", type: "GERAL", barcode: "", attachment: "", paymentMethod: "BOLETO", pixKey: "", paid: false });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [removeAttachment, setRemoveAttachment] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -62,7 +63,8 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                 barcode: cost.barcode || "",
                 attachment: cost.attachment || "",
                 paymentMethod: cost.paymentMethod || "BOLETO",
-                pixKey: cost.pixKey || ""
+                pixKey: cost.pixKey || "",
+                paid: cost.paid || false
             });
         } else {
             setEditingCost(null);
@@ -75,7 +77,8 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                 barcode: "",
                 attachment: "",
                 paymentMethod: "BOLETO",
-                pixKey: ""
+                pixKey: "",
+                paid: false
             });
         }
         setIsModalOpen(true);
@@ -94,6 +97,7 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
         formDataObj.append("barcode", formData.barcode);
         formDataObj.append("paymentMethod", formData.paymentMethod);
         formDataObj.append("pixKey", formData.pixKey);
+        formDataObj.append("paid", String(formData.paid));
         if (selectedFile) {
             formDataObj.append("file", selectedFile);
         }
@@ -195,16 +199,29 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                                         <span style={{ fontSize: '0.75rem', color: "var(--text-tertiary)", display: "block", marginTop: "0.15rem" }}>{cost.type}</span>
                                     </td>
                                     <td style={{ padding: "1rem" }}>
-                                        <span style={{
-                                            backgroundColor: categoryBg,
-                                            color: categoryColor,
-                                            padding: "0.25rem 0.5rem",
-                                            borderRadius: "var(--radius-sm)",
-                                            fontSize: "0.75rem",
-                                            border: `1px solid ${categoryColor}`
-                                        }}>
-                                            {cost.category}
-                                        </span>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                            <span style={{
+                                                backgroundColor: categoryBg,
+                                                color: categoryColor,
+                                                padding: "0.25rem 0.5rem",
+                                                borderRadius: "var(--radius-sm)",
+                                                fontSize: "0.75rem",
+                                                border: `1px solid ${categoryColor}`
+                                            }}>
+                                                {cost.category}
+                                            </span>
+                                            <span style={{
+                                                backgroundColor: cost.paid ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)",
+                                                color: cost.paid ? "var(--accent-primary)" : "var(--accent-orange)",
+                                                padding: "0.25rem 0.5rem",
+                                                borderRadius: "var(--radius-sm)",
+                                                fontSize: "0.75rem",
+                                                fontWeight: 600,
+                                                border: `1px solid ${cost.paid ? "var(--accent-primary)" : "var(--accent-orange)"}`
+                                            }}>
+                                                {cost.paid ? "PAGO" : "PENDENTE"}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td style={{ padding: "1rem", color: "var(--text-secondary)" }}>
                                         {new Date(cost.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}
@@ -287,11 +304,24 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                                 </div>
                                 <span style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text-primary)" }}>{formatCurrency(cost.amount)}</span>
                             </div>
-                            <div className="flex-between">
-                                <span style={{ backgroundColor: categoryBg, color: categoryColor, padding: "0.25rem 0.5rem", borderRadius: "100px", fontSize: "0.65rem", fontWeight: 700, border: `1px solid ${categoryColor}40` }}>
-                                    {cost.category}
-                                </span>
-                            </div>
+                             <div className="flex-between">
+                                 <div style={{ display: "flex", gap: "0.5rem" }}>
+                                     <span style={{ backgroundColor: categoryBg, color: categoryColor, padding: "0.25rem 0.5rem", borderRadius: "100px", fontSize: "0.65rem", fontWeight: 700, border: `1px solid ${categoryColor}40` }}>
+                                         {cost.category}
+                                     </span>
+                                     <span style={{
+                                         backgroundColor: cost.paid ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)",
+                                         color: cost.paid ? "var(--accent-primary)" : "var(--accent-orange)",
+                                         padding: "0.25rem 0.5rem",
+                                         borderRadius: "100px",
+                                         fontSize: "0.65rem",
+                                         fontWeight: 700,
+                                         border: `1px solid ${cost.paid ? "var(--accent-primary)" : "var(--accent-orange)"}40`
+                                     }}>
+                                         {cost.paid ? "PAGO" : "PENDENTE"}
+                                     </span>
+                                 </div>
+                             </div>
                         </div>
                     );
                 })}
@@ -379,6 +409,19 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                                         <input className="glass-input" value={formData.pixKey} onChange={e => setFormData({ ...formData, pixKey: e.target.value })} placeholder="Digite a chave PIX (CNPJ, Celular, E-mail ou Aleatória)" />
                                     </div>
                                 )}
+
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.25rem", marginBottom: "0.25rem" }}>
+                                    <input 
+                                        type="checkbox" 
+                                        id="paid" 
+                                        checked={formData.paid} 
+                                        onChange={e => setFormData({ ...formData, paid: e.target.checked })} 
+                                        style={{ width: "18px", height: "18px", accentColor: "var(--accent-primary)", cursor: "pointer" }} 
+                                    />
+                                    <label htmlFor="paid" style={{ fontSize: "0.875rem", color: "var(--text-secondary)", cursor: "pointer", fontWeight: 500 }}>
+                                        Despesa já está PAGA
+                                    </label>
+                                </div>
 
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Comprovante / Anexo (PDF ou Imagem)</label>
