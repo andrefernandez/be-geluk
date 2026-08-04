@@ -166,6 +166,7 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                         <tr style={{ borderBottom: "1px solid var(--glass-border-light)" }}>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Descrição</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Categoria</th>
+                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Status</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Data</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Valor</th>
                             {isAdminOrManager && <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, textAlign: "right" }}>Ações</th>}
@@ -199,29 +200,29 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                                         <span style={{ fontSize: '0.75rem', color: "var(--text-tertiary)", display: "block", marginTop: "0.15rem" }}>{cost.type}</span>
                                     </td>
                                     <td style={{ padding: "1rem" }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                            <span style={{
-                                                backgroundColor: categoryBg,
-                                                color: categoryColor,
-                                                padding: "0.25rem 0.5rem",
-                                                borderRadius: "var(--radius-sm)",
-                                                fontSize: "0.75rem",
-                                                border: `1px solid ${categoryColor}`
-                                            }}>
-                                                {cost.category}
-                                            </span>
-                                            <span style={{
-                                                backgroundColor: cost.paid ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)",
-                                                color: cost.paid ? "var(--accent-primary)" : "var(--accent-orange)",
-                                                padding: "0.25rem 0.5rem",
-                                                borderRadius: "var(--radius-sm)",
-                                                fontSize: "0.75rem",
-                                                fontWeight: 600,
-                                                border: `1px solid ${cost.paid ? "var(--accent-primary)" : "var(--accent-orange)"}`
-                                            }}>
-                                                {cost.paid ? "PAGO" : "PENDENTE"}
-                                            </span>
-                                        </div>
+                                        <span style={{
+                                            backgroundColor: categoryBg,
+                                            color: categoryColor,
+                                            padding: "0.25rem 0.5rem",
+                                            borderRadius: "var(--radius-sm)",
+                                            fontSize: "0.75rem",
+                                            border: `1px solid ${categoryColor}`
+                                        }}>
+                                            {cost.category}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: "1rem" }}>
+                                        <span style={{
+                                            backgroundColor: cost.paid ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)",
+                                            color: cost.paid ? "var(--accent-primary)" : "var(--accent-orange)",
+                                            padding: "0.25rem 0.5rem",
+                                            borderRadius: "var(--radius-sm)",
+                                            fontSize: "0.75rem",
+                                            fontWeight: 600,
+                                            border: `1px solid ${cost.paid ? "var(--accent-primary)" : "var(--accent-orange)"}`
+                                        }}>
+                                            {cost.paid ? "PAGO" : "PENDENTE"}
+                                        </span>
                                     </td>
                                     <td style={{ padding: "1rem", color: "var(--text-secondary)" }}>
                                         {new Date(cost.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}
@@ -251,13 +252,13 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                     {costs.length > 0 && (
                         <tfoot>
                             <tr style={{ borderTop: "2px solid var(--glass-border)", fontWeight: 600 }}>
-                                <td style={{ padding: "1rem" }} colSpan={3}>Total</td>
+                                <td style={{ padding: "1rem" }} colSpan={4}>Total</td>
                                 <td style={{ padding: "1rem", color: "var(--text-primary)" }}>{formatCurrency(sumCosts())}</td>
                                 {isAdminOrManager && <td></td>}
                             </tr>
                             {selectedIds.size > 0 && (
                                 <tr style={{ borderTop: "1px dashed var(--glass-border)", fontWeight: 600, backgroundColor: "rgba(16, 185, 129, 0.05)" }}>
-                                    <td style={{ padding: "1rem", color: "var(--accent-primary)" }} colSpan={3}>Sel. ({selectedIds.size} itens)</td>
+                                    <td style={{ padding: "1rem", color: "var(--accent-primary)" }} colSpan={4}>Sel. ({selectedIds.size} itens)</td>
                                     <td style={{ padding: "1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumCosts(true))}</td>
                                     {isAdminOrManager && <td></td>}
                                 </tr>
