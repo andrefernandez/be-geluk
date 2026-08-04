@@ -200,17 +200,19 @@ export default function CostTable({ initialCosts, currentUserRole }: { initialCo
                                     <td style={{ padding: "1rem", fontWeight: 600, color: "var(--text-primary)" }}>{formatCurrency(cost.amount)}</td>
 
                                     {isAdminOrManager && (
-                                        <td style={{ padding: "1rem", textAlign: "right", display: "flex", gap: "0.5rem", justifyContent: "flex-end", alignItems: "center" }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedIds.has(cost.id)}
-                                                onChange={() => toggleSelection(cost.id)}
-                                                style={{ cursor: "pointer", width: "18px", height: "18px", accentColor: "var(--accent-primary)", marginRight: "0.25rem" }}
-                                            />
-                                            <button className="btn-secondary" onClick={() => handleOpenModal(cost)} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}>Editar</button>
-                                            <button onClick={() => handleDelete(cost.id)} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", backgroundColor: "rgba(239, 68, 68, 0.1)", color: "var(--accent-red)", border: "1px solid var(--accent-red)", borderRadius: "var(--radius-sm)" }}>
-                                                Excluir
-                                            </button>
+                                        <td style={{ padding: "1rem", textAlign: "right" }}>
+                                            <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", alignItems: "center" }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedIds.has(cost.id)}
+                                                    onChange={() => toggleSelection(cost.id)}
+                                                    style={{ cursor: "pointer", width: "18px", height: "18px", accentColor: "var(--accent-primary)", marginRight: "0.25rem" }}
+                                                />
+                                                <button className="btn-secondary" onClick={() => handleOpenModal(cost)} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}>Editar</button>
+                                                <button onClick={() => handleDelete(cost.id)} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", backgroundColor: "rgba(239, 68, 68, 0.1)", color: "var(--accent-red)", border: "1px solid var(--accent-red)", borderRadius: "var(--radius-sm)" }}>
+                                                    Excluir
+                                                </button>
+                                            </div>
                                         </td>
                                     )}
                                 </tr>
