@@ -1,6 +1,6 @@
 {
   "node": {
-    "40d146d07a0047dcc31a8a6727e83ff8cb0ee58521": {
+    "4062d1c51035e476fd8d95adc4ae0e60d5e9d281e1": {
       "workers": {
         "app/operacoes/page": {
           "moduleId": 18851,
@@ -15,7 +15,7 @@
       "exportedName": "createOperation",
       "filename": "apps/web/src/app/operacoes/actions.ts"
     },
-    "405ea5141346c843d91f4ea7d20598d92527a23890": {
+    "40271b1782caad50794bd7b3f0ffbbfc056274940f": {
       "workers": {
         "app/operacoes/page": {
           "moduleId": 18851,
@@ -30,7 +30,7 @@
       "exportedName": "deleteOperation",
       "filename": "apps/web/src/app/operacoes/actions.ts"
     },
-    "6080cbd8ad126fe09404763c953d4b55bf3604b998": {
+    "6057d0c7e31aa38b137c2121f6656f95ac18847ce4": {
       "workers": {
         "app/operacoes/page": {
           "moduleId": 18851,
@@ -43,6 +43,36 @@
         "app/operacoes/page": "action-browser"
       },
       "exportedName": "updateOperation",
+      "filename": "apps/web/src/app/operacoes/actions.ts"
+    },
+    "7053c38300f6074bdedfa49d2c971ef35b11426206": {
+      "workers": {
+        "app/operacoes/page": {
+          "moduleId": 18851,
+          "async": true,
+          "exportedName": "uploadOperationFile",
+          "filename": "apps/web/src/app/operacoes/actions.ts"
+        }
+      },
+      "layer": {
+        "app/operacoes/page": "action-browser"
+      },
+      "exportedName": "uploadOperationFile",
+      "filename": "apps/web/src/app/operacoes/actions.ts"
+    },
+    "60026f1a4f15e3ad6709dfa853219c904b48374af0": {
+      "workers": {
+        "app/operacoes/page": {
+          "moduleId": 18851,
+          "async": true,
+          "exportedName": "updateOperationStatus",
+          "filename": "apps/web/src/app/operacoes/actions.ts"
+        }
+      },
+      "layer": {
+        "app/operacoes/page": "action-browser"
+      },
+      "exportedName": "updateOperationStatus",
       "filename": "apps/web/src/app/operacoes/actions.ts"
     }
   },

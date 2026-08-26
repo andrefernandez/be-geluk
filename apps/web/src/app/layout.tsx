@@ -11,6 +11,15 @@ const roboto = Roboto({
 export const metadata: Metadata = {
   title: "Geluk | Dashboard Financeiro",
   description: "Sistema CRUD Administrativo",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png" },
+    ],
+  },
 };
 
 import { Providers } from "@/components/Providers";

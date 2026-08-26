@@ -1,6 +1,6 @@
 {
   "node": {
-    "40da1d2f543369dd5d0d496512198065cafb04a039": {
+    "40408f3b2e58a15121bba0a0d64768e854fc2a8ff6": {
       "workers": {
         "app/bos/page": {
           "moduleId": 65220,
@@ -15,7 +15,7 @@
       "exportedName": "createBo",
       "filename": "apps/web/src/app/bos/actions.ts"
     },
-    "40eab488a66a4c7d8b7d58ffeff57c1a29574bfde6": {
+    "404d9c26dcb265842692444c66dabc6d9659950733": {
       "workers": {
         "app/bos/page": {
           "moduleId": 65220,
@@ -30,7 +30,7 @@
       "exportedName": "deleteBo",
       "filename": "apps/web/src/app/bos/actions.ts"
     },
-    "606ddff2d4b0a3abf744da9560b7f2580c4a41e65d": {
+    "601f30514fe45388c0e416ba16f8fec32acef1a6dd": {
       "workers": {
         "app/bos/page": {
           "moduleId": 65220,

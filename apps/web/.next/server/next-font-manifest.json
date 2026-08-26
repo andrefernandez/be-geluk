@@ -9,6 +9,9 @@
     "[project]/apps/web/src/app/bos/page": [
       "static/media/ce62453a442c7f35-s.p.124b2306.woff2"
     ],
+    "[project]/apps/web/src/app/clientes/[id]/page": [
+      "static/media/ce62453a442c7f35-s.p.124b2306.woff2"
+    ],
     "[project]/apps/web/src/app/clientes/page": [
       "static/media/ce62453a442c7f35-s.p.124b2306.woff2"
     ],

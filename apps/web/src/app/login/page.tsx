@@ -92,9 +92,11 @@ export default function LoginPage() {
                 }
 
                 .login-logo {
-                    width: 120px;
+                    width: 170px;
                     height: auto;
-                    margin-bottom: 1.5rem;
+                    display: block;
+                    margin: 0 auto 1.5rem auto;
+                    object-fit: contain;
                 }
 
                 .form-group {

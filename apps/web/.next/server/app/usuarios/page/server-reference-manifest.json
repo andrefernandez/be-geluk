@@ -1,6 +1,6 @@
 {
   "node": {
-    "4093733f715ad2233faee70498989d9d83a91c5382": {
+    "40af3e562281107ce2fe57f4230f991df196f29275": {
       "workers": {
         "app/usuarios/page": {
           "moduleId": 5751,
@@ -15,7 +15,7 @@
       "exportedName": "createUser",
       "filename": "apps/web/src/app/usuarios/actions.ts"
     },
-    "606e80af25b258937bea372688d775a3a50915933b": {
+    "605bbab28b9947804c893f8862fe919555ec9fe1a1": {
       "workers": {
         "app/usuarios/page": {
           "moduleId": 5751,
@@ -30,7 +30,7 @@
       "exportedName": "updateUser",
       "filename": "apps/web/src/app/usuarios/actions.ts"
     },
-    "4016522d8365770d14347217c02f400335aa59c4c4": {
+    "40514023e1b8ba2a7c21699664f19613db9b55f397": {
       "workers": {
         "app/usuarios/page": {
           "moduleId": 5751,

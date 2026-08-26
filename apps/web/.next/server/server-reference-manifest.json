@@ -1,6 +1,6 @@
 {
   "node": {
-    "409474a7b897936add1c29782e7b6a39f735120dd0": {
+    "40bd2c5acb79365404aaedaa1fa01c973aff99932c": {
       "workers": {
         "app/acordos/page": {
           "moduleId": 83619,
@@ -15,7 +15,7 @@
       "filename": "apps/web/src/app/acordos/actions.ts",
       "exportedName": "createAgreement"
     },
-    "40323c1f665e4165d5f2f0dcd4e4a9aac0e1cce54e": {
+    "40680524c071f1457d94c96e4cf12284df412cd157": {
       "workers": {
         "app/acordos/page": {
           "moduleId": 83619,
@@ -30,7 +30,7 @@
       "filename": "apps/web/src/app/acordos/actions.ts",
       "exportedName": "toggleInstallmentStatus"
     },
-    "4016fb5f52767b77f539f0d7a2cc94f58f8ac2da19": {
+    "404f182a0cc268217079d46c7905daad675a9bdd87": {
       "workers": {
         "app/acordos/page": {
           "moduleId": 83619,
@@ -45,7 +45,7 @@
       "filename": "apps/web/src/app/acordos/actions.ts",
       "exportedName": "deleteAgreement"
     },
-    "6066f77ab5d999f001bb916b0ebcb74c0734354db2": {
+    "604ddbc4bb48cb07ddb82e39cb44c4043f7fa77d57": {
       "workers": {
         "app/acordos/page": {
           "moduleId": 83619,
@@ -60,7 +60,7 @@
       "filename": "apps/web/src/app/acordos/actions.ts",
       "exportedName": "updateInstallmentPayment"
     },
-    "700c5375200309e6db9e1d5cb0f250d44641065ad6": {
+    "7049c29b6f968f0488a0913706ab1db2ccc88b66a6": {
       "workers": {
         "app/acordos/page": {
           "moduleId": 83619,
@@ -75,7 +75,7 @@
       "filename": "apps/web/src/app/acordos/actions.ts",
       "exportedName": "addInstallment"
     },
-    "60713860205907d61ee67573f859e7b19bc85f2a65": {
+    "609e8ebb6868404b806778838d456a68d801b565d0": {
       "workers": {
         "app/acordos/page": {
           "moduleId": 83619,
@@ -90,7 +90,7 @@
       "filename": "apps/web/src/app/acordos/actions.ts",
       "exportedName": "editAgreement"
     },
-    "40da1d2f543369dd5d0d496512198065cafb04a039": {
+    "40408f3b2e58a15121bba0a0d64768e854fc2a8ff6": {
       "workers": {
         "app/bos/page": {
           "moduleId": 65220,
@@ -105,7 +105,7 @@
       "filename": "apps/web/src/app/bos/actions.ts",
       "exportedName": "createBo"
     },
-    "40eab488a66a4c7d8b7d58ffeff57c1a29574bfde6": {
+    "404d9c26dcb265842692444c66dabc6d9659950733": {
       "workers": {
         "app/bos/page": {
           "moduleId": 65220,
@@ -120,7 +120,7 @@
       "filename": "apps/web/src/app/bos/actions.ts",
       "exportedName": "deleteBo"
     },
-    "606ddff2d4b0a3abf744da9560b7f2580c4a41e65d": {
+    "601f30514fe45388c0e416ba16f8fec32acef1a6dd": {
       "workers": {
         "app/bos/page": {
           "moduleId": 65220,
@@ -135,7 +135,7 @@
       "filename": "apps/web/src/app/bos/actions.ts",
       "exportedName": "toggleBoStatus"
     },
-    "4036c26e2d0a224f8d189868e428fd867a1e31abd5": {
+    "40eb4799dbefbea442f538c6a5519c0cb962f76195": {
       "workers": {
         "app/clientes/page": {
           "moduleId": 47636,
@@ -150,7 +150,7 @@
       "filename": "apps/web/src/app/clientes/actions.ts",
       "exportedName": "createClient"
     },
-    "60bbe86026d17e28d641e2f8a3d8990873d6732a1a": {
+    "60372ab37147920a091d8fb829b425695da0e983e5": {
       "workers": {
         "app/clientes/page": {
           "moduleId": 47636,
@@ -165,7 +165,7 @@
       "filename": "apps/web/src/app/clientes/actions.ts",
       "exportedName": "updateClient"
     },
-    "400400ef41abfc5c0e56e3c6dd3b7d8b57e3e1edf4": {
+    "402dc92882f2b335350cb502f9c4682cd0f8d88b22": {
       "workers": {
         "app/clientes/page": {
           "moduleId": 47636,
@@ -180,7 +180,7 @@
       "filename": "apps/web/src/app/clientes/actions.ts",
       "exportedName": "deleteClient"
     },
-    "60a7cc80193f418f40871144851a1c65079bbc8733": {
+    "605a6ec353a833e047fe55a042295cd747351d3fad": {
       "workers": {
         "app/clientes/page": {
           "moduleId": 47636,
@@ -195,7 +195,7 @@
       "filename": "apps/web/src/app/clientes/actions.ts",
       "exportedName": "updateClientStatus"
     },
-    "40f824d7ae1f7efa07a815b0732f95fda61b286105": {
+    "40f726d4dbbdba3ee5008c355bd60b55862c1045d5": {
       "workers": {
         "app/custos/page": {
           "moduleId": 91387,
@@ -210,7 +210,7 @@
       "filename": "apps/web/src/app/custos/actions.ts",
       "exportedName": "createCost"
     },
-    "60300ef31475db09d504bf8d1c56da5a5f264c69b3": {
+    "608120c15b3b45ef72f31984e78a2bf8ff7f84a3e2": {
       "workers": {
         "app/custos/page": {
           "moduleId": 91387,
@@ -225,7 +225,7 @@
       "filename": "apps/web/src/app/custos/actions.ts",
       "exportedName": "updateCost"
     },
-    "40e2e3a88b78da7c3ab99c173e107f6df95f77635a": {
+    "40b1b7695bd1856b836cb595d5925d9f8ecb43a712": {
       "workers": {
         "app/custos/page": {
           "moduleId": 91387,
@@ -240,7 +240,7 @@
       "filename": "apps/web/src/app/custos/actions.ts",
       "exportedName": "deleteCost"
     },
-    "406a638b0ada539dddf2e047e74a470ff2ccc9e45b": {
+    "4027ce97e4c8808a24d017b4f2c196d69f73a5fcb8": {
       "workers": {
         "app/investidores/page": {
           "moduleId": 98245,
@@ -255,7 +255,7 @@
       "filename": "apps/web/src/app/investidores/actions.ts",
       "exportedName": "createInvestor"
     },
-    "60b52ab608906d8bf68f1e199275f6b2a9a229a6af": {
+    "605a374d0287661f8d8dc5bb16dd008779c62bfd95": {
       "workers": {
         "app/investidores/page": {
           "moduleId": 98245,
@@ -270,7 +270,7 @@
       "filename": "apps/web/src/app/investidores/actions.ts",
       "exportedName": "updateInvestor"
     },
-    "602e7d8bc5fc65063f51a4ce8b7dd4619abeac64a6": {
+    "60053af68f5ea8abd0780a0361ca7ed0ad826ab636": {
       "workers": {
         "app/investidores/page": {
           "moduleId": 98245,
@@ -285,7 +285,7 @@
       "filename": "apps/web/src/app/investidores/actions.ts",
       "exportedName": "addTransaction"
     },
-    "401b755ebf97c0a9ac820ca2eb88b8d75e3b8e7355": {
+    "40849301cc7e7ea853268c763deb05f6263285426e": {
       "workers": {
         "app/investidores/page": {
           "moduleId": 98245,
@@ -300,7 +300,7 @@
       "filename": "apps/web/src/app/investidores/actions.ts",
       "exportedName": "deleteTransaction"
     },
-    "40850008968a8869c213c58d8d17c67fcb76d5b886": {
+    "40ba04ec90d32334cb1d0447daf3bff23b579f5648": {
       "workers": {
         "app/investidores/page": {
           "moduleId": 98245,
@@ -315,7 +315,7 @@
       "filename": "apps/web/src/app/investidores/actions.ts",
       "exportedName": "deleteInvestor"
     },
-    "60b3a7d7d12b080b761d869425ee41f77b848c354b": {
+    "60fb8cd5caaf3c28d1f68b08379fc45f31f4c95a3b": {
       "workers": {
         "app/investidores/page": {
           "moduleId": 98245,
@@ -330,7 +330,7 @@
       "filename": "apps/web/src/app/investidores/actions.ts",
       "exportedName": "updateTransactionDate"
     },
-    "40d146d07a0047dcc31a8a6727e83ff8cb0ee58521": {
+    "4062d1c51035e476fd8d95adc4ae0e60d5e9d281e1": {
       "workers": {
         "app/operacoes/page": {
           "moduleId": 18851,
@@ -345,7 +345,7 @@
       "filename": "apps/web/src/app/operacoes/actions.ts",
       "exportedName": "createOperation"
     },
-    "405ea5141346c843d91f4ea7d20598d92527a23890": {
+    "40271b1782caad50794bd7b3f0ffbbfc056274940f": {
       "workers": {
         "app/operacoes/page": {
           "moduleId": 18851,
@@ -360,7 +360,7 @@
       "filename": "apps/web/src/app/operacoes/actions.ts",
       "exportedName": "deleteOperation"
     },
-    "6080cbd8ad126fe09404763c953d4b55bf3604b998": {
+    "6057d0c7e31aa38b137c2121f6656f95ac18847ce4": {
       "workers": {
         "app/operacoes/page": {
           "moduleId": 18851,
@@ -375,7 +375,37 @@
       "filename": "apps/web/src/app/operacoes/actions.ts",
       "exportedName": "updateOperation"
     },
-    "000af69af4339b0ba1264e29999ea7ba126f96fef4": {
+    "7053c38300f6074bdedfa49d2c971ef35b11426206": {
+      "workers": {
+        "app/operacoes/page": {
+          "moduleId": 18851,
+          "async": true,
+          "exportedName": "uploadOperationFile",
+          "filename": "apps/web/src/app/operacoes/actions.ts"
+        }
+      },
+      "layer": {
+        "app/operacoes/page": "action-browser"
+      },
+      "filename": "apps/web/src/app/operacoes/actions.ts",
+      "exportedName": "uploadOperationFile"
+    },
+    "60026f1a4f15e3ad6709dfa853219c904b48374af0": {
+      "workers": {
+        "app/operacoes/page": {
+          "moduleId": 18851,
+          "async": true,
+          "exportedName": "updateOperationStatus",
+          "filename": "apps/web/src/app/operacoes/actions.ts"
+        }
+      },
+      "layer": {
+        "app/operacoes/page": "action-browser"
+      },
+      "filename": "apps/web/src/app/operacoes/actions.ts",
+      "exportedName": "updateOperationStatus"
+    },
+    "00760c35fe4c14b78a9e068243b5c327f370934bcd": {
       "workers": {
         "app/taxas-tarifas/page": {
           "moduleId": 11829,
@@ -390,7 +420,7 @@
       "filename": "apps/web/src/app/taxas-tarifas/actions.ts",
       "exportedName": "getGlobalSettings"
     },
-    "40fd0b7f5f177fd34ae8e981c191bc0d9ad7dea162": {
+    "40a9708cda9eb83aff815541c2569dd7a1953268f3": {
       "workers": {
         "app/taxas-tarifas/page": {
           "moduleId": 11829,
@@ -405,7 +435,7 @@
       "filename": "apps/web/src/app/taxas-tarifas/actions.ts",
       "exportedName": "updateGlobalSettings"
     },
-    "4093733f715ad2233faee70498989d9d83a91c5382": {
+    "40af3e562281107ce2fe57f4230f991df196f29275": {
       "workers": {
         "app/usuarios/page": {
           "moduleId": 5751,
@@ -420,7 +450,7 @@
       "filename": "apps/web/src/app/usuarios/actions.ts",
       "exportedName": "createUser"
     },
-    "606e80af25b258937bea372688d775a3a50915933b": {
+    "605bbab28b9947804c893f8862fe919555ec9fe1a1": {
       "workers": {
         "app/usuarios/page": {
           "moduleId": 5751,
@@ -435,7 +465,7 @@
       "filename": "apps/web/src/app/usuarios/actions.ts",
       "exportedName": "updateUser"
     },
-    "4016522d8365770d14347217c02f400335aa59c4c4": {
+    "40514023e1b8ba2a7c21699664f19613db9b55f397": {
       "workers": {
         "app/usuarios/page": {
           "moduleId": 5751,
@@ -452,5 +482,5 @@
     }
   },
   "edge": {},
-  "encryptionKey": "ScqtCi8kqhiOZZusKuOUZUJ8AQA1kM3+tWyGWVgxmKc="
+  "encryptionKey": "zVA5mYUwLujiNMhsLqsahJJ5hjdhPNgZ3NUQRJZxFZM="
 }

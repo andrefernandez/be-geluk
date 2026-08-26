@@ -1,6 +1,6 @@
 {
   "node": {
-    "000af69af4339b0ba1264e29999ea7ba126f96fef4": {
+    "00760c35fe4c14b78a9e068243b5c327f370934bcd": {
       "workers": {
         "app/taxas-tarifas/page": {
           "moduleId": 11829,
@@ -15,7 +15,7 @@
       "exportedName": "getGlobalSettings",
       "filename": "apps/web/src/app/taxas-tarifas/actions.ts"
     },
-    "40fd0b7f5f177fd34ae8e981c191bc0d9ad7dea162": {
+    "40a9708cda9eb83aff815541c2569dd7a1953268f3": {
       "workers": {
         "app/taxas-tarifas/page": {
           "moduleId": 11829,
