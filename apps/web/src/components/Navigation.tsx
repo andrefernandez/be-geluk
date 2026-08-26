@@ -126,7 +126,6 @@ export function Navigation() {
                 .logo-img {
                     width: 110px;
                     height: auto;
-                    filter: brightness(0); /* Make white logo solid black */
                 }
 
                 .nav-links {
@@ -242,7 +241,6 @@ export function Navigation() {
                     left: 50%;
                     top: 50%;
                     transform: translate(-50%, -50%);
-                    filter: brightness(0); /* Make white logo solid black */
                 }
 
                 .menu-btn {
