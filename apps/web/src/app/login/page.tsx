@@ -31,7 +31,7 @@ export default function LoginPage() {
         <div className="login-container">
             <div className="login-card">
                 <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
-                    <img src="https://www.gelukbank.com.br/logo.svg" alt="Geluk Logo" className="login-logo" />
+                    <img src="/logo.png" alt="Geluk Logo" className="login-logo" />
                     <h1 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.025em" }}>SISTEMA DE GESTÃO</h1>
                     <p style={{ color: "var(--text-tertiary)", fontSize: "0.8125rem", fontWeight: 500, marginTop: "0.5rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Acesso Restrito</p>
                 </div>
@@ -92,7 +92,7 @@ export default function LoginPage() {
                 }
 
                 .login-logo {
-                    width: 70px;
+                    width: 120px;
                     height: auto;
                     margin-bottom: 1.5rem;
                 }

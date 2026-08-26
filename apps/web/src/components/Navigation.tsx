@@ -41,7 +41,7 @@ export function Navigation() {
             {/* Unified Topbar */}
             <div className="mobile-topbar">
                 <Link href="/">
-                    <img src="https://www.gelukbank.com.br/logo.svg" alt="Geluk Logo" className="logo-img-mobile" style={{ cursor: "pointer" }} />
+                    <img src="/logo.png" alt="Geluk Logo" className="logo-img-mobile" style={{ cursor: "pointer" }} />
                 </Link>
                 <button onClick={() => setIsMobileMenuOpen(true)} className="menu-btn" aria-label="Abrir menu">
                     <Menu size={24} color="var(--text-primary)" />
@@ -57,7 +57,7 @@ export function Navigation() {
             <nav className={`nav-sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
                 <div className="nav-logo flex-between" style={{ alignItems: "center" }}>
                     <Link href="/" style={{ display: "flex", alignItems: "center" }}>
-                        <img src="https://www.gelukbank.com.br/logo.svg" alt="Geluk Logo" className="logo-img" style={{ cursor: "pointer" }} />
+                        <img src="/logo.png" alt="Geluk Logo" className="logo-img" style={{ cursor: "pointer" }} />
                     </Link>
                     <button onClick={() => setIsMobileMenuOpen(false)} className="close-btn" aria-label="Fechar menu">
                         <X size={24} color="var(--text-primary)" />
@@ -124,7 +124,7 @@ export function Navigation() {
                 }
 
                 .logo-img {
-                    width: 80px;
+                    width: 110px;
                     height: auto;
                     filter: brightness(0); /* Make white logo solid black */
                 }
@@ -236,7 +236,7 @@ export function Navigation() {
                 }
 
                 .logo-img-mobile {
-                    width: 90px;
+                    width: 120px;
                     height: auto;
                     position: absolute;
                     left: 50%;

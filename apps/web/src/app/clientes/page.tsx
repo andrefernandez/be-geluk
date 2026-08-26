@@ -27,6 +27,17 @@ export default async function ClientesPage() {
                     name: true
                 }
             },
+            taxaFator: true,
+            taxaAdValorem: true,
+            taxaTarifa: true,
+            taxaIof: true,
+            taxaIofAdicional: true,
+            operations: {
+                where: { active: true },
+                select: {
+                    valorBruto: true
+                }
+            },
             _count: {
                 select: { 
                     operations: true,

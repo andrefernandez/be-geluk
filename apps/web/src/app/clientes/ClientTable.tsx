@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { createClient, updateClient, deleteClient, updateClientStatus } from "./actions";
 import { NumericFormat } from 'react-number-format';
+import Link from "next/link";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 type Client = {
     id: string;
@@ -17,6 +19,7 @@ type Client = {
     taxaTarifa?: number | null;
     taxaIof?: number | null;
     taxaIofAdicional?: number | null;
+    operations?: { valorBruto: number }[];
     _count: { 
         operations: number;
         agreements: number;
@@ -175,8 +178,59 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
         }
     };
 
+    const chartData = initialClients
+        .map(c => {
+            const total = c.operations?.reduce((sum, op) => sum + (op.valorBruto || 0), 0) || 0;
+            return {
+                name: c.name,
+                volume: Math.round(total * 100) / 100,
+            };
+        })
+        .filter(c => c.volume > 0)
+        .sort((a, b) => b.volume - a.volume);
+
+    const topChartData = chartData.slice(0, 8);
+    if (chartData.length > 8) {
+        const otherVolume = chartData.slice(8).reduce((sum, c) => sum + c.volume, 0);
+        topChartData.push({
+            name: "Outros",
+            volume: Math.round(otherVolume * 100) / 100
+        });
+    }
+
     return (
         <div>
+            {/* Concentration Chart */}
+            <div className="glass-card" style={{ marginBottom: "2rem", padding: "1.5rem", border: "1px solid var(--card-border)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-sm)" }}>
+                <h3 style={{ fontSize: "0.875rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem", color: "var(--text-secondary)" }}>
+                    Volume Operado por Cedente (Participação da Carteira)
+                </h3>
+                {chartData.length === 0 ? (
+                    <div style={{ height: "150px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-tertiary)", fontSize: "0.875rem", fontStyle: "italic" }}>
+                        Nenhuma operação ativa registrada para os cedentes.
+                    </div>
+                ) : (
+                    <div style={{ width: "100%", height: Math.max(160, topChartData.length * 35), marginTop: "1rem" }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={topChartData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                                <XAxis type="number" stroke="var(--text-tertiary)" fontSize={11} tickFormatter={(val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val)} tickLine={false} axisLine={false} />
+                                <YAxis type="category" dataKey="name" stroke="var(--text-tertiary)" fontSize={11} width={130} tickLine={false} axisLine={false} />
+                                <Tooltip 
+                                    formatter={(value: any) => [new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value), "Volume Operado"]} 
+                                    contentStyle={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--card-border)", borderRadius: "var(--radius-md)" }}
+                                    labelStyle={{ fontWeight: "bold", color: "var(--text-primary)" }}
+                                />
+                                <Bar dataKey="volume" fill="var(--accent-secondary)" radius={[0, 4, 4, 0]} maxBarSize={20}>
+                                    {topChartData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.name === "Outros" ? "var(--text-tertiary)" : index === 0 ? "var(--accent-primary)" : "var(--accent-secondary)"} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                )}
+            </div>
+
             {/* Approval Section */}
             {isAdminOrManager && pendingClients.length > 0 && (
                 <div className="glass-card" style={{ marginBottom: "2rem", padding: "1.5rem", border: "1px solid rgba(245, 158, 11, 0.3)" }}>
@@ -197,7 +251,11 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                             <tbody>
                                 {pendingClients.map(client => (
                                     <tr key={client.id} style={{ borderBottom: "1px solid var(--glass-border)" }}>
-                                        <td style={{ padding: "0.75rem", fontWeight: 500 }}>{client.name}</td>
+                                        <td style={{ padding: "0.75rem", fontWeight: 500 }}>
+                                            <Link href={`/clientes/${client.id}`} className="client-link">
+                                                {client.name}
+                                            </Link>
+                                        </td>
                                         <td style={{ padding: "0.75rem", color: "var(--text-tertiary)", fontSize: "0.875rem" }}>{client.cnpj || "---"}</td>
                                         <td style={{ padding: "0.75rem", textAlign: "right", display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
                                             <button 
@@ -264,6 +322,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>CNPJ</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Status</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Representante</th>
+                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, textAlign: "right" }}>Volume Operado</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Operações</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Data Criação</th>
                             {isAdminOrManager && <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, textAlign: "right" }}>Ações</th>}
@@ -274,7 +333,11 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                             const statusStyle = getStatusColor(client.status);
                             return (
                                 <tr key={client.id} style={{ borderBottom: "1px solid var(--glass-border)", transition: "background var(--transition-fast)" }} className="hover-row">
-                                    <td style={{ padding: "1rem", fontWeight: 500 }}>{client.name}</td>
+                                    <td style={{ padding: "1rem", fontWeight: 500 }}>
+                                        <Link href={`/clientes/${client.id}`} className="client-link">
+                                            {client.name}
+                                        </Link>
+                                    </td>
                                     <td style={{ padding: "1rem", color: "var(--text-tertiary)", fontSize: "0.875rem" }}>{client.cnpj || "---"}</td>
                                     <td style={{ padding: "1rem" }}>
                                         <span style={{
@@ -292,6 +355,11 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                     </td>
                                     <td style={{ padding: "1rem", color: "var(--text-secondary)", fontSize: "0.875rem" }}>
                                         {client.representative?.name || <span style={{ color: "var(--text-tertiary)", fontStyle: "italic" }}>Não definido</span>}
+                                    </td>
+                                    <td style={{ padding: "1rem", color: "var(--text-secondary)", fontSize: "0.875rem", textAlign: "right", fontWeight: 600 }}>
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                            client.operations?.reduce((sum, op) => sum + (op.valorBruto || 0), 0) || 0
+                                        )}
                                     </td>
                                     <td style={{ padding: "1rem", color: "var(--text-secondary)" }}>
                                         <span style={{ backgroundColor: "rgba(255,255,255,0.05)", padding: "0.25rem 0.5rem", borderRadius: "var(--radius-sm)", fontSize: "0.875rem", border: "1px solid var(--glass-border)" }}>
@@ -337,8 +405,10 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                         <div key={client.id} className="glass-card" onClick={() => isAdminOrManager && handleOpenModal(client)} style={{ padding: "1.25rem", cursor: isAdminOrManager ? "pointer" : "default" }}>
                             <div className="flex-between" style={{ alignItems: "flex-start", marginBottom: "0.75rem" }}>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                        <span style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-primary)" }}>{client.name}</span>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                                        <Link href={`/clientes/${client.id}`} onClick={(e) => e.stopPropagation()} className="client-link" style={{ fontSize: "1rem" }}>
+                                            {client.name}
+                                        </Link>
                                         <span style={{
                                             padding: "0.15rem 0.4rem",
                                             borderRadius: "99px",
@@ -354,6 +424,11 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                     </div>
                                     <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>CNPJ: {client.cnpj || "---"}</span>
                                     <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 500 }}>Rep: {client.representative?.name || "N/A"}</span>
+                                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 600 }}>
+                                        Vol: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                            client.operations?.reduce((sum, op) => sum + (op.valorBruto || 0), 0) || 0
+                                        )}
+                                    </span>
                                     <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>Cadastrado em {new Date(client.createdAt).toLocaleDateString("pt-BR")}</span>
                                 </div>
                                 <span style={{ backgroundColor: "rgba(255,255,255,0.05)", padding: "0.25rem 0.5rem", borderRadius: "var(--radius-sm)", fontSize: "0.75rem", border: "1px solid var(--glass-border)", color: "var(--text-secondary)" }}>
@@ -509,6 +584,16 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
             <style dangerouslySetInnerHTML={{
                 __html: `
                 .hover-row:hover { background-color: var(--glass-bg-hover); }
+                .client-link {
+                    color: var(--text-primary);
+                    text-decoration: none;
+                    font-weight: 600;
+                    transition: color var(--transition-fast);
+                }
+                .client-link:hover {
+                    color: var(--accent-primary) !important;
+                    text-decoration: underline;
+                }
                 @keyframes pulse {
                     0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
                     70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
