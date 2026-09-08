@@ -27,7 +27,6 @@ export function Navigation() {
         { name: "B.o's", path: "/bos" },
         { name: "Operações", path: "/operacoes" },
         { name: "Re-desconto", path: "/redesconto" },
-        { name: "Em Aberto", path: "/em-aberto" },
         { name: "Acordos", path: "/acordos" },
         { name: "Cedentes", path: "/clientes" },
         { name: "Investidores", path: "/investidores" },

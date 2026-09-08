@@ -181,14 +181,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   const totalRedescontoReceita = redescontoOps.reduce((acc, op) => acc + (Number(op.fator) || 0) + (Number(op.adValorem) || 0) + (Number(op.tarifas) || 0), 0);
   const totalRedescontoGanho = totalRedescontoReceita - totalRedescontoCusto;
 
-  const totalOpenOpsCount = await prisma.operation.count({
-    where: { paga: false, active: true }
-  });
-  const totalOpenOpsBruto = await prisma.operation.aggregate({
-    where: { paga: false, active: true },
-    _sum: { valorBruto: true }
-  });
-
   // ---- CALCULO DO PONTO DE EQUILÍBRIO (BREAK-EVEN) ----
   // Rentabilidade operacional (taxa de faturamento bruto sobre volume de operações)
   let taxaRetorno = totalOperado > 0 ? (receitaBruta / totalOperado) * 100 : 0;
@@ -645,70 +637,39 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
           </div>
         </div>
 
-        {/* Resumo de Re-desconto e Operações em Aberto */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem" }}>
-          <div className="glass-panel" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", borderLeft: "4px solid #8b5cf6" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-              <div>
-                <h3 style={{ fontSize: "0.875rem", fontWeight: 700, color: "#c4b5fd", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                  🟣 Operações com Re-desconto
-                </h3>
-                <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>Funding com Bancos, FIDCs e Securitizadoras no período</span>
-              </div>
-              <Link href="/redesconto" style={{ fontSize: "0.75rem", color: "#c4b5fd", fontWeight: 700, textDecoration: "underline" }}>
-                Ver Dashboard de Re-desconto →
-              </Link>
+        {/* Resumo de Re-desconto */}
+        <div className="glass-panel" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", borderLeft: "4px solid #8b5cf6" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+            <div>
+              <h3 style={{ fontSize: "0.875rem", fontWeight: 700, color: "#c4b5fd", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                🟣 Operações com Re-desconto
+              </h3>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>Funding com Bancos, FIDCs e Securitizadoras no período</span>
             </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "0.75rem" }}>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontSize: "0.7rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Volume Operado</span>
-                <span style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(totalRedescontoVolume)}</span>
-                <span style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>{redescontoOps.length} operações</span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontSize: "0.7rem", color: "var(--accent-red)", textTransform: "uppercase" }}>Custo Parceiros</span>
-                <span style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--accent-red)" }}>{formatCurrency(totalRedescontoCusto)}</span>
-                <span style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Juros cobrados</span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontSize: "0.7rem", color: "var(--accent-primary)", textTransform: "uppercase" }}>Ganho Líquido</span>
-                <span style={{ fontSize: "1.125rem", fontWeight: 700, color: totalRedescontoGanho >= 0 ? "var(--accent-primary)" : "var(--accent-red)" }}>
-                  {formatCurrency(totalRedescontoGanho)}
-                </span>
-                <span style={{ fontSize: "0.7rem", color: "var(--accent-primary)", fontWeight: 600 }}>
-                  Spread: {totalRedescontoVolume > 0 ? formatPercent((totalRedescontoGanho / totalRedescontoVolume) * 100) : "0,00%"}
-                </span>
-              </div>
-            </div>
+            <Link href="/redesconto" style={{ fontSize: "0.75rem", color: "#c4b5fd", fontWeight: 700, textDecoration: "underline" }}>
+              Ver Dashboard de Re-desconto →
+            </Link>
           </div>
 
-          <div className="glass-panel" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", borderLeft: "4px solid #f59e0b" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-              <div>
-                <h3 style={{ fontSize: "0.875rem", fontWeight: 700, color: "#fbbf24", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                  ⏳ Operações em Aberto (Aguardando Liquidação)
-                </h3>
-                <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>Títulos e duplicatas não quitados pelo cliente</span>
-              </div>
-              <Link href="/em-aberto" style={{ fontSize: "0.75rem", color: "#fbbf24", fontWeight: 700, textDecoration: "underline" }}>
-                Ver Lista em Aberto →
-              </Link>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem" }}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span style={{ fontSize: "0.7rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Volume Operado</span>
+              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(totalRedescontoVolume)}</span>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{redescontoOps.length} operações</span>
             </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.25rem", flexWrap: "wrap", gap: "0.5rem" }}>
-              <div>
-                <span style={{ fontSize: "0.7rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Total Pendente</span>
-                <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                  {formatCurrency(totalOpenOpsBruto._sum.valorBruto || 0)}
-                </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <span style={{ fontSize: "0.7rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Quantidade Pendente</span>
-                <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#fbbf24" }}>
-                  {totalOpenOpsCount} em aberto
-                </div>
-              </div>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span style={{ fontSize: "0.7rem", color: "var(--accent-red)", textTransform: "uppercase" }}>Custo Parceiros</span>
+              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--accent-red)" }}>{formatCurrency(totalRedescontoCusto)}</span>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Juros cobrados</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span style={{ fontSize: "0.7rem", color: "var(--accent-primary)", textTransform: "uppercase" }}>Ganho Líquido</span>
+              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: totalRedescontoGanho >= 0 ? "var(--accent-primary)" : "var(--accent-red)" }}>
+                {formatCurrency(totalRedescontoGanho)}
+              </span>
+              <span style={{ fontSize: "0.75rem", color: "var(--accent-primary)", fontWeight: 600 }}>
+                Spread: {totalRedescontoVolume > 0 ? formatPercent((totalRedescontoGanho / totalRedescontoVolume) * 100) : "0,00%"}
+              </span>
             </div>
           </div>
         </div>
@@ -829,66 +790,208 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
         <div style={{ padding: "2rem 0", display: "flex", flexDirection: "column", gap: "2.5rem" }}>
           <ProjectionsSection completedMonths={completedMonths} currentMonthIdx={currentMonthIdx} />
 
-          {/* Client Performance rankings (Side-by-Side under the table) */}
-          <div className="responsive-grid-1-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2.5rem" }}>
+          {/* Client Performance rankings */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))", gap: "2rem" }}>
                 
-                {/* Ranking 1 */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  <h3 style={{ fontSize: "0.875rem", fontWeight: 800, textTransform: "uppercase" }}>Melhores Cedentes (Rentabilidade / Receita)</h3>
-                  <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                      <thead>
-                        <tr style={{ borderBottom: "1px solid var(--card-border)" }}>
-                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", width: "40px" }}>Pos</th>
-                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem" }}>Cedente</th>
-                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right" }}>Volume</th>
-                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right" }}>Receita</th>
-                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right" }}>Rentab %</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {revenueRanking.slice(0, 5).map((client, idx) => (
-                          <tr key={client.id} style={{ borderBottom: "1px solid rgba(0,0,0,0.02)" }}>
-                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", fontWeight: 800, color: "var(--text-tertiary)" }}>{idx + 1}º</td>
-                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", fontWeight: 700 }}>{client.name}</td>
-                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right" }}>{formatCurrency(client.totalVolume)}</td>
-                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right", fontWeight: 700, color: "var(--accent-primary)" }}>{formatCurrency(client.totalRevenue)}</td>
-                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right" }}>{formatPercent(client.rentabilidadePercent)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Ranking 2 */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  <h3 style={{ fontSize: "0.875rem", fontWeight: 800, textTransform: "uppercase" }}>Melhores Cedentes (Tarifas Flat Arrecadadas)</h3>
-                  <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                      <thead>
-                        <tr style={{ borderBottom: "1px solid var(--card-border)" }}>
-                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", width: "40px" }}>Pos</th>
-                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem" }}>Cedente</th>
-                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right" }}>Nº Ops</th>
-                          <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right" }}>Total Tarifas</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {tarifasRanking.slice(0, 5).map((client, idx) => (
-                          <tr key={client.id} style={{ borderBottom: "1px solid rgba(0,0,0,0.02)" }}>
-                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", fontWeight: 800, color: "var(--text-tertiary)" }}>{idx + 1}º</td>
-                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", fontWeight: 700 }}>{client.name}</td>
-                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right" }}>{client.numOps} ops</td>
-                            <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right", fontWeight: 700, color: "var(--accent-secondary)" }}>{formatCurrency(client.totalTarifas)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
+            {/* Ranking 1 */}
+            <div className="glass-panel" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h3 style={{ fontSize: "0.875rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-primary)" }}>
+                  Melhores Cedentes (Rentabilidade / Receita)
+                </h3>
               </div>
+
+              {/* Desktop Table View */}
+              <div className="desktop-only" style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", minWidth: "460px", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid var(--card-border)" }}>
+                      <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", width: "40px", textAlign: "left", color: "var(--text-tertiary)" }}>Pos</th>
+                      <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "left", color: "var(--text-tertiary)" }}>Cedente</th>
+                      <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right", color: "var(--text-tertiary)" }}>Volume</th>
+                      <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right", color: "var(--text-tertiary)" }}>Receita</th>
+                      <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right", color: "var(--text-tertiary)" }}>Rentab %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {revenueRanking.slice(0, 5).map((client, idx) => (
+                      <tr key={client.id} style={{ borderBottom: "1px solid var(--card-border)" }}>
+                        <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", fontWeight: 800, color: "var(--text-tertiary)" }}>{idx + 1}º</td>
+                        <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", fontWeight: 700 }}>
+                          <Link href={`/clientes/${client.id}`} style={{ color: "var(--text-primary)", textDecoration: "none" }}>
+                            {client.name}
+                          </Link>
+                        </td>
+                        <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right", color: "var(--text-secondary)" }}>{formatCurrency(client.totalVolume)}</td>
+                        <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right", fontWeight: 700, color: "var(--accent-primary)" }}>{formatCurrency(client.totalRevenue)}</td>
+                        <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right", fontWeight: 600, color: "var(--text-primary)" }}>{formatPercent(client.rentabilidadePercent)}</td>
+                      </tr>
+                    ))}
+                    {revenueRanking.length === 0 && (
+                      <tr>
+                        <td colSpan={5} style={{ padding: "2rem 0", textAlign: "center", color: "var(--text-tertiary)", fontSize: "0.8125rem" }}>
+                          Nenhum cedente com operações registradas no período.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Cards View */}
+              <div className="mobile-only">
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  {revenueRanking.slice(0, 5).map((client, idx) => (
+                    <div 
+                      key={`mob-rev-${client.id}`} 
+                      className="glass-card" 
+                      style={{ 
+                        padding: "1rem", 
+                        display: "flex", 
+                        flexDirection: "column", 
+                        gap: "0.625rem",
+                        borderRadius: "var(--radius-sm)",
+                        border: "1px solid var(--card-border)"
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
+                          <span style={{ 
+                            fontSize: "0.75rem", 
+                            fontWeight: 800, 
+                            padding: "0.2rem 0.5rem", 
+                            borderRadius: "4px",
+                            background: idx === 0 ? "rgba(234, 179, 8, 0.15)" : idx === 1 ? "rgba(148, 163, 184, 0.15)" : idx === 2 ? "rgba(217, 119, 6, 0.15)" : "var(--bg-secondary)",
+                            color: idx === 0 ? "#eab308" : idx === 1 ? "#94a3b8" : idx === 2 ? "#d97706" : "var(--text-tertiary)"
+                          }}>
+                            {idx + 1}º
+                          </span>
+                          <Link href={`/clientes/${client.id}`} style={{ fontSize: "0.9375rem", fontWeight: 700, color: "var(--text-primary)", textDecoration: "none" }}>
+                            {client.name}
+                          </Link>
+                        </div>
+                        <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "var(--accent-primary)" }}>
+                          {formatPercent(client.rentabilidadePercent)}
+                        </span>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", paddingTop: "0.5rem", borderTop: "1px solid var(--card-border)" }}>
+                        <div>
+                          <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Volume</span>
+                          <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-secondary)" }}>{formatCurrency(client.totalVolume)}</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Receita</span>
+                          <div style={{ fontSize: "0.875rem", fontWeight: 700, color: "var(--accent-primary)" }}>{formatCurrency(client.totalRevenue)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {revenueRanking.length === 0 && (
+                    <div style={{ padding: "1.5rem", textAlign: "center", color: "var(--text-tertiary)", fontSize: "0.8125rem" }}>
+                      Nenhum cedente com operações no período.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Ranking 2 */}
+            <div className="glass-panel" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h3 style={{ fontSize: "0.875rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-primary)" }}>
+                  Melhores Cedentes (Tarifas Flat Arrecadadas)
+                </h3>
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="desktop-only" style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", minWidth: "400px", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid var(--card-border)" }}>
+                      <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", width: "40px", textAlign: "left", color: "var(--text-tertiary)" }}>Pos</th>
+                      <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "left", color: "var(--text-tertiary)" }}>Cedente</th>
+                      <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right", color: "var(--text-tertiary)" }}>Nº Ops</th>
+                      <th style={{ padding: "0.5rem 0", fontSize: "0.6875rem", textAlign: "right", color: "var(--text-tertiary)" }}>Total Tarifas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tarifasRanking.slice(0, 5).map((client, idx) => (
+                      <tr key={client.id} style={{ borderBottom: "1px solid var(--card-border)" }}>
+                        <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", fontWeight: 800, color: "var(--text-tertiary)" }}>{idx + 1}º</td>
+                        <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", fontWeight: 700 }}>
+                          <Link href={`/clientes/${client.id}`} style={{ color: "var(--text-primary)", textDecoration: "none" }}>
+                            {client.name}
+                          </Link>
+                        </td>
+                        <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right", color: "var(--text-secondary)" }}>{client.numOps} ops</td>
+                        <td style={{ padding: "0.75rem 0", fontSize: "0.8125rem", textAlign: "right", fontWeight: 700, color: "var(--accent-secondary)" }}>{formatCurrency(client.totalTarifas)}</td>
+                      </tr>
+                    ))}
+                    {tarifasRanking.length === 0 && (
+                      <tr>
+                        <td colSpan={4} style={{ padding: "2rem 0", textAlign: "center", color: "var(--text-tertiary)", fontSize: "0.8125rem" }}>
+                          Nenhuma tarifa registrada no período.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Cards View */}
+              <div className="mobile-only">
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  {tarifasRanking.slice(0, 5).map((client, idx) => (
+                    <div 
+                      key={`mob-tar-${client.id}`} 
+                      className="glass-card" 
+                      style={{ 
+                        padding: "1rem", 
+                        display: "flex", 
+                        flexDirection: "column", 
+                        gap: "0.625rem",
+                        borderRadius: "var(--radius-sm)",
+                        border: "1px solid var(--card-border)"
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
+                          <span style={{ 
+                            fontSize: "0.75rem", 
+                            fontWeight: 800, 
+                            padding: "0.2rem 0.5rem", 
+                            borderRadius: "4px",
+                            background: idx === 0 ? "rgba(234, 179, 8, 0.15)" : idx === 1 ? "rgba(148, 163, 184, 0.15)" : idx === 2 ? "rgba(217, 119, 6, 0.15)" : "var(--bg-secondary)",
+                            color: idx === 0 ? "#eab308" : idx === 1 ? "#94a3b8" : idx === 2 ? "#d97706" : "var(--text-tertiary)"
+                          }}>
+                            {idx + 1}º
+                          </span>
+                          <Link href={`/clientes/${client.id}`} style={{ fontSize: "0.9375rem", fontWeight: 700, color: "var(--text-primary)", textDecoration: "none" }}>
+                            {client.name}
+                          </Link>
+                        </div>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", fontWeight: 600 }}>
+                          {client.numOps} ops
+                        </span>
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "0.5rem", borderTop: "1px solid var(--card-border)" }}>
+                        <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Total Tarifas</span>
+                        <span style={{ fontSize: "0.9375rem", fontWeight: 700, color: "var(--accent-secondary)" }}>{formatCurrency(client.totalTarifas)}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {tarifasRanking.length === 0 && (
+                    <div style={{ padding: "1.5rem", textAlign: "center", color: "var(--text-tertiary)", fontSize: "0.8125rem" }}>
+                      Nenhuma tarifa registrada no período.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+          </div>
 
             </div>
       </main>
