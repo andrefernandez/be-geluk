@@ -68,7 +68,8 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
         },
         include: {
             client: true,
-            sacados: true
+            sacados: true,
+            partner: true
         },
         orderBy: { date: "asc" },
     });
@@ -140,6 +141,11 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
 
     const globalSettings = await prisma.globalSettings.findFirst();
 
+    const partners = await prisma.partner.findMany({
+        where: { active: true },
+        orderBy: { name: "asc" }
+    });
+
     const allHistoryOperations = await prisma.operation.findMany({
         select: {
             clientId: true,
@@ -198,6 +204,7 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
                     <OperationTable
                         initialOperations={operations as any}
                         clients={clients as any}
+                        partners={partners as any}
                         currentUserRole={(session.user as any).role}
                         clientHistoryMaxRates={clientHistoryMaxRates}
                         clientLastOperationRate={clientLastOperationRate}

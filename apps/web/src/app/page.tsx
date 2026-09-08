@@ -81,7 +81,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
       date: dateFilter,
       ...(isComercial ? { client: { representativeId: (session.user as any).id } } : {})
     },
-    include: { client: true },
+    include: { client: true, partner: true },
     orderBy: { date: "asc" }
   });
 
@@ -173,6 +173,21 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   const valorNaoDeclarado = operations.filter(op => !op.declarada).reduce((acc, op) => acc + Math.round((Number(op.valorBruto) || 0) * 100), 0) / 100;
   const percentualDeclarado = totalOperado > 0 ? (valorDeclarado / totalOperado) * 100 : 0;
   const percentualNaoDeclarado = totalOperado > 0 ? (valorNaoDeclarado / totalOperado) * 100 : 0;
+
+  // ---- MÉTRICAS DE RE-DESCONTO & OPERAÇÕES EM ABERTO ----
+  const redescontoOps = operations.filter(op => op.isRedesconto);
+  const totalRedescontoVolume = redescontoOps.reduce((acc, op) => acc + (Number(op.valorBruto) || 0), 0);
+  const totalRedescontoCusto = redescontoOps.reduce((acc, op) => acc + (Number(op.custoParceiro) || 0), 0);
+  const totalRedescontoReceita = redescontoOps.reduce((acc, op) => acc + (Number(op.fator) || 0) + (Number(op.adValorem) || 0) + (Number(op.tarifas) || 0), 0);
+  const totalRedescontoGanho = totalRedescontoReceita - totalRedescontoCusto;
+
+  const totalOpenOpsCount = await prisma.operation.count({
+    where: { paga: false, active: true }
+  });
+  const totalOpenOpsBruto = await prisma.operation.aggregate({
+    where: { paga: false, active: true },
+    _sum: { valorBruto: true }
+  });
 
   // ---- CALCULO DO PONTO DE EQUILÍBRIO (BREAK-EVEN) ----
   // Rentabilidade operacional (taxa de faturamento bruto sobre volume de operações)
@@ -626,6 +641,74 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
             <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--accent-primary)" }}>{formatCurrency(valorDeclarado)}</div>
             <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
                 DECLARADO: {formatPercent(percentualDeclarado)}
+            </div>
+          </div>
+        </div>
+
+        {/* Resumo de Re-desconto e Operações em Aberto */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem" }}>
+          <div className="glass-panel" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", borderLeft: "4px solid #8b5cf6" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+              <div>
+                <h3 style={{ fontSize: "0.875rem", fontWeight: 700, color: "#c4b5fd", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  🟣 Operações com Re-desconto
+                </h3>
+                <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>Funding com Bancos, FIDCs e Securitizadoras no período</span>
+              </div>
+              <Link href="/redesconto" style={{ fontSize: "0.75rem", color: "#c4b5fd", fontWeight: 700, textDecoration: "underline" }}>
+                Ver Dashboard de Re-desconto →
+              </Link>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "0.75rem" }}>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: "0.7rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Volume Operado</span>
+                <span style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(totalRedescontoVolume)}</span>
+                <span style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>{redescontoOps.length} operações</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: "0.7rem", color: "var(--accent-red)", textTransform: "uppercase" }}>Custo Parceiros</span>
+                <span style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--accent-red)" }}>{formatCurrency(totalRedescontoCusto)}</span>
+                <span style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Juros cobrados</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: "0.7rem", color: "var(--accent-primary)", textTransform: "uppercase" }}>Ganho Líquido</span>
+                <span style={{ fontSize: "1.125rem", fontWeight: 700, color: totalRedescontoGanho >= 0 ? "var(--accent-primary)" : "var(--accent-red)" }}>
+                  {formatCurrency(totalRedescontoGanho)}
+                </span>
+                <span style={{ fontSize: "0.7rem", color: "var(--accent-primary)", fontWeight: 600 }}>
+                  Spread: {totalRedescontoVolume > 0 ? formatPercent((totalRedescontoGanho / totalRedescontoVolume) * 100) : "0,00%"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="glass-panel" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", borderLeft: "4px solid #f59e0b" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+              <div>
+                <h3 style={{ fontSize: "0.875rem", fontWeight: 700, color: "#fbbf24", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  ⏳ Operações em Aberto (Aguardando Liquidação)
+                </h3>
+                <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>Títulos e duplicatas não quitados pelo cliente</span>
+              </div>
+              <Link href="/em-aberto" style={{ fontSize: "0.75rem", color: "#fbbf24", fontWeight: 700, textDecoration: "underline" }}>
+                Ver Lista em Aberto →
+              </Link>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.25rem", flexWrap: "wrap", gap: "0.5rem" }}>
+              <div>
+                <span style={{ fontSize: "0.7rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Total Pendente</span>
+                <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                  {formatCurrency(totalOpenOpsBruto._sum.valorBruto || 0)}
+                </div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <span style={{ fontSize: "0.7rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Quantidade Pendente</span>
+                <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#fbbf24" }}>
+                  {totalOpenOpsCount} em aberto
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,15 +1,33 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { createOperation, deleteOperation, updateOperation, uploadOperationFile, updateOperationStatus } from "./actions";
+import { createOperation, deleteOperation, updateOperation, uploadOperationFile, updateOperationStatus, toggleOperationPaid } from "./actions";
 import { NumericFormat } from 'react-number-format';
 
-export default function OperationTable({ initialOperations, clients, currentUserRole, clientHistoryMaxRates, clientLastOperationRate, globalSettings }: { initialOperations: any[], clients: any[], currentUserRole: string, clientHistoryMaxRates?: Record<string, any>, clientLastOperationRate?: Record<string, { percentual: number, percentualAdValorem: number }>, globalSettings?: any }) {
+export default function OperationTable({ 
+    initialOperations, 
+    clients, 
+    partners = [],
+    currentUserRole, 
+    clientHistoryMaxRates, 
+    clientLastOperationRate, 
+    globalSettings 
+}: { 
+    initialOperations: any[], 
+    clients: any[], 
+    partners?: any[],
+    currentUserRole: string, 
+    clientHistoryMaxRates?: Record<string, any>, 
+    clientLastOperationRate?: Record<string, { percentual: number, percentualAdValorem: number }>, 
+    globalSettings?: any 
+}) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [clientSearch, setClientSearch] = useState("");
     const [dateSearch, setDateSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState<"TODAS" | "EM_ABERTO" | "PAGAS">("TODAS");
+    const [tipoFilter, setTipoFilter] = useState<"TODAS" | "REDESCONTO" | "PROPRIO">("TODAS");
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [xmlWarning, setXmlWarning] = useState<{ name: string, cnpj: string } | null>(null);
     const [activeStepTab, setActiveStepTab] = useState<string>("CONFIRMACAO");
@@ -21,7 +39,9 @@ export default function OperationTable({ initialOperations, clients, currentUser
     const filteredOperations = initialOperations.filter(op => {
         const matchesClient = op.client.name.toLowerCase().includes(clientSearch.toLowerCase());
         const matchesDate = dateSearch ? new Date(op.date).toISOString().split("T")[0] === dateSearch : true;
-        return matchesClient && matchesDate;
+        const matchesStatus = statusFilter === "TODAS" ? true : statusFilter === "PAGAS" ? op.paga === true : op.paga !== true;
+        const matchesTipo = tipoFilter === "TODAS" ? true : tipoFilter === "REDESCONTO" ? op.isRedesconto === true : !op.isRedesconto;
+        return matchesClient && matchesDate && matchesStatus && matchesTipo;
     });
 
     const operations = filteredOperations;
@@ -307,6 +327,12 @@ export default function OperationTable({ initialOperations, clients, currentUser
         valorLiquido: "",
         recompra: "",
         declarada: true,
+        isRedesconto: false,
+        partnerId: "",
+        taxaParceiro: "",
+        custoParceiro: "",
+        paga: false,
+        dataPagamento: "",
         status: "CONFIRMACAO",
         comprovanteConfirmacao: "",
         comprovanteAssinatura: "",
@@ -525,6 +551,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
             valorBruto: "", fator: "", percentual: "", percentualPrazo: "", dias: "",
             tarifas: "", percentualTarifas: "", adValorem: "", percentualAdValorem: "",
             irpj: "", iof: "", percentualIof: "", iofAdicional: "", percentualIofAdicional: "", valorLiquido: "", recompra: "", declarada: true,
+            isRedesconto: false, partnerId: "", taxaParceiro: "", custoParceiro: "", paga: false, dataPagamento: "",
             status: "CONFIRMACAO", comprovanteConfirmacao: "", comprovanteAssinatura: "", comprovantePagamento: "",
             sacados: [],
             tarifasList: globalSettings?.defaultTarifas && globalSettings.defaultTarifas.length > 0 ? globalSettings.defaultTarifas : [
@@ -568,6 +595,12 @@ export default function OperationTable({ initialOperations, clients, currentUser
             valorLiquido: op.valorLiquido?.toString() || "",
             recompra: op.recompra?.toString() || "",
             declarada: op.declarada ?? false,
+            isRedesconto: op.isRedesconto ?? false,
+            partnerId: op.partnerId || "",
+            taxaParceiro: op.taxaParceiro?.toString() || "",
+            custoParceiro: op.custoParceiro?.toString() || "",
+            paga: op.paga ?? false,
+            dataPagamento: op.dataPagamento ? new Date(op.dataPagamento).toISOString().split("T")[0] : "",
             status: op.status || "CONFIRMACAO",
             comprovanteConfirmacao: op.comprovanteConfirmacao || "",
             comprovanteAssinatura: op.comprovanteAssinatura || "",
@@ -620,6 +653,12 @@ export default function OperationTable({ initialOperations, clients, currentUser
             valorLiquido: Number(formData.valorLiquido),
             recompra: formData.recompra ? Number(formData.recompra) : null,
             declarada: formData.declarada,
+            isRedesconto: formData.isRedesconto,
+            partnerId: formData.isRedesconto && formData.partnerId ? formData.partnerId : null,
+            taxaParceiro: formData.isRedesconto && formData.taxaParceiro ? Number(formData.taxaParceiro) : null,
+            custoParceiro: formData.isRedesconto && formData.custoParceiro ? Number(formData.custoParceiro) : null,
+            paga: formData.paga,
+            dataPagamento: formData.paga && formData.dataPagamento ? formData.dataPagamento : null,
             sacados: activeSacados,
         };
 
@@ -866,14 +905,34 @@ export default function OperationTable({ initialOperations, clients, currentUser
     return (
         <div className="responsive-p">
             <div className="responsive-header-flex" style={{ flexWrap: "wrap", alignItems: "center", justifyContent: "center", marginBottom: "2rem" }}>
-                <div className="filters-container" style={{ display: "flex", flexDirection: "column", gap: "1.25rem", width: "100%", maxWidth: "400px", margin: "0 auto" }}>
-                    <div style={{ width: "100%" }}>
-                        <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, marginBottom: "0.5rem", display: "block", textAlign: "center" }}>Filtrar por Cedente</label>
-                        <input type="text" className="glass-input" placeholder="Nome do cedente..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} style={{ textAlign: "center" }}/>
+                <div className="filters-container" style={{ display: "flex", flexDirection: "column", gap: "1rem", width: "100%", maxWidth: "600px", margin: "0 auto" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                        <div style={{ width: "100%" }}>
+                            <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, marginBottom: "0.5rem", display: "block", textAlign: "center" }}>Filtrar por Cedente</label>
+                            <input type="text" className="glass-input" placeholder="Nome do cedente..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} style={{ textAlign: "center" }}/>
+                        </div>
+                        <div style={{ width: "100%" }}>
+                            <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, marginBottom: "0.5rem", display: "block", textAlign: "center" }}>Filtrar por Data</label>
+                            <input type="date" className="glass-input" value={dateSearch} onChange={(e) => setDateSearch(e.target.value)} style={{ textAlign: "center" }}/>
+                        </div>
                     </div>
-                    <div style={{ width: "100%" }}>
-                        <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, marginBottom: "0.5rem", display: "block", textAlign: "center" }}>Filtrar por Data</label>
-                        <input type="date" className="glass-input" value={dateSearch} onChange={(e) => setDateSearch(e.target.value)} style={{ textAlign: "center" }}/>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                        <div style={{ width: "100%" }}>
+                            <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, marginBottom: "0.5rem", display: "block", textAlign: "center" }}>Status de Pagamento</label>
+                            <select className="glass-input" value={statusFilter} onChange={(e: any) => setStatusFilter(e.target.value)} style={{ textAlign: "center", cursor: "pointer" }}>
+                                <option value="TODAS">Todos os Status</option>
+                                <option value="EM_ABERTO">⏳ Apenas Em Aberto</option>
+                                <option value="PAGAS">✔ Apenas Pagas (Liquidadas)</option>
+                            </select>
+                        </div>
+                        <div style={{ width: "100%" }}>
+                            <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, marginBottom: "0.5rem", display: "block", textAlign: "center" }}>Tipo de Operação</label>
+                            <select className="glass-input" value={tipoFilter} onChange={(e: any) => setTipoFilter(e.target.value)} style={{ textAlign: "center", cursor: "pointer" }}>
+                                <option value="TODAS">Todos os Tipos</option>
+                                <option value="REDESCONTO">🟣 Apenas Re-desconto</option>
+                                <option value="PROPRIO">⚪ Recursos Próprios</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 {isAdminOrManager && (
@@ -945,6 +1004,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Data</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Cedente</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Etapa</th>
+                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Pagamento</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, borderLeft: "1px dashed var(--glass-border)" }}>Bruto Operação</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Fator</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Dias</th>
@@ -961,8 +1021,43 @@ export default function OperationTable({ initialOperations, clients, currentUser
                         {operations.map((op) => (
                             <tr key={op.id} onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) toggleSelection(op.id); }} style={{ cursor: "pointer", backgroundColor: selectedIds.has(op.id) ? "rgba(16, 185, 129, 0.1)" : "transparent", borderBottom: "1px solid var(--glass-border)", transition: "background var(--transition-fast)", fontSize: "0.875rem" }} className="hover-row">
                                 <td style={{ padding: "0.75rem 1rem", color: "var(--text-secondary)" }}>{new Date(op.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</td>
-                                <td style={{ padding: "0.75rem 1rem", fontWeight: 500 }}>{op.client.name}</td>
+                                <td style={{ padding: "0.75rem 1rem", fontWeight: 500 }}>
+                                    <div style={{ display: "flex", flexDirection: "column" }}>
+                                        <span>{op.client.name}</span>
+                                        {op.isRedesconto && (
+                                            <span style={{ fontSize: "0.7rem", color: "#a78bfa", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "0.25rem", marginTop: "0.15rem" }}>
+                                                🟣 {op.partner?.name ? `Re-desconto: ${op.partner.name}` : "Re-desconto"}
+                                            </span>
+                                        )}
+                                    </div>
+                                </td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{renderStatusBadge(op.status)}</td>
+                                <td style={{ padding: "0.75rem 1rem" }}>
+                                    <button
+                                        type="button"
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                                            await toggleOperationPaid(op.id, !op.paga);
+                                            window.location.reload();
+                                        }}
+                                        style={{
+                                            padding: "0.25rem 0.6rem",
+                                            borderRadius: "9999px",
+                                            fontSize: "0.75rem",
+                                            fontWeight: 700,
+                                            backgroundColor: op.paga ? "rgba(16, 185, 129, 0.12)" : "rgba(245, 158, 11, 0.12)",
+                                            color: op.paga ? "var(--accent-primary)" : "#f59e0b",
+                                            border: `1px solid ${op.paga ? "rgba(16, 185, 129, 0.3)" : "rgba(245, 158, 11, 0.3)"}`,
+                                            cursor: "pointer",
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "0.25rem"
+                                        }}
+                                        title={op.paga ? "Liquidada! Clique para alternar para Em Aberto" : "Em Aberto! Clique para marcar como Liquidada"}
+                                    >
+                                        {op.paga ? "✔ Paga" : "⏳ Em Aberto"}
+                                    </button>
+                                </td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(op.valorBruto)}</td>
                                 <td style={{ padding: "0.75rem 1rem", color: "var(--text-tertiary)" }}>{formatCurrency(op.fator)}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{op.dias}</td>
@@ -986,7 +1081,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                     {operations.length > 0 && (
                         <tfoot>
                             <tr style={{ borderTop: "2px solid var(--glass-border)", fontWeight: 600 }}>
-                                <td style={{ padding: "0.75rem 1rem" }} colSpan={3}>Total</td>
+                                <td style={{ padding: "0.75rem 1rem" }} colSpan={4}>Total</td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(sumColumn("valorBruto"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("fator"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{calculateAverageDays().toFixed(1)} d</td>
@@ -1000,7 +1095,7 @@ export default function OperationTable({ initialOperations, clients, currentUser
                             </tr>
                             {selectedIds.size > 0 && (
                                 <tr style={{ borderTop: "1px dashed var(--glass-border)", fontWeight: 600, backgroundColor: "rgba(16, 185, 129, 0.05)" }}>
-                                    <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }} colSpan={3}>Sel. ({selectedIds.size} itens)</td>
+                                    <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }} colSpan={4}>Sel. ({selectedIds.size} itens)</td>
                                     <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("valorBruto", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("fator", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{calculateAverageDays(true).toFixed(1)} d</td>
@@ -1022,8 +1117,36 @@ export default function OperationTable({ initialOperations, clients, currentUser
                 {operations.map(op => (
                     <div key={op.id} className="glass-card" onClick={() => isAdminOrManager && handleEdit(op)} style={{ padding: "1.25rem", cursor: isAdminOrManager ? "pointer" : "default", display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "0.5rem" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ fontSize: "0.875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Cedente: {op.client.name}</span>
-                            {renderStatusBadge(op.status)}
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <span style={{ fontSize: "0.875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Cedente: {op.client.name}</span>
+                                {op.isRedesconto && (
+                                    <span style={{ fontSize: "0.7rem", color: "#a78bfa", fontWeight: 600 }}>
+                                        🟣 {op.partner?.name ? `Re-desconto: ${op.partner.name}` : "Re-desconto"}
+                                    </span>
+                                )}
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                {renderStatusBadge(op.status)}
+                                <button
+                                    type="button"
+                                    onClick={async (e) => {
+                                        e.stopPropagation();
+                                        await toggleOperationPaid(op.id, !op.paga);
+                                        window.location.reload();
+                                    }}
+                                    style={{
+                                        padding: "0.2rem 0.5rem",
+                                        borderRadius: "9999px",
+                                        fontSize: "0.7rem",
+                                        fontWeight: 700,
+                                        backgroundColor: op.paga ? "rgba(16, 185, 129, 0.12)" : "rgba(245, 158, 11, 0.12)",
+                                        color: op.paga ? "var(--accent-primary)" : "#f59e0b",
+                                        border: `1px solid ${op.paga ? "rgba(16, 185, 129, 0.3)" : "rgba(245, 158, 11, 0.3)"}`,
+                                    }}
+                                >
+                                    {op.paga ? "✔ Paga" : "⏳ Aberto"}
+                                </button>
+                            </div>
                         </div>
                         <div style={{ display: "flex", flexDirection: "column" }}>
                             <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Data: {new Date(op.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</span>
@@ -1562,6 +1685,236 @@ export default function OperationTable({ initialOperations, clients, currentUser
                                     <label style={{ fontSize: "0.875rem", color: "var(--accent-red)", fontWeight: 600 }}>Recompra (R$)</label>
                                     <NumericFormat className="glass-input" style={{ borderColor: "var(--accent-red)" }} value={formData.recompra} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => setFormData({ ...formData, recompra: v.floatValue !== undefined ? String(v.floatValue) : "" })} />
                                 </div>
+                            </div>
+
+                            {/* SEÇÃO RE-DESCONTO */}
+                            <div style={{
+                                padding: "1.25rem",
+                                backgroundColor: formData.isRedesconto ? "rgba(139, 92, 246, 0.08)" : "rgba(255, 255, 255, 0.02)",
+                                border: `1px solid ${formData.isRedesconto ? "rgba(139, 92, 246, 0.35)" : "var(--glass-border)"}`,
+                                borderRadius: "var(--radius-sm)",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "1rem",
+                                marginTop: "0.5rem"
+                            }}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                                        <input
+                                            type="checkbox"
+                                            id="isRedesconto"
+                                            checked={formData.isRedesconto}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                const firstPartner = partners && partners.length > 0 ? partners[0] : null;
+                                                const partnerRate = firstPartner ? String(firstPartner.rate) : "";
+                                                let custoCalc = "";
+                                                if (checked && firstPartner && formData.valorBruto && formData.dias) {
+                                                    const b = parseFloat(formData.valorBruto);
+                                                    const d = parseFloat(formData.dias);
+                                                    const r = firstPartner.rate;
+                                                    const c = b * (r / 100 / 30) * d;
+                                                    custoCalc = c > 0 ? c.toFixed(2) : "";
+                                                }
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    isRedesconto: checked,
+                                                    partnerId: checked ? (prev.partnerId || (firstPartner ? firstPartner.id : "")) : "",
+                                                    taxaParceiro: checked ? (prev.taxaParceiro || partnerRate) : "",
+                                                    custoParceiro: checked ? (prev.custoParceiro || custoCalc) : ""
+                                                }));
+                                            }}
+                                            style={{ width: "18px", height: "18px", accentColor: "#8b5cf6", cursor: "pointer" }}
+                                        />
+                                        <label htmlFor="isRedesconto" style={{ fontSize: "0.9375rem", fontWeight: 700, color: formData.isRedesconto ? "#c4b5fd" : "var(--text-primary)", cursor: "pointer" }}>
+                                            Operação com Re-desconto (Funding FIDC / Banco / Securitizadora)
+                                        </label>
+                                    </div>
+                                    {formData.isRedesconto && (
+                                        <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(139, 92, 246, 0.25)", color: "#ddd6fe", padding: "0.25rem 0.6rem", borderRadius: "9999px", fontWeight: 700 }}>
+                                            🟣 Alavancagem / Funding
+                                        </span>
+                                    )}
+                                </div>
+
+                                {formData.isRedesconto && (
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                                        <div className="form-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                                                <label style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", fontWeight: 600 }}>Parceiro de Funding</label>
+                                                <select
+                                                    className="glass-input"
+                                                    required={formData.isRedesconto}
+                                                    value={formData.partnerId}
+                                                    onChange={(e) => {
+                                                        const pId = e.target.value;
+                                                        const sel = partners.find((p: any) => p.id === pId);
+                                                        const pRate = sel ? sel.rate : (parseFloat(formData.taxaParceiro) || 0);
+                                                        let custoCalc = "";
+                                                        if (formData.valorBruto && formData.dias && pRate) {
+                                                            const b = parseFloat(formData.valorBruto);
+                                                            const d = parseFloat(formData.dias);
+                                                            const c = b * (pRate / 100 / 30) * d;
+                                                            custoCalc = c > 0 ? c.toFixed(2) : "";
+                                                        }
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            partnerId: pId,
+                                                            taxaParceiro: sel ? sel.rate.toString() : prev.taxaParceiro,
+                                                            custoParceiro: custoCalc || prev.custoParceiro
+                                                        }));
+                                                    }}
+                                                >
+                                                    <option value="">Selecione um parceiro...</option>
+                                                    {partners.map((p: any) => (
+                                                        <option key={p.id} value={p.id}>
+                                                            {p.name} ({p.type} - {p.rate}% a.m.)
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                                                <label style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", fontWeight: 600 }}>Taxa Cobrada pelo Parceiro (% a.m.)</label>
+                                                <NumericFormat
+                                                    className="glass-input"
+                                                    value={formData.taxaParceiro}
+                                                    thousandSeparator="."
+                                                    decimalSeparator=","
+                                                    decimalScale={4}
+                                                    placeholder="Ex: 2,5"
+                                                    onValueChange={(v: any) => {
+                                                        const val = v.floatValue;
+                                                        let custoCalc = formData.custoParceiro;
+                                                        if (val !== undefined && formData.valorBruto && formData.dias) {
+                                                            const b = parseFloat(formData.valorBruto);
+                                                            const d = parseFloat(formData.dias);
+                                                            const c = b * (val / 100 / 30) * d;
+                                                            custoCalc = c > 0 ? c.toFixed(2) : "";
+                                                        }
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            taxaParceiro: val !== undefined ? String(val) : "",
+                                                            custoParceiro: custoCalc
+                                                        }));
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                                                <label style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", fontWeight: 600 }}>Custo Financeiro Parceiro (R$)</label>
+                                                <NumericFormat
+                                                    className="glass-input"
+                                                    value={formData.custoParceiro}
+                                                    thousandSeparator="."
+                                                    decimalSeparator=","
+                                                    decimalScale={2}
+                                                    fixedDecimalScale={true}
+                                                    prefix="R$ "
+                                                    placeholder="R$ 0,00"
+                                                    onValueChange={(v: any) => {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            custoParceiro: v.floatValue !== undefined ? String(v.floatValue) : ""
+                                                        }));
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Detalhe de Ganho / Spread nesta operação */}
+                                        {(() => {
+                                            const bruto = parseFloat(formData.valorBruto) || 0;
+                                            const fator = parseFloat(formData.fator) || 0;
+                                            const adValorem = parseFloat(formData.adValorem) || 0;
+                                            const tarifas = parseFloat(formData.tarifas) || 0;
+                                            const receitaGeluk = fator + adValorem + tarifas;
+                                            const custo = parseFloat(formData.custoParceiro) || 0;
+                                            const ganhoGeluk = receitaGeluk - custo;
+                                            const spreadPercent = bruto > 0 ? (ganhoGeluk / bruto) * 100 : 0;
+
+                                            return (
+                                                <div style={{
+                                                    padding: "0.875rem 1rem",
+                                                    backgroundColor: ganhoGeluk >= 0 ? "rgba(16, 185, 129, 0.08)" : "rgba(239, 68, 68, 0.08)",
+                                                    border: `1px solid ${ganhoGeluk >= 0 ? "rgba(16, 185, 129, 0.3)" : "rgba(239, 68, 68, 0.3)"}`,
+                                                    borderRadius: "var(--radius-sm)",
+                                                    display: "flex",
+                                                    justifyContent: "space-between",
+                                                    alignItems: "center",
+                                                    flexWrap: "wrap",
+                                                    gap: "0.5rem",
+                                                    fontSize: "0.8125rem"
+                                                }}>
+                                                    <div>
+                                                        <span style={{ color: "var(--text-secondary)" }}>Receita Geluk (Fator + Tarifas + AdValorem): </span>
+                                                        <strong>{formatCurrency(receitaGeluk)}</strong>
+                                                        <span style={{ margin: "0 0.5rem", color: "var(--text-tertiary)" }}>|</span>
+                                                        <span style={{ color: "var(--text-secondary)" }}>Custo do Parceiro: </span>
+                                                        <strong style={{ color: "var(--accent-red)" }}>{formatCurrency(custo)}</strong>
+                                                    </div>
+                                                    <div>
+                                                        <span style={{ color: "var(--text-secondary)" }}>Ganho Líquido da Operação: </span>
+                                                        <strong style={{ color: ganhoGeluk >= 0 ? "var(--accent-primary)" : "var(--accent-red)", fontSize: "1rem" }}>
+                                                            {formatCurrency(ganhoGeluk)} ({spreadPercent.toFixed(2)}%)
+                                                        </strong>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* SEÇÃO STATUS DE PAGAMENTO PELO CLIENTE */}
+                            <div style={{
+                                padding: "1rem 1.25rem",
+                                backgroundColor: formData.paga ? "rgba(16, 185, 129, 0.06)" : "rgba(245, 158, 11, 0.06)",
+                                border: `1px solid ${formData.paga ? "rgba(16, 185, 129, 0.3)" : "rgba(245, 158, 11, 0.3)"}`,
+                                borderRadius: "var(--radius-sm)",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                flexWrap: "wrap",
+                                gap: "1rem"
+                            }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                                    <input
+                                        type="checkbox"
+                                        id="paga"
+                                        checked={formData.paga}
+                                        onChange={(e) => {
+                                            const isPaid = e.target.checked;
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                paga: isPaid,
+                                                dataPagamento: isPaid ? (prev.dataPagamento || new Date().toISOString().split("T")[0]) : ""
+                                            }));
+                                        }}
+                                        style={{ width: "18px", height: "18px", accentColor: "var(--accent-primary)", cursor: "pointer" }}
+                                    />
+                                    <div>
+                                        <label htmlFor="paga" style={{ fontSize: "0.875rem", fontWeight: 700, color: formData.paga ? "var(--accent-primary)" : "#f59e0b", cursor: "pointer", display: "block" }}>
+                                            {formData.paga ? "✔ Operação PAGA pelo Cliente (Liquidada)" : "⏳ Operação EM ABERTO (Aguardando Pagamento)"}
+                                        </label>
+                                        <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>
+                                            {formData.paga ? "O cliente já liquidou os títulos. Se for re-desconto, o limite do parceiro é restabelecido." : "Esta operação constará no painel de Operações em Aberto até ser liquidada."}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {formData.paga && (
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                        <label style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>Data da Liquidação:</label>
+                                        <input
+                                            type="date"
+                                            className="glass-input"
+                                            style={{ width: "auto", padding: "0.35rem 0.6rem", fontSize: "0.8125rem" }}
+                                            value={formData.dataPagamento}
+                                            onChange={e => setFormData(prev => ({ ...prev, dataPagamento: e.target.value }))}
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.5rem" }}>

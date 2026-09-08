@@ -18,12 +18,14 @@
   "/clientes/[id]/page": "app/clientes/[id]/page.js",
   "/clientes/page": "app/clientes/page.js",
   "/custos/page": "app/custos/page.js",
+  "/em-aberto/page": "app/em-aberto/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/icon.png/route": "app/icon.png/route.js",
   "/investidores/page": "app/investidores/page.js",
   "/login/page": "app/login/page.js",
   "/operacoes/page": "app/operacoes/page.js",
   "/page": "app/page.js",
+  "/redesconto/page": "app/redesconto/page.js",
   "/taxas-tarifas/page": "app/taxas-tarifas/page.js",
   "/usuarios/page": "app/usuarios/page.js"
 }

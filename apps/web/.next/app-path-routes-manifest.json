@@ -18,12 +18,14 @@
   "/clientes/[id]/page": "/clientes/[id]",
   "/clientes/page": "/clientes",
   "/custos/page": "/custos",
+  "/em-aberto/page": "/em-aberto",
   "/favicon.ico/route": "/favicon.ico",
   "/icon.png/route": "/icon.png",
   "/investidores/page": "/investidores",
   "/login/page": "/login",
   "/operacoes/page": "/operacoes",
   "/page": "/",
+  "/redesconto/page": "/redesconto",
   "/taxas-tarifas/page": "/taxas-tarifas",
   "/usuarios/page": "/usuarios"
 }

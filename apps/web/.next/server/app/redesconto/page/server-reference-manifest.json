@@ -1,0 +1,65 @@
+{
+  "node": {
+    "40fbb650b26fc1b0f74e474c98daf229e7835368ed": {
+      "workers": {
+        "app/redesconto/page": {
+          "moduleId": 87617,
+          "async": true,
+          "exportedName": "createPartner",
+          "filename": "apps/web/src/app/redesconto/actions.ts"
+        }
+      },
+      "layer": {
+        "app/redesconto/page": "action-browser"
+      },
+      "exportedName": "createPartner",
+      "filename": "apps/web/src/app/redesconto/actions.ts"
+    },
+    "60de2c8ea29f344370061bd258f524e98a33c1e6d3": {
+      "workers": {
+        "app/redesconto/page": {
+          "moduleId": 87617,
+          "async": true,
+          "exportedName": "updatePartner",
+          "filename": "apps/web/src/app/redesconto/actions.ts"
+        }
+      },
+      "layer": {
+        "app/redesconto/page": "action-browser"
+      },
+      "exportedName": "updatePartner",
+      "filename": "apps/web/src/app/redesconto/actions.ts"
+    },
+    "40951b4f74b5f825572c7c6eb321a03af83169ed09": {
+      "workers": {
+        "app/redesconto/page": {
+          "moduleId": 87617,
+          "async": true,
+          "exportedName": "deletePartner",
+          "filename": "apps/web/src/app/redesconto/actions.ts"
+        }
+      },
+      "layer": {
+        "app/redesconto/page": "action-browser"
+      },
+      "exportedName": "deletePartner",
+      "filename": "apps/web/src/app/redesconto/actions.ts"
+    },
+    "709b512bc45fd4997783ec86fc9047ca353e9a4749": {
+      "workers": {
+        "app/redesconto/page": {
+          "moduleId": 87617,
+          "async": true,
+          "exportedName": "toggleOperationPaid",
+          "filename": "apps/web/src/app/operacoes/actions.ts"
+        }
+      },
+      "layer": {
+        "app/redesconto/page": "action-browser"
+      },
+      "exportedName": "toggleOperationPaid",
+      "filename": "apps/web/src/app/operacoes/actions.ts"
+    }
+  },
+  "edge": {}
+}

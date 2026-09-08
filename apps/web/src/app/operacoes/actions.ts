@@ -28,6 +28,12 @@ export async function createOperation(data: any) {
                 comprovanteConfirmacao: data.comprovanteConfirmacao || null,
                 comprovanteAssinatura: data.comprovanteAssinatura || null,
                 comprovantePagamento: data.comprovantePagamento || null,
+                isRedesconto: data.isRedesconto ?? false,
+                partnerId: data.isRedesconto && data.partnerId ? data.partnerId : null,
+                taxaParceiro: data.isRedesconto && data.taxaParceiro != null ? Number(data.taxaParceiro) : null,
+                custoParceiro: data.isRedesconto && data.custoParceiro != null ? Number(data.custoParceiro) : null,
+                paga: data.paga ?? false,
+                dataPagamento: data.paga ? (data.dataPagamento ? new Date(data.dataPagamento) : new Date()) : null,
                 sacados: {
                     create: data.sacados?.map((s: any) => ({
                         nome: s.nome,
@@ -38,6 +44,9 @@ export async function createOperation(data: any) {
             },
         });
         revalidatePath("/operacoes");
+        revalidatePath("/redesconto");
+        revalidatePath("/em-aberto");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         console.log(error);
@@ -49,6 +58,9 @@ export async function deleteOperation(id: string) {
     try {
         await prisma.operation.delete({ where: { id } });
         revalidatePath("/operacoes");
+        revalidatePath("/redesconto");
+        revalidatePath("/em-aberto");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         return { success: false, error: "Erro ao excluir operação" };
@@ -81,6 +93,12 @@ export async function updateOperation(id: string, data: any) {
                 comprovanteConfirmacao: data.comprovanteConfirmacao || null,
                 comprovanteAssinatura: data.comprovanteAssinatura || null,
                 comprovantePagamento: data.comprovantePagamento || null,
+                isRedesconto: data.isRedesconto ?? false,
+                partnerId: data.isRedesconto && data.partnerId ? data.partnerId : null,
+                taxaParceiro: data.isRedesconto && data.taxaParceiro != null ? Number(data.taxaParceiro) : null,
+                custoParceiro: data.isRedesconto && data.custoParceiro != null ? Number(data.custoParceiro) : null,
+                paga: data.paga ?? false,
+                dataPagamento: data.paga ? (data.dataPagamento ? new Date(data.dataPagamento) : new Date()) : null,
                 sacados: {
                     deleteMany: {},
                     create: data.sacados?.map((s: any) => ({
@@ -92,6 +110,9 @@ export async function updateOperation(id: string, data: any) {
             },
         });
         revalidatePath("/operacoes");
+        revalidatePath("/redesconto");
+        revalidatePath("/em-aberto");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         console.log(error);
@@ -159,5 +180,25 @@ export async function updateOperationStatus(operationId: string, status: string)
     } catch (error: any) {
         console.error("Erro ao atualizar status:", error);
         return { success: false, error: error.message };
+    }
+}
+
+export async function toggleOperationPaid(operationId: string, paga: boolean, dataPagamento?: string | null) {
+    try {
+        await prisma.operation.update({
+            where: { id: operationId },
+            data: {
+                paga,
+                dataPagamento: paga ? (dataPagamento ? new Date(dataPagamento) : new Date()) : null
+            }
+        });
+        revalidatePath("/operacoes");
+        revalidatePath("/redesconto");
+        revalidatePath("/em-aberto");
+        revalidatePath("/");
+        return { success: true };
+    } catch (error: any) {
+        console.error("Erro ao atualizar status de pagamento:", error);
+        return { success: false, error: error.message || "Erro ao atualizar status de pagamento" };
     }
 }

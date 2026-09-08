@@ -110,6 +110,31 @@ model Operation {
   updatedAt           DateTime @updatedAt
   client              Client   @relation(fields: [clientId], references: [id])
   sacados             Sacado[]
+
+  // Re-desconto
+  isRedesconto        Boolean   @default(false)
+  partnerId           String?
+  partner             Partner?  @relation(fields: [partnerId], references: [id])
+  taxaParceiro        Float?
+  custoParceiro       Float?
+
+  // Status de Pagamento pelo Cliente
+  paga                Boolean   @default(false)
+  dataPagamento       DateTime?
+}
+
+model Partner {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  type        String      @default("FIDC") // BANCO, FIDC, SECURITIZADORA, OUTRO
+  rate        Float       // Taxa cobrada pelo parceiro (% a.m.)
+  limit       Float       // Limite disponibilizado para operar (R$)
+  contact     String?
+  notes       String?
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  operations  Operation[]
 }
 
 model Sacado {

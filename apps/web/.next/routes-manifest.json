@@ -171,6 +171,12 @@
       "namedRegex": "^/custos(?:/)?$"
     },
     {
+      "page": "/em-aberto",
+      "regex": "^/em\\-aberto(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/em\\-aberto(?:/)?$"
+    },
+    {
       "page": "/favicon.ico",
       "regex": "^/favicon\\.ico(?:/)?$",
       "routeKeys": {},
@@ -199,6 +205,12 @@
       "regex": "^/operacoes(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/operacoes(?:/)?$"
+    },
+    {
+      "page": "/redesconto",
+      "regex": "^/redesconto(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/redesconto(?:/)?$"
     },
     {
       "page": "/taxas-tarifas",

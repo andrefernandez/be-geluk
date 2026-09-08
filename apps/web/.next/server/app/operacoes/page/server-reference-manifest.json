@@ -74,6 +74,21 @@
       },
       "exportedName": "updateOperationStatus",
       "filename": "apps/web/src/app/operacoes/actions.ts"
+    },
+    "709b512bc45fd4997783ec86fc9047ca353e9a4749": {
+      "workers": {
+        "app/operacoes/page": {
+          "moduleId": 18851,
+          "async": true,
+          "exportedName": "toggleOperationPaid",
+          "filename": "apps/web/src/app/operacoes/actions.ts"
+        }
+      },
+      "layer": {
+        "app/operacoes/page": "action-browser"
+      },
+      "exportedName": "toggleOperationPaid",
+      "filename": "apps/web/src/app/operacoes/actions.ts"
     }
   },
   "edge": {}

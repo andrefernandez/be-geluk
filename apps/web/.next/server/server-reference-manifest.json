@@ -240,6 +240,35 @@
       "filename": "apps/web/src/app/custos/actions.ts",
       "exportedName": "deleteCost"
     },
+    "709b512bc45fd4997783ec86fc9047ca353e9a4749": {
+      "workers": {
+        "app/em-aberto/page": {
+          "moduleId": 99835,
+          "async": true,
+          "exportedName": "toggleOperationPaid",
+          "filename": "apps/web/src/app/operacoes/actions.ts"
+        },
+        "app/operacoes/page": {
+          "moduleId": 18851,
+          "async": true,
+          "exportedName": "toggleOperationPaid",
+          "filename": "apps/web/src/app/operacoes/actions.ts"
+        },
+        "app/redesconto/page": {
+          "moduleId": 87617,
+          "async": true,
+          "exportedName": "toggleOperationPaid",
+          "filename": "apps/web/src/app/operacoes/actions.ts"
+        }
+      },
+      "layer": {
+        "app/em-aberto/page": "action-browser",
+        "app/operacoes/page": "action-browser",
+        "app/redesconto/page": "action-browser"
+      },
+      "filename": "apps/web/src/app/operacoes/actions.ts",
+      "exportedName": "toggleOperationPaid"
+    },
     "4027ce97e4c8808a24d017b4f2c196d69f73a5fcb8": {
       "workers": {
         "app/investidores/page": {
@@ -404,6 +433,51 @@
       },
       "filename": "apps/web/src/app/operacoes/actions.ts",
       "exportedName": "updateOperationStatus"
+    },
+    "40fbb650b26fc1b0f74e474c98daf229e7835368ed": {
+      "workers": {
+        "app/redesconto/page": {
+          "moduleId": 87617,
+          "async": true,
+          "exportedName": "createPartner",
+          "filename": "apps/web/src/app/redesconto/actions.ts"
+        }
+      },
+      "layer": {
+        "app/redesconto/page": "action-browser"
+      },
+      "filename": "apps/web/src/app/redesconto/actions.ts",
+      "exportedName": "createPartner"
+    },
+    "60de2c8ea29f344370061bd258f524e98a33c1e6d3": {
+      "workers": {
+        "app/redesconto/page": {
+          "moduleId": 87617,
+          "async": true,
+          "exportedName": "updatePartner",
+          "filename": "apps/web/src/app/redesconto/actions.ts"
+        }
+      },
+      "layer": {
+        "app/redesconto/page": "action-browser"
+      },
+      "filename": "apps/web/src/app/redesconto/actions.ts",
+      "exportedName": "updatePartner"
+    },
+    "40951b4f74b5f825572c7c6eb321a03af83169ed09": {
+      "workers": {
+        "app/redesconto/page": {
+          "moduleId": 87617,
+          "async": true,
+          "exportedName": "deletePartner",
+          "filename": "apps/web/src/app/redesconto/actions.ts"
+        }
+      },
+      "layer": {
+        "app/redesconto/page": "action-browser"
+      },
+      "filename": "apps/web/src/app/redesconto/actions.ts",
+      "exportedName": "deletePartner"
     },
     "00760c35fe4c14b78a9e068243b5c327f370934bcd": {
       "workers": {
