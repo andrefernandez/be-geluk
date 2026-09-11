@@ -3,36 +3,53 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function createClient(data: { name: string, cnpj?: string, status?: string, representativeId?: string, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number, taxaIof?: number, taxaIofAdicional?: number }) {
+export async function createClient(data: { name: string, cnpj?: string | null, status?: string, representativeId?: string | null, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number, taxaIof?: number, taxaIofAdicional?: number }) {
     try {
-        const existing = await prisma.client.findUnique({ where: { name: data.name } });
+        const trimmedName = data.name?.trim();
+        if (!trimmedName) {
+            return { success: false, error: "O nome do cliente é obrigatório." };
+        }
+
+        const existing = await prisma.client.findUnique({ where: { name: trimmedName } });
         if (existing) {
             return { success: false, error: "Já existe um cliente com este nome." };
         }
 
         await prisma.client.create({
             data: {
-                name: data.name,
-                cnpj: data.cnpj,
+                name: trimmedName,
+                cnpj: data.cnpj?.trim() || null,
                 status: data.status || "ATIVO",
-                representativeId: data.representativeId,
-                taxaFator: data.taxaFator,
-                taxaAdValorem: data.taxaAdValorem,
-                taxaTarifa: data.taxaTarifa,
-                taxaIof: data.taxaIof,
-                taxaIofAdicional: data.taxaIofAdicional,
+                representativeId: data.representativeId?.trim() ? data.representativeId.trim() : null,
+                taxaFator: data.taxaFator ?? null,
+                taxaAdValorem: data.taxaAdValorem ?? null,
+                taxaTarifa: data.taxaTarifa ?? null,
+                taxaIof: data.taxaIof ?? null,
+                taxaIofAdicional: data.taxaIofAdicional ?? null,
             } as any,
         });
         revalidatePath("/clientes");
         return { success: true };
-    } catch (error) {
-        return { success: false, error: "Erro ao criar cliente. Verifique se o nome é único." };
+    } catch (error: any) {
+        console.error("Erro ao criar cliente:", error);
+        if (error.code === 'P2002') {
+            return { success: false, error: "Já existe um cliente com este nome." };
+        }
+        if (error.code === 'P2003') {
+            return { success: false, error: "Representante selecionado inválido ou não encontrado." };
+        }
+        return { success: false, error: "Erro ao criar cliente: " + (error?.message || "Erro desconhecido") };
     }
 }
 
-export async function updateClient(id: string, data: { name: string, cnpj?: string, status?: string, representativeId?: string, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number, taxaIof?: number, taxaIofAdicional?: number }) {
+export async function updateClient(id: string, data: { name: string, cnpj?: string | null, status?: string, representativeId?: string | null, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number, taxaIof?: number, taxaIofAdicional?: number }) {
     try {
-        const existing = await prisma.client.findUnique({ where: { name: data.name } });
+        const trimmedName = data.name?.trim();
+        if (!trimmedName) {
+            return { success: false, error: "O nome do cliente é obrigatório." };
+        }
+
+        const existing = await prisma.client.findUnique({ where: { name: trimmedName } });
         if (existing && existing.id !== id) {
             return { success: false, error: "Já existe um cliente com este nome." };
         }
@@ -40,21 +57,28 @@ export async function updateClient(id: string, data: { name: string, cnpj?: stri
         await prisma.client.update({
             where: { id },
             data: {
-                name: data.name,
-                cnpj: data.cnpj,
+                name: trimmedName,
+                cnpj: data.cnpj?.trim() || null,
                 status: data.status,
-                representativeId: data.representativeId,
-                taxaFator: data.taxaFator,
-                taxaAdValorem: data.taxaAdValorem,
-                taxaTarifa: data.taxaTarifa,
-                taxaIof: data.taxaIof,
-                taxaIofAdicional: data.taxaIofAdicional,
+                representativeId: data.representativeId?.trim() ? data.representativeId.trim() : null,
+                taxaFator: data.taxaFator ?? null,
+                taxaAdValorem: data.taxaAdValorem ?? null,
+                taxaTarifa: data.taxaTarifa ?? null,
+                taxaIof: data.taxaIof ?? null,
+                taxaIofAdicional: data.taxaIofAdicional ?? null,
             } as any,
         });
         revalidatePath("/clientes");
         return { success: true };
-    } catch (error) {
-        return { success: false, error: "Erro ao atualizar cliente" };
+    } catch (error: any) {
+        console.error("Erro ao atualizar cliente:", error);
+        if (error.code === 'P2002') {
+            return { success: false, error: "Já existe um cliente com este nome." };
+        }
+        if (error.code === 'P2003') {
+            return { success: false, error: "Representante selecionado inválido ou não encontrado." };
+        }
+        return { success: false, error: "Erro ao atualizar cliente: " + (error?.message || "Erro desconhecido") };
     }
 }
 

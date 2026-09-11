@@ -105,10 +105,32 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
         const tIof = taxaIof ? parseFloat(taxaIof) : undefined;
         const tIofAdicional = taxaIofAdicional ? parseFloat(taxaIofAdicional) : undefined;
 
+        const finalRepId = representativeId && representativeId.trim() !== "" ? representativeId.trim() : null;
+
         if (editingClient) {
-            res = await updateClient(editingClient.id, { name, cnpj, status, representativeId, taxaFator: tFator, taxaAdValorem: tAdValorem, taxaTarifa: tTarifa, taxaIof: tIof, taxaIofAdicional: tIofAdicional });
+            res = await updateClient(editingClient.id, { 
+                name: name.trim(), 
+                cnpj: cnpj.trim() || null, 
+                status, 
+                representativeId: finalRepId, 
+                taxaFator: tFator, 
+                taxaAdValorem: tAdValorem, 
+                taxaTarifa: tTarifa, 
+                taxaIof: tIof, 
+                taxaIofAdicional: tIofAdicional 
+            });
         } else {
-            res = await createClient({ name, cnpj, status, representativeId, taxaFator: tFator, taxaAdValorem: tAdValorem, taxaTarifa: tTarifa, taxaIof: tIof, taxaIofAdicional: tIofAdicional });
+            res = await createClient({ 
+                name: name.trim(), 
+                cnpj: cnpj.trim() || null, 
+                status, 
+                representativeId: finalRepId, 
+                taxaFator: tFator, 
+                taxaAdValorem: tAdValorem, 
+                taxaTarifa: tTarifa, 
+                taxaIof: tIof, 
+                taxaIofAdicional: tIofAdicional 
+            });
         }
 
         if (!res.success) {
