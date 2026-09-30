@@ -13,7 +13,7 @@ type Client = {
     status: string;
     createdAt: Date;
     representativeId?: string | null;
-    representative?: { name: string } | null;
+    representative?: { name: string; role?: string } | null;
     taxaFator?: number | null;
     taxaAdValorem?: number | null;
     taxaTarifa?: number | null;
@@ -343,7 +343,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Nome da Empresa</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>CNPJ</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Status</th>
-                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Representante</th>
+                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Representante / Parceiro</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, textAlign: "right" }}>Volume Operado</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Operações</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Data Criação</th>
@@ -376,7 +376,18 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                         </span>
                                     </td>
                                     <td style={{ padding: "1rem", color: "var(--text-secondary)", fontSize: "0.875rem" }}>
-                                        {client.representative?.name || <span style={{ color: "var(--text-tertiary)", fontStyle: "italic" }}>Não definido</span>}
+                                        {client.representative?.name ? (
+                                            <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+                                                <span>{client.representative.name}</span>
+                                                {client.representative.role === "PARCEIRO" && (
+                                                    <span style={{ fontSize: "0.625rem", padding: "0.1rem 0.35rem", borderRadius: "4px", backgroundColor: "rgba(168, 85, 247, 0.15)", color: "#c084fc", border: "1px solid rgba(168, 85, 247, 0.4)", fontWeight: 700 }}>
+                                                        PARCEIRO
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <span style={{ color: "var(--text-tertiary)", fontStyle: "italic" }}>Não definido</span>
+                                        )}
                                     </td>
                                     <td style={{ padding: "1rem", color: "var(--text-secondary)", fontSize: "0.875rem", textAlign: "right", fontWeight: 600 }}>
                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
@@ -445,7 +456,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                         </span>
                                     </div>
                                     <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>CNPJ: {client.cnpj || "---"}</span>
-                                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 500 }}>Rep: {client.representative?.name || "N/A"}</span>
+                                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 500 }}>Rep/Parceiro: {client.representative?.name ? `${client.representative.name}${client.representative.role === "PARCEIRO" ? " (PARCEIRO)" : ""}` : "N/A"}</span>
                                     <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 600 }}>
                                         Vol: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
                                             client.operations?.reduce((sum, op) => sum + (op.valorBruto || 0), 0) || 0
@@ -547,7 +558,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
 
                             {!isComercial && (
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Representante (Comercial/Manager)</label>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Representante Comercial / Parceiro</label>
                                     <select 
                                         className="glass-input" 
                                         value={representativeId} 
@@ -558,7 +569,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                             borderColor: "var(--glass-border, rgba(255,255,255,0.1))"
                                         }}
                                     >
-                                        <option value="" style={{ backgroundColor: "#1a1a1a", color: "#ffffff" }}>Selecione um representante</option>
+                                        <option value="" style={{ backgroundColor: "#1a1a1a", color: "#ffffff" }}>Selecione um representante ou parceiro</option>
                                         {representatives.map(rep => (
                                             <option key={rep.id} value={rep.id} style={{ backgroundColor: "#1a1a1a", color: "#ffffff" }}>
                                                 {rep.name} ({rep.role})

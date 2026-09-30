@@ -16,11 +16,11 @@ export function Navigation() {
     const isAdminOrManager = (session?.user as any)?.role === "ADMIN" || (session?.user as any)?.role === "MANAGER";
     const isInvestor = (session?.user as any)?.role === "INVESTOR";
     const isContador = (session?.user as any)?.role === "CONTADOR";
-    const isComercial = (session?.user as any)?.role === "COMERCIAL";
+    const isComercialOrParceiro = (session?.user as any)?.role === "COMERCIAL" || (session?.user as any)?.role === "PARCEIRO";
 
     const navItems = isInvestor ? [] : isContador ? [
         { name: "Custos", path: "/custos" },
-    ] : isComercial ? [
+    ] : isComercialOrParceiro ? [
         { name: "Cedentes", path: "/clientes" },
     ] : [
         { name: "Dashboard", path: "/" },

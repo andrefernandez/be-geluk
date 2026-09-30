@@ -16,6 +16,8 @@ export async function createUser(data: any) {
             },
         });
         revalidatePath("/usuarios");
+        revalidatePath("/clientes");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         return { success: false, error: "Erro ao criar usuário" };
@@ -38,6 +40,8 @@ export async function updateUser(id: string, data: any) {
             data: updateData,
         });
         revalidatePath("/usuarios");
+        revalidatePath("/clientes");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         return { success: false, error: "Erro ao atualizar usuário" };
@@ -48,6 +52,8 @@ export async function deleteUser(id: string) {
     try {
         await prisma.user.delete({ where: { id } });
         revalidatePath("/usuarios");
+        revalidatePath("/clientes");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         return { success: false, error: "Erro ao deletar usuário" };

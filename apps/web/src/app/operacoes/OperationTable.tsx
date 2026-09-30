@@ -1914,7 +1914,7 @@ export default function OperationTable({
                                                 </div>
                                                 <div>
                                                     <span style={{ fontSize: "0.9375rem", fontWeight: 700, color: "#93c5fd" }}>
-                                                        Comissão do Representante Comercial
+                                                        Comissão do Representante / Parceiro
                                                     </span>
                                                     <div style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
                                                         Cedente vinculado a: <strong style={{ color: "var(--text-primary)" }}>{repName}{repRole}</strong>

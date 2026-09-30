@@ -24,7 +24,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
     redirect("/custos");
   }
 
-  if ((session?.user as any)?.role === "COMERCIAL") {
+  if ((session?.user as any)?.role === "COMERCIAL" || (session?.user as any)?.role === "PARCEIRO") {
     redirect("/clientes");
   }
 
@@ -114,7 +114,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   // Busca representantes cadastrados
   const representatives = await prisma.user.findMany({
     where: {
-      role: { in: ["COMERCIAL", "MANAGER"] }
+      role: { in: ["COMERCIAL", "MANAGER", "PARCEIRO"] }
     },
     select: {
       id: true,

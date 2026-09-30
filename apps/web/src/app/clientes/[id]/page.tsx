@@ -43,7 +43,7 @@ export default async function ClientDetailPage({ params }: Props) {
 
     // Role check: Commercial reps can only view their own clients
     const user = session.user as any;
-    if (user.role === "COMERCIAL" && client.representativeId !== user.id) {
+    if ((user.role === "COMERCIAL" || user.role === "PARCEIRO") && client.representativeId !== user.id) {
         redirect("/clientes");
     }
 

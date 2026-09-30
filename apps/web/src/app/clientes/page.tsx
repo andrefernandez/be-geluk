@@ -11,8 +11,11 @@ export default async function ClientesPage() {
         redirect("/login");
     }
 
+    const userRole = (session.user as any)?.role;
+    const isRestricted = userRole === "COMERCIAL" || userRole === "PARCEIRO";
+
     const clients = await prisma.client.findMany({
-        where: (session.user as any).role === "COMERCIAL" ? {
+        where: isRestricted ? {
             representativeId: (session.user as any).id
         } : {},
         select: {
@@ -24,7 +27,8 @@ export default async function ClientesPage() {
             representativeId: true,
             representative: {
                 select: {
-                    name: true
+                    name: true,
+                    role: true
                 }
             },
             taxaFator: true,
@@ -51,7 +55,7 @@ export default async function ClientesPage() {
     const representatives = await prisma.user.findMany({
         where: {
             role: {
-                in: ["MANAGER", "COMERCIAL"]
+                in: ["MANAGER", "COMERCIAL", "PARCEIRO"]
             }
         },
         select: {

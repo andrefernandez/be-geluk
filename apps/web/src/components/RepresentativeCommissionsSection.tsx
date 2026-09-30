@@ -166,10 +166,10 @@ export default function RepresentativeCommissionsSection({
                         </div>
                         <div>
                             <h3 style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
-                                Comissões de Representantes Comerciais
+                                Comissões de Representantes & Parceiros
                             </h3>
                             <span style={{ fontSize: "0.8125rem", color: "var(--text-tertiary)" }}>
-                                {selectedPeriodTitle} • Visão mensal e individual
+                                {selectedPeriodTitle} • Visão mensal e individual por representante / parceiro
                             </span>
                         </div>
                     </div>
@@ -268,7 +268,7 @@ export default function RepresentativeCommissionsSection({
                             <thead>
                                 <tr style={{ borderBottom: "1px solid var(--card-border)", backgroundColor: "rgba(0, 0, 0, 0.2)" }}>
                                     <th style={{ padding: "0.875rem 1rem", fontSize: "0.75rem", textAlign: "left", color: "var(--text-secondary)", fontWeight: 600, minWidth: "160px" }}>
-                                        Representante
+                                        Representante / Parceiro
                                     </th>
                                     {MONTH_NAMES_SHORT.map((m) => (
                                         <th key={m} style={{ padding: "0.875rem 0.6rem", fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 600 }}>
@@ -286,7 +286,9 @@ export default function RepresentativeCommissionsSection({
                                         <td style={{ padding: "0.875rem 1rem", textAlign: "left" }}>
                                             <div style={{ display: "flex", flexDirection: "column" }}>
                                                 <strong style={{ fontSize: "0.875rem", color: "var(--text-primary)" }}>{row.rep.name}</strong>
-                                                <span style={{ fontSize: "0.7rem", color: "var(--text-tertiary)" }}>{row.rep.role}</span>
+                                                <span style={{ fontSize: "0.7rem", fontWeight: 600, color: row.rep.role === "PARCEIRO" ? "#c084fc" : "var(--text-tertiary)" }}>
+                                                    {row.rep.role === "PARCEIRO" ? "✦ PARCEIRO" : row.rep.role}
+                                                </span>
                                             </div>
                                         </td>
                                         {row.monthlyTotals.map((val, mIdx) => (
@@ -385,8 +387,15 @@ export default function RepresentativeCommissionsSection({
                                                 <div style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)" }}>
                                                     {item.rep.name}
                                                 </div>
-                                                <div style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>
-                                                    {item.rep.role} • {item.rep.email}
+                                                <div style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.15rem" }}>
+                                                    {item.rep.role === "PARCEIRO" ? (
+                                                        <span style={{ fontSize: "0.625rem", padding: "0.1rem 0.35rem", borderRadius: "4px", backgroundColor: "rgba(168, 85, 247, 0.15)", color: "#c084fc", border: "1px solid rgba(168, 85, 247, 0.4)", fontWeight: 700 }}>
+                                                            PARCEIRO
+                                                        </span>
+                                                    ) : (
+                                                        <span>{item.rep.role}</span>
+                                                    )}
+                                                    <span>• {item.rep.email}</span>
                                                 </div>
                                             </div>
                                         </div>
