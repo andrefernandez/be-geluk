@@ -121,6 +121,9 @@ model Operation {
   // Status de Pagamento pelo Cliente
   paga                Boolean   @default(false)
   dataPagamento       DateTime?
+
+  // Comissão do Representante
+  comissaoRepresentante Float?
 }
 
 model Partner {

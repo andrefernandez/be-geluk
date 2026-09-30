@@ -7,6 +7,7 @@ import MonthFilter from "@/components/MonthFilter";
 import { cookies } from "next/headers";
 import DashboardCharts from "@/components/DashboardCharts";
 import ProjectionsSection from "@/components/ProjectionsSection";
+import RepresentativeCommissionsSection from "@/components/RepresentativeCommissionsSection";
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ month?: string | string[], startDate?: string | string[], endDate?: string | string[] }> }) {
   const session = await getServerSession(authOptions);
@@ -81,7 +82,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
       date: dateFilter,
       ...(isComercial ? { client: { representativeId: (session.user as any).id } } : {})
     },
-    include: { client: true, partner: true },
+    include: { 
+      client: {
+        include: {
+          representative: true
+        }
+      }, 
+      partner: true 
+    },
     orderBy: { date: "asc" }
   });
 
@@ -91,8 +99,31 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   });
 
   // Busca todas as operações e custos para cálculos históricos e fallbacks
-  const allOperations = await prisma.operation.findMany({ include: { client: true }, orderBy: { date: 'asc' } });
+  const allOperations = await prisma.operation.findMany({ 
+    include: { 
+      client: {
+        include: {
+          representative: true
+        }
+      } 
+    }, 
+    orderBy: { date: 'asc' } 
+  });
   const allCosts = await prisma.cost.findMany();
+
+  // Busca representantes cadastrados
+  const representatives = await prisma.user.findMany({
+    where: {
+      role: { in: ["COMERCIAL", "MANAGER"] }
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true
+    },
+    orderBy: { name: "asc" }
+  });
 
   // Busca operações realizadas no dia de hoje (UTC)
   const todayDate = new Date();
@@ -160,6 +191,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
 
   const rentabilidade = totalOperado > 0 ? (lucroLiquido / totalOperado) * 100 : 0;
   const custoReceitaPercent = receitaBruta > 0 ? (custoTotalManual / receitaBruta) * 100 : 0;
+
+  // Comissões de Representantes no período
+  const totalComissoes = operations.reduce((acc, op) => acc + (Number(op.comissaoRepresentante) || 0), 0);
+  const totalOpsComissionadas = operations.filter(op => (Number(op.comissaoRepresentante) || 0) > 0).length;
 
   // Separação apenas para exibição na lista detalhada
   const custosFixos = safeSumList(costs.filter(c => c.category === "FIXO"));
@@ -453,10 +488,18 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   });
 
   const nowTime = new Date();
-  const currentMonthIdx = nowTime.getUTCFullYear() === 2026 ? nowTime.getUTCMonth() : 7;
+  const currentMonthIdx = nowTime.getUTCFullYear() === 2026 ? nowTime.getUTCMonth() : 8;
 
-  const completedMonths: any[] = [];
-  for (let m = 0; m < currentMonthIdx; m++) {
+  const monthlyData: {
+    m: number;
+    totalOperado: number;
+    receita: number;
+    custo: number;
+    lucroLiquido: number;
+    hasActivity: boolean;
+  }[] = [];
+
+  for (let m = 0; m < 12; m++) {
     const opsInMonth = operations2026.filter(o => new Date(o.date).getUTCMonth() === m);
     const costsInMonth = costs2026.filter(c => new Date(c.date).getUTCMonth() === m);
 
@@ -464,8 +507,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
     const receita = opsInMonth.reduce((sum, o) => sum + (o.fator + o.tarifas + o.adValorem + (o.iof || 0) + (o.iofAdicional || 0)), 0);
     const custo = costsInMonth.reduce((sum, c) => sum + c.amount, 0);
     const lucroLiquido = receita - custo;
+    const hasActivity = opsInMonth.length > 0 || costsInMonth.length > 0;
 
-    completedMonths.push({ m, totalOperado, receita, custo, lucroLiquido });
+    monthlyData.push({ m, totalOperado, receita, custo, lucroLiquido, hasActivity });
   }
 
   // Rankings de Cedentes baseados em operações de 2026
@@ -559,6 +603,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
             <div className="glass-panel">
               <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Custos Totais</h3>
               <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(custoTotalManual)}</div>
+            </div>
+          )}
+
+          {!isComercial && (
+            <div className="glass-panel">
+              <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Comissões Representantes</h3>
+              <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "#60a5fa" }}>{formatCurrency(totalComissoes)}</div>
+              <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem" }}>
+                {totalOpsComissionadas} OP(S) COMISSIONADA(S)
+              </div>
             </div>
           )}
 
@@ -788,7 +842,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
 
         {/* Projections & Client Rankings Section */}
         <div style={{ padding: "2rem 0", display: "flex", flexDirection: "column", gap: "2.5rem" }}>
-          <ProjectionsSection completedMonths={completedMonths} currentMonthIdx={currentMonthIdx} />
+          <ProjectionsSection monthlyData={monthlyData} currentMonthIdx={currentMonthIdx} />
+
+          {!isComercial && (
+            <RepresentativeCommissionsSection
+              representatives={representatives}
+              periodOperations={operations as any}
+              allYearOperations={allOperations as any}
+              selectedPeriodTitle={displayTitle}
+            />
+          )}
 
           {/* Client Performance rankings */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))", gap: "2rem" }}>

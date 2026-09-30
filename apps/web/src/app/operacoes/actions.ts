@@ -34,6 +34,7 @@ export async function createOperation(data: any) {
                 custoParceiro: data.isRedesconto && data.custoParceiro != null ? Number(data.custoParceiro) : null,
                 paga: data.paga ?? false,
                 dataPagamento: data.paga ? (data.dataPagamento ? new Date(data.dataPagamento) : new Date()) : null,
+                comissaoRepresentante: data.comissaoRepresentante != null && data.comissaoRepresentante !== "" ? Number(data.comissaoRepresentante) : null,
                 sacados: {
                     create: data.sacados?.map((s: any) => ({
                         nome: s.nome,
@@ -99,6 +100,7 @@ export async function updateOperation(id: string, data: any) {
                 custoParceiro: data.isRedesconto && data.custoParceiro != null ? Number(data.custoParceiro) : null,
                 paga: data.paga ?? false,
                 dataPagamento: data.paga ? (data.dataPagamento ? new Date(data.dataPagamento) : new Date()) : null,
+                comissaoRepresentante: data.comissaoRepresentante != null && data.comissaoRepresentante !== "" ? Number(data.comissaoRepresentante) : null,
                 sacados: {
                     deleteMany: {},
                     create: data.sacados?.map((s: any) => ({
@@ -162,6 +164,9 @@ export async function uploadOperationFile(operationId: string, stage: string, fo
         });
 
         revalidatePath("/operacoes");
+        revalidatePath("/redesconto");
+        revalidatePath("/em-aberto");
+        revalidatePath("/");
         return { success: true, path: relativePath };
     } catch (error: any) {
         console.error("Erro no upload do arquivo:", error);
@@ -176,6 +181,9 @@ export async function updateOperationStatus(operationId: string, status: string)
             data: { status }
         });
         revalidatePath("/operacoes");
+        revalidatePath("/redesconto");
+        revalidatePath("/em-aberto");
+        revalidatePath("/");
         return { success: true };
     } catch (error: any) {
         console.error("Erro ao atualizar status:", error);

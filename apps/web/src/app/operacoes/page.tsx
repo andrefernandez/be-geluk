@@ -67,7 +67,11 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
             ...(isComercial ? { client: { representativeId: (session.user as any).id } } : {})
         },
         include: {
-            client: true,
+            client: {
+                include: {
+                    representative: true
+                }
+            },
             sacados: true,
             partner: true
         },
@@ -76,6 +80,9 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
 
     const rawClients = await prisma.client.findMany({
         where: isComercial ? { representativeId: (session.user as any).id } : {},
+        include: {
+            representative: true
+        },
         orderBy: { name: "asc" }
     });
 

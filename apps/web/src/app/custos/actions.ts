@@ -58,6 +58,7 @@ export async function createCost(formData: FormData) {
         }
 
         revalidatePath("/custos");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         console.error("Erro ao registrar custo:", error);
@@ -123,6 +124,7 @@ export async function updateCost(id: string, formData: FormData) {
             },
         });
         revalidatePath("/custos");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         console.error("Erro ao atualizar custo:", error);
@@ -134,6 +136,7 @@ export async function deleteCost(id: string) {
     try {
         await prisma.cost.delete({ where: { id } });
         revalidatePath("/custos");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         return { success: false, error: "Erro ao excluir custo" };
