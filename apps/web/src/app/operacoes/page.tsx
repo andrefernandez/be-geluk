@@ -13,7 +13,7 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
         redirect("/login");
     }
 
-    if ((session?.user as any)?.role === "COMERCIAL") {
+    if ((session?.user as any)?.role === "COMERCIAL" || (session?.user as any)?.role === "PARCEIRO") {
         redirect("/clientes");
     }
 
@@ -72,10 +72,24 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
                     representative: true
                 }
             },
+            representative: true,
             sacados: true,
             partner: true
         },
         orderBy: { date: "asc" },
+    });
+
+    const representatives = await prisma.user.findMany({
+        where: {
+            role: { in: ["PARCEIRO", "COMERCIAL", "MANAGER"] }
+        },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true
+        },
+        orderBy: { name: "asc" }
     });
 
     const rawClients = await prisma.client.findMany({
@@ -216,6 +230,7 @@ export default async function OperacoesPage({ searchParams }: { searchParams: Pr
                         clientHistoryMaxRates={clientHistoryMaxRates}
                         clientLastOperationRate={clientLastOperationRate}
                         globalSettings={globalSettings}
+                        representatives={representatives}
                     />
                 </div>
             </main>

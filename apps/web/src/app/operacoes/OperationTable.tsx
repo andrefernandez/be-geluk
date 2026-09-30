@@ -11,7 +11,8 @@ export default function OperationTable({
     currentUserRole, 
     clientHistoryMaxRates, 
     clientLastOperationRate, 
-    globalSettings 
+    globalSettings,
+    representatives = []
 }: { 
     initialOperations: any[], 
     clients: any[], 
@@ -19,7 +20,8 @@ export default function OperationTable({
     currentUserRole: string, 
     clientHistoryMaxRates?: Record<string, any>, 
     clientLastOperationRate?: Record<string, { percentual: number, percentualAdValorem: number }>, 
-    globalSettings?: any 
+    globalSettings?: any,
+    representatives?: { id: string; name: string; email?: string; role: string }[]
 }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -309,6 +311,7 @@ export default function OperationTable({
 
     const [formData, setFormData] = useState({
         clientId: "",
+        representativeId: "",
         date: new Date().toISOString().split("T")[0],
         valorBruto: "",
         fator: "",
@@ -546,8 +549,11 @@ export default function OperationTable({
     const handleOpenModal = () => {
         setEditingId(null);
         setXmlWarning(null);
+        const defaultClientId = clients.length > 0 ? clients[0].id : "";
+        const defaultClient = clients.find(c => c.id === defaultClientId);
         let initialData = {
-            clientId: clients.length > 0 ? clients[0].id : "",
+            clientId: defaultClientId,
+            representativeId: defaultClient?.representativeId || "",
             date: new Date().toISOString().split("T")[0],
             valorBruto: "", fator: "", percentual: "", percentualPrazo: "", dias: "",
             tarifas: "", percentualTarifas: "", adValorem: "", percentualAdValorem: "",
@@ -578,6 +584,7 @@ export default function OperationTable({
         const dateStr = new Date(op.date).toISOString().split("T")[0];
         setFormData({
             clientId: op.clientId,
+            representativeId: op.representativeId || op.client?.representativeId || "",
             date: dateStr,
             valorBruto: op.valorBruto?.toString() || "",
             fator: op.fator?.toString() || "",
@@ -639,6 +646,7 @@ export default function OperationTable({
 
         const payload = {
             ...formData,
+            representativeId: formData.representativeId && formData.representativeId.trim() !== "" ? formData.representativeId.trim() : null,
             date: new Date(formData.date),
             valorBruto: Number(formData.valorBruto),
             fator: Number(formData.fator),
@@ -774,6 +782,7 @@ export default function OperationTable({
                 let newState = {
                     ...prev,
                     clientId: matchedClient ? matchedClient.id : prev.clientId,
+                    representativeId: prev.representativeId || matchedClient?.representativeId || "",
                     valorBruto: String(totalActiveBruto),
                     sacados: combinedSacados,
                     dias: calcDias || prev.dias
@@ -995,6 +1004,13 @@ export default function OperationTable({
                     </span>
                 </div>
                 <div className="glass-card" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Total Comissões</span>
+                    <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "#60a5fa" }}>{formatCurrency(sumColumn("comissaoRepresentante"))}</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>
+                        {operations.filter(op => (Number(op.comissaoRepresentante) || 0) > 0).length} comissionada(s)
+                    </span>
+                </div>
+                <div className="glass-card" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Prazo Médio</span>
                     <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>{calculateAverageDays().toFixed(1)} <span style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-tertiary)' }}>Dias</span></span>
                 </div>
@@ -1015,6 +1031,7 @@ export default function OperationTable({
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Ad Valorem</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>IOF</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>IOF Adic.</th>
+                            <th style={{ padding: "1rem", color: "#60a5fa", fontWeight: 500, borderLeft: "1px dashed var(--glass-border)" }}>Comissão</th>
                             <th style={{ padding: "1rem", color: "var(--accent-primary)", fontWeight: 500, borderLeft: "1px dashed var(--glass-border)" }}>Valor Líquido</th>
                             <th style={{ padding: "1rem", color: "var(--accent-red)", fontWeight: 500 }}>Recompra</th>
                             {isAdminOrManager && <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, textAlign: "right" }}>Ações</th>}
@@ -1034,7 +1051,7 @@ export default function OperationTable({
                                         )}
                                         {op.comissaoRepresentante != null && op.comissaoRepresentante > 0 && (
                                             <span style={{ fontSize: "0.7rem", color: "#60a5fa", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "0.25rem", marginTop: "0.15rem" }}>
-                                                👤 Comiss: {formatCurrency(op.comissaoRepresentante)} {op.client.representative?.name ? `(${op.client.representative.name})` : ""}
+                                                👤 Comiss: {formatCurrency(op.comissaoRepresentante)} {op.representative?.name ? `(${op.representative.name})` : op.client.representative?.name ? `(${op.client.representative.name})` : ""}
                                             </span>
                                         )}
                                     </div>
@@ -1073,6 +1090,18 @@ export default function OperationTable({
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(op.adValorem)}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(op.iof)}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(op.iofAdicional)}</td>
+                                <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>
+                                    {op.comissaoRepresentante != null && op.comissaoRepresentante > 0 ? (
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <span style={{ fontWeight: 600, color: "#60a5fa" }}>{formatCurrency(op.comissaoRepresentante)}</span>
+                                            <span style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>
+                                                👤 {op.representative?.name || op.client?.representative?.name || "Parceiro"}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <span style={{ color: "var(--text-tertiary)" }}>-</span>
+                                    )}
+                                </td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", fontWeight: 600, color: "var(--accent-primary)" }}>{formatCurrency(op.valorLiquido)}</td>
                                 <td style={{ padding: "0.75rem 1rem", fontWeight: 500, color: op.recompra ? "var(--accent-red)" : "inherit" }}>{op.recompra ? formatCurrency(op.recompra) : "-"}</td>
                                 {isAdminOrManager && (
@@ -1097,6 +1126,7 @@ export default function OperationTable({
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("adValorem"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("iof"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("iofAdicional"))}</td>
+                                <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "#60a5fa" }}>{formatCurrency(sumColumn("comissaoRepresentante"))}</td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("valorLiquido"))}</td>
                                 <td style={{ padding: "0.75rem 1rem", color: "var(--accent-red)" }}>{formatCurrency(sumColumn("recompra"))}</td>
                                 {isAdminOrManager && <td></td>}
@@ -1111,6 +1141,7 @@ export default function OperationTable({
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("adValorem", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("iof", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("iofAdicional", true))}</td>
+                                    <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "#60a5fa" }}>{formatCurrency(sumColumn("comissaoRepresentante", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--text-primary)" }}>{formatCurrency(sumColumn("valorLiquido", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-red)" }}>{formatCurrency(sumColumn("recompra", true))}</td>
                                     {isAdminOrManager && <td></td>}
@@ -1170,7 +1201,7 @@ export default function OperationTable({
                         </div>
                         {op.comissaoRepresentante != null && op.comissaoRepresentante > 0 && (
                             <div style={{ display: "flex", flexDirection: "column" }}>
-                                <span style={{ fontSize: "0.875rem", color: "#60a5fa", fontWeight: 600 }}>Comissão Rep: {formatCurrency(op.comissaoRepresentante)} {op.client.representative?.name ? `(${op.client.representative.name})` : ""}</span>
+                                <span style={{ fontSize: "0.875rem", color: "#60a5fa", fontWeight: 600 }}>Comissão: {formatCurrency(op.comissaoRepresentante)} ({op.representative?.name || op.client.representative?.name || "Parceiro"})</span>
                             </div>
                         )}
                     </div>
@@ -1362,7 +1393,12 @@ export default function OperationTable({
                                                                 key={c.id}
                                                                 type="button"
                                                                 onClick={() => {
-                                                                    let newState = { ...formData, clientId: c.id };
+                                                                    const targetClient = clients.find(cl => cl.id === c.id);
+                                                                    let newState = { 
+                                                                        ...formData, 
+                                                                        clientId: c.id,
+                                                                        representativeId: formData.representativeId || targetClient?.representativeId || ""
+                                                                    };
                                                                     newState = applyClientRates(c.id, newState, true);
                                                                     setFormData(newState);
                                                                     setShowInlineSearch(false);
@@ -1418,8 +1454,14 @@ export default function OperationTable({
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Cedente</label>
                                     <select required className="glass-input" value={formData.clientId} onChange={e => {
-                                        let newState = { ...formData, clientId: e.target.value };
-                                        newState = applyClientRates(e.target.value, newState, true);
+                                        const selectedClientId = e.target.value;
+                                        const targetClient = clients.find(c => c.id === selectedClientId);
+                                        let newState = { 
+                                            ...formData, 
+                                            clientId: selectedClientId,
+                                            representativeId: formData.representativeId || targetClient?.representativeId || ""
+                                        };
+                                        newState = applyClientRates(selectedClientId, newState, true);
                                         setFormData(newState);
                                         setXmlWarning(null);
                                     }}>
@@ -1887,66 +1929,164 @@ export default function OperationTable({
                                 )}
                             </div>
 
-                            {/* SEÇÃO COMISSÃO DO REPRESENTANTE COMERCIAL (Apenas para cedentes com representante) */}
+                            {/* SEÇÃO COMISSÃO DO PARCEIRO / REPRESENTANTE */}
                             {(() => {
                                 const selectedClient = clients.find((c: any) => c.id === formData.clientId);
-                                const rep = selectedClient?.representative;
-                                const hasRep = Boolean(rep || selectedClient?.representativeId);
-                                if (!hasRep) return null;
+                                const clientRep = selectedClient?.representative;
+                                
+                                // Lista de representantes/parceiros disponíveis para comissionar
+                                const repList = representatives && representatives.length > 0
+                                    ? representatives
+                                    : (clientRep ? [clientRep] : []);
 
-                                const repName = rep?.name || "Representante Vinculado";
-                                const repRole = rep?.role ? ` (${rep.role})` : "";
+                                const selectedRep = repList.find((r: any) => r.id === formData.representativeId) || (formData.representativeId ? { id: formData.representativeId, name: "Representante Selecionado", role: "" } : null);
+
+                                const bruto = parseFloat(formData.valorBruto) || 0;
+                                const fator = parseFloat(formData.fator) || 0;
+                                const adValorem = parseFloat(formData.adValorem) || 0;
+                                const tarifas = parseFloat(formData.tarifas) || 0;
+                                const receitaGeluk = fator + adValorem + tarifas;
+                                const custo = parseFloat(formData.custoParceiro) || 0;
+                                const comissao = parseFloat(formData.comissaoRepresentante) || 0;
+                                const ganhoGeluk = receitaGeluk - custo - comissao;
+                                const percentComissao = receitaGeluk > 0 ? (comissao / receitaGeluk) * 100 : 0;
 
                                 return (
                                     <div style={{
-                                        padding: "1rem 1.25rem",
+                                        padding: "1.25rem",
                                         backgroundColor: "rgba(59, 130, 246, 0.05)",
                                         border: "1px solid rgba(59, 130, 246, 0.25)",
                                         borderRadius: "var(--radius-sm)",
                                         display: "flex",
                                         flexDirection: "column",
-                                        gap: "0.875rem"
+                                        gap: "1rem"
                                     }}>
                                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
                                             <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                                                <div style={{ width: "28px", height: "28px", borderRadius: "50%", backgroundColor: "rgba(59, 130, 246, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#60a5fa", fontWeight: "bold" }}>
+                                                <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "rgba(59, 130, 246, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#60a5fa", fontWeight: "bold", fontSize: "1rem" }}>
                                                     👤
                                                 </div>
                                                 <div>
                                                     <span style={{ fontSize: "0.9375rem", fontWeight: 700, color: "#93c5fd" }}>
-                                                        Comissão do Representante / Parceiro
+                                                        Comissão do Parceiro / Representante Comercial
                                                     </span>
                                                     <div style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-                                                        Cedente vinculado a: <strong style={{ color: "var(--text-primary)" }}>{repName}{repRole}</strong>
+                                                        {clientRep ? (
+                                                            <>Cedente com vínculo padrão a: <strong style={{ color: "var(--text-primary)" }}>{clientRep.name} ({clientRep.role})</strong></>
+                                                        ) : (
+                                                            <>Defina um parceiro ou representante para creditar comissão nesta operação</>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(59, 130, 246, 0.2)", color: "#bfdbfe", padding: "0.25rem 0.6rem", borderRadius: "9999px", fontWeight: 700 }}>
+                                            <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(59, 130, 246, 0.2)", color: "#bfdbfe", padding: "0.25rem 0.65rem", borderRadius: "9999px", fontWeight: 700 }}>
                                                 Comissionamento
                                             </span>
                                         </div>
 
-                                        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", maxWidth: "300px" }}>
-                                            <label style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", fontWeight: 600 }}>
-                                                Valor de Comissionamento (R$)
-                                            </label>
-                                            <NumericFormat
-                                                className="glass-input"
-                                                value={formData.comissaoRepresentante}
-                                                thousandSeparator="."
-                                                decimalSeparator=","
-                                                decimalScale={2}
-                                                fixedDecimalScale={true}
-                                                prefix="R$ "
-                                                placeholder="R$ 0,00"
-                                                onValueChange={(v: any) => {
-                                                    setFormData(prev => ({
-                                                        ...prev,
-                                                        comissaoRepresentante: v.floatValue !== undefined ? String(v.floatValue) : ""
-                                                    }));
-                                                }}
-                                            />
+                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem", alignItems: "flex-end" }}>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                                                <label style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", fontWeight: 600 }}>
+                                                    Parceiro / Representante Beneficiário
+                                                </label>
+                                                <select
+                                                    className="glass-input"
+                                                    value={formData.representativeId}
+                                                    onChange={e => setFormData(prev => ({ ...prev, representativeId: e.target.value }))}
+                                                    style={{ cursor: "pointer" }}
+                                                >
+                                                    <option value="">Nenhum (Sem parceiro comissionado)</option>
+                                                    {repList.map((r: any) => (
+                                                        <option key={r.id} value={r.id}>
+                                                            {r.name} ({r.role || "PARCEIRO"}) {r.id === clientRep?.id ? "⭐ Vínculo do Cedente" : ""}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                                                <label style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", fontWeight: 600 }}>
+                                                    Valor da Comissão (R$)
+                                                </label>
+                                                <NumericFormat
+                                                    className="glass-input"
+                                                    value={formData.comissaoRepresentante}
+                                                    thousandSeparator="."
+                                                    decimalSeparator=","
+                                                    decimalScale={2}
+                                                    fixedDecimalScale={true}
+                                                    prefix="R$ "
+                                                    placeholder="R$ 0,00"
+                                                    onValueChange={(v: any) => {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            comissaoRepresentante: v.floatValue !== undefined ? String(v.floatValue) : ""
+                                                        }));
+                                                    }}
+                                                />
+                                            </div>
+
+                                            {comissao > 0 && (
+                                                <div style={{
+                                                    padding: "0.6rem 0.85rem",
+                                                    backgroundColor: "rgba(59, 130, 246, 0.12)",
+                                                    border: "1px solid rgba(59, 130, 246, 0.3)",
+                                                    borderRadius: "var(--radius-sm)",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    gap: "0.2rem",
+                                                    fontSize: "0.75rem"
+                                                }}>
+                                                    <span style={{ color: "var(--text-secondary)" }}>
+                                                        Beneficiário: <strong style={{ color: "#93c5fd" }}>{selectedRep?.name || "Parceiro Selecionado"}</strong>
+                                                    </span>
+                                                    <span style={{ color: "var(--text-secondary)" }}>
+                                                        Impacto na Receita: <strong style={{ color: "#60a5fa" }}>{percentComissao.toFixed(1)}% da receita bruta</strong>
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
+
+                                        {/* Resumo Financeiro da Operação considerando a comissão */}
+                                        {(comissao > 0 || formData.isRedesconto) && (
+                                            <div style={{
+                                                padding: "0.75rem 1rem",
+                                                backgroundColor: ganhoGeluk >= 0 ? "rgba(16, 185, 129, 0.08)" : "rgba(239, 68, 68, 0.08)",
+                                                border: `1px solid ${ganhoGeluk >= 0 ? "rgba(16, 185, 129, 0.3)" : "rgba(239, 68, 68, 0.3)"}`,
+                                                borderRadius: "var(--radius-sm)",
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                alignItems: "center",
+                                                flexWrap: "wrap",
+                                                gap: "0.5rem",
+                                                fontSize: "0.8125rem"
+                                            }}>
+                                                <div>
+                                                    <span style={{ color: "var(--text-secondary)" }}>Receita Geluk: </span>
+                                                    <strong>{formatCurrency(receitaGeluk)}</strong>
+                                                    {custo > 0 && (
+                                                        <>
+                                                            <span style={{ margin: "0 0.4rem", color: "var(--text-tertiary)" }}>-</span>
+                                                            <span style={{ color: "var(--text-secondary)" }}>Custo Redesc.: </span>
+                                                            <strong style={{ color: "var(--accent-red)" }}>{formatCurrency(custo)}</strong>
+                                                        </>
+                                                    )}
+                                                    {comissao > 0 && (
+                                                        <>
+                                                            <span style={{ margin: "0 0.4rem", color: "var(--text-tertiary)" }}>-</span>
+                                                            <span style={{ color: "var(--text-secondary)" }}>Comissão Parceiro: </span>
+                                                            <strong style={{ color: "#60a5fa" }}>{formatCurrency(comissao)}</strong>
+                                                        </>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <span style={{ color: "var(--text-secondary)" }}>Resultado Líquido Geluk: </span>
+                                                    <strong style={{ color: ganhoGeluk >= 0 ? "var(--accent-primary)" : "var(--accent-red)", fontSize: "0.95rem" }}>
+                                                        {formatCurrency(ganhoGeluk)}
+                                                    </strong>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })()}

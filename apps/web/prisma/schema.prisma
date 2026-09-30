@@ -18,7 +18,8 @@ model User {
   investorId String?  @unique
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  representedClients Client[] @relation("Representative")
+  representedClients    Client[]    @relation("Representative")
+  representedOperations Operation[] @relation("OperationRepresentative")
 }
 
 model Client {
@@ -122,8 +123,10 @@ model Operation {
   paga                Boolean   @default(false)
   dataPagamento       DateTime?
 
-  // Comissão do Representante
+  // Comissão do Representante / Parceiro
   comissaoRepresentante Float?
+  representativeId      String?
+  representative        User?     @relation("OperationRepresentative", fields: [representativeId], references: [id])
 }
 
 model Partner {

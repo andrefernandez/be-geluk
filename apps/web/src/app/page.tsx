@@ -88,6 +88,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
           representative: true
         }
       }, 
+      representative: true,
       partner: true 
     },
     orderBy: { date: "asc" }
@@ -105,7 +106,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
         include: {
           representative: true
         }
-      } 
+      },
+      representative: true
     }, 
     orderBy: { date: 'asc' } 
   });

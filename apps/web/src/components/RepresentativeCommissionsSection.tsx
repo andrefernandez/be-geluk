@@ -17,6 +17,12 @@ export interface CommissionOperation {
     valorBruto: number;
     valorLiquido: number;
     comissaoRepresentante: number | null;
+    representativeId?: string | null;
+    representative?: {
+        id: string;
+        name: string;
+        role?: string;
+    } | null;
     client: {
         id: string;
         name: string;
@@ -78,7 +84,7 @@ export default function RepresentativeCommissionsSection({
 
         // Agrega as operações do período
         periodOperations.forEach(op => {
-            const repId = op.client?.representativeId || op.client?.representative?.id;
+            const repId = op.representativeId || op.representative?.id || op.client?.representativeId || op.client?.representative?.id;
             if (repId && statsMap.has(repId)) {
                 const item = statsMap.get(repId)!;
                 const comissao = Number(op.comissaoRepresentante) || 0;
@@ -113,7 +119,7 @@ export default function RepresentativeCommissionsSection({
         });
 
         allYearOperations.forEach(op => {
-            const repId = op.client?.representativeId || op.client?.representative?.id;
+            const repId = op.representativeId || op.representative?.id || op.client?.representativeId || op.client?.representative?.id;
             const comissao = Number(op.comissaoRepresentante) || 0;
             if (repId && comissao > 0 && matrixMap.has(repId)) {
                 const opDate = new Date(op.date);

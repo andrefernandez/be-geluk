@@ -35,6 +35,7 @@ export async function createOperation(data: any) {
                 paga: data.paga ?? false,
                 dataPagamento: data.paga ? (data.dataPagamento ? new Date(data.dataPagamento) : new Date()) : null,
                 comissaoRepresentante: data.comissaoRepresentante != null && data.comissaoRepresentante !== "" ? Number(data.comissaoRepresentante) : null,
+                representativeId: data.representativeId && data.representativeId.trim() !== "" ? data.representativeId.trim() : null,
                 sacados: {
                     create: data.sacados?.map((s: any) => ({
                         nome: s.nome,
@@ -101,6 +102,7 @@ export async function updateOperation(id: string, data: any) {
                 paga: data.paga ?? false,
                 dataPagamento: data.paga ? (data.dataPagamento ? new Date(data.dataPagamento) : new Date()) : null,
                 comissaoRepresentante: data.comissaoRepresentante != null && data.comissaoRepresentante !== "" ? Number(data.comissaoRepresentante) : null,
+                representativeId: data.representativeId && data.representativeId.trim() !== "" ? data.representativeId.trim() : null,
                 sacados: {
                     deleteMany: {},
                     create: data.sacados?.map((s: any) => ({
