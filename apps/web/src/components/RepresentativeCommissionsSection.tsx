@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Users, DollarSign, Calendar, ChevronDown, ChevronUp, Award, TrendingUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export interface RepresentativeData {
     id: string;
@@ -162,39 +162,34 @@ export default function RepresentativeCommissionsSection({
     }
 
     return (
-        <div className="glass-panel" style={{ padding: "1.75rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        <div className="glass-panel" style={{ padding: "2rem", display: "flex", flexDirection: "column", gap: "2rem" }}>
             {/* Header com título e abas de visualização */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1.5rem" }}>
                 <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                        <div style={{ width: "32px", height: "32px", borderRadius: "8px", backgroundColor: "rgba(59, 130, 246, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#60a5fa" }}>
-                            <Award size={18} />
-                        </div>
-                        <div>
-                            <h3 style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
-                                Comissões de Representantes & Parceiros
-                            </h3>
-                            <span style={{ fontSize: "0.8125rem", color: "var(--text-tertiary)" }}>
-                                {selectedPeriodTitle} • Visão mensal e individual por representante / parceiro
-                            </span>
-                        </div>
-                    </div>
+                    <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--text-primary)", textTransform: "uppercase" }}>
+                        Comissões de Representantes & Parceiros
+                    </h2>
+                    <p style={{ color: "var(--text-tertiary)", fontSize: "0.8125rem", marginTop: "0.25rem" }}>
+                        {selectedPeriodTitle} • Visão mensal e individual por representante / parceiro
+                    </p>
                 </div>
 
                 {/* Abas */}
-                <div style={{ display: "flex", backgroundColor: "rgba(255, 255, 255, 0.05)", padding: "0.25rem", borderRadius: "var(--radius-sm)", border: "1px solid var(--glass-border)" }}>
+                <div style={{ display: "flex", background: "var(--bg-tertiary)", padding: "0.25rem", borderRadius: "var(--radius-sm)", gap: "0.25rem" }}>
                     <button
                         type="button"
                         onClick={() => setActiveTab("monthly")}
                         style={{
-                            padding: "0.4rem 0.875rem",
-                            fontSize: "0.8125rem",
-                            fontWeight: activeTab === "monthly" ? 700 : 500,
-                            borderRadius: "var(--radius-sm)",
+                            padding: "0.4rem 0.8rem",
+                            borderRadius: "var(--radius-xs)",
+                            fontSize: "0.6875rem",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.025em",
+                            background: activeTab === "monthly" ? "#000000" : "transparent",
+                            color: activeTab === "monthly" ? "#ffffff" : "var(--text-secondary)",
                             border: "none",
                             cursor: "pointer",
-                            backgroundColor: activeTab === "monthly" ? "var(--accent-primary)" : "transparent",
-                            color: activeTab === "monthly" ? "#000" : "var(--text-secondary)",
                             transition: "all var(--transition-fast)"
                         }}
                     >
@@ -204,14 +199,16 @@ export default function RepresentativeCommissionsSection({
                         type="button"
                         onClick={() => setActiveTab("ranking")}
                         style={{
-                            padding: "0.4rem 0.875rem",
-                            fontSize: "0.8125rem",
-                            fontWeight: activeTab === "ranking" ? 700 : 500,
-                            borderRadius: "var(--radius-sm)",
+                            padding: "0.4rem 0.8rem",
+                            borderRadius: "var(--radius-xs)",
+                            fontSize: "0.6875rem",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.025em",
+                            background: activeTab === "ranking" ? "#000000" : "transparent",
+                            color: activeTab === "ranking" ? "#ffffff" : "var(--text-secondary)",
                             border: "none",
                             cursor: "pointer",
-                            backgroundColor: activeTab === "ranking" ? "var(--accent-primary)" : "transparent",
-                            color: activeTab === "ranking" ? "#000" : "var(--text-secondary)",
                             transition: "all var(--transition-fast)"
                         }}
                     >
@@ -221,104 +218,114 @@ export default function RepresentativeCommissionsSection({
             </div>
 
             {/* Cards de Métricas Rápidas */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-                <div className="glass-card" style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.5rem" }}>
+                <div className="glass-card" style={{ padding: "1.25rem" }}>
+                    <h4 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
                         Total Comissões (Período)
-                    </span>
-                    <span style={{ fontSize: "1.375rem", fontWeight: 800, color: "#60a5fa" }}>
+                    </h4>
+                    <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", marginTop: "0.5rem" }}>
                         {formatCurrency(totalComissaoPeriodo)}
-                    </span>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                    </div>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", marginTop: "0.25rem" }}>
                         {totalOpsComissaoPeriodo} operação(ões) comissionada(s)
-                    </span>
+                    </p>
                 </div>
 
-                <div className="glass-card" style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
+                <div className="glass-card" style={{ padding: "1.25rem" }}>
+                    <h4 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
                         Total Comissões no Ano
-                    </span>
-                    <span style={{ fontSize: "1.375rem", fontWeight: 800, color: "var(--accent-primary)" }}>
+                    </h4>
+                    <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--accent-primary)", marginTop: "0.5rem" }}>
                         {formatCurrency(monthlyMatrix.companyYearTotal)}
-                    </span>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                    </div>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", marginTop: "0.25rem" }}>
                         Acumulado de 2026
-                    </span>
+                    </p>
                 </div>
 
-                <div className="glass-card" style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
+                <div className="glass-card" style={{ padding: "1.25rem" }}>
+                    <h4 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
                         Maior Comissão (Período)
-                    </span>
-                    <span style={{ fontSize: "1.375rem", fontWeight: 800, color: topRepPeriodo ? "var(--text-primary)" : "var(--text-tertiary)" }}>
+                    </h4>
+                    <div style={{ fontSize: "1.5rem", fontWeight: 800, color: topRepPeriodo ? "var(--text-primary)" : "var(--text-tertiary)", marginTop: "0.5rem" }}>
                         {topRepPeriodo ? topRepPeriodo.rep.name : "Nenhum"}
-                    </span>
-                    <span style={{ fontSize: "0.75rem", color: topRepPeriodo ? "#60a5fa" : "var(--text-tertiary)", fontWeight: 600 }}>
+                    </div>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", marginTop: "0.25rem" }}>
                         {topRepPeriodo ? formatCurrency(topRepPeriodo.totalComissao) : "Sem comissões"}
-                    </span>
+                    </p>
                 </div>
             </div>
 
             {/* ABA 1: Matriz Mensal (Separado sempre por mês) */}
             {activeTab === "monthly" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                        <h3 style={{ fontSize: "0.875rem", fontWeight: 800, textTransform: "uppercase" }}>
                             Distribuição Mensal de Comissões por Representante
-                        </span>
+                        </h3>
                     </div>
 
                     {/* Tabela Desktop com scroll horizontal */}
-                    <div className="desktop-only" style={{ overflowX: "auto", border: "1px solid var(--card-border)", borderRadius: "var(--radius-md)" }}>
+                    <div className="desktop-only" style={{ overflowX: "auto" }}>
                         <table style={{ width: "100%", minWidth: "900px", borderCollapse: "collapse", textAlign: "right" }}>
                             <thead>
-                                <tr style={{ borderBottom: "1px solid var(--card-border)", backgroundColor: "rgba(0, 0, 0, 0.2)" }}>
-                                    <th style={{ padding: "0.875rem 1rem", fontSize: "0.75rem", textAlign: "left", color: "var(--text-secondary)", fontWeight: 600, minWidth: "160px" }}>
+                                <tr style={{ borderBottom: "1px solid var(--card-border)" }}>
+                                    <th style={{ padding: "0.75rem 0.5rem", fontSize: "0.6875rem", textAlign: "left", color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", minWidth: "180px" }}>
                                         Representante / Parceiro
                                     </th>
                                     {MONTH_NAMES_SHORT.map((m) => (
-                                        <th key={m} style={{ padding: "0.875rem 0.6rem", fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 600 }}>
+                                        <th key={m} style={{ padding: "0.75rem 0.5rem", fontSize: "0.6875rem", color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase" }}>
                                             {m}
                                         </th>
                                     ))}
-                                    <th style={{ padding: "0.875rem 1rem", fontSize: "0.75rem", color: "var(--accent-primary)", fontWeight: 700, borderLeft: "1px dashed var(--glass-border)" }}>
+                                    <th style={{ padding: "0.75rem 0.75rem", fontSize: "0.6875rem", color: "var(--accent-primary)", fontWeight: 700, textTransform: "uppercase", borderLeft: "1px dashed var(--card-border)" }}>
                                         Total Ano
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {monthlyMatrix.rows.map((row) => (
-                                    <tr key={row.rep.id} style={{ borderBottom: "1px solid var(--card-border)", transition: "background var(--transition-fast)" }} className="hover-row">
-                                        <td style={{ padding: "0.875rem 1rem", textAlign: "left" }}>
-                                            <div style={{ display: "flex", flexDirection: "column" }}>
-                                                <strong style={{ fontSize: "0.875rem", color: "var(--text-primary)" }}>{row.rep.name}</strong>
-                                                <span style={{ fontSize: "0.7rem", fontWeight: 600, color: row.rep.role === "PARCEIRO" ? "#c084fc" : "var(--text-tertiary)" }}>
-                                                    {row.rep.role === "PARCEIRO" ? "✦ PARCEIRO" : row.rep.role}
+                                    <tr key={row.rep.id} style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.04)" }}>
+                                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "left" }}>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "0.15rem" }}>
+                                                <strong style={{ fontSize: "0.8125rem", color: "var(--text-primary)" }}>{row.rep.name}</strong>
+                                                <span style={{
+                                                    fontSize: "0.5625rem",
+                                                    fontWeight: 700,
+                                                    textTransform: "uppercase",
+                                                    padding: "0.1rem 0.35rem",
+                                                    borderRadius: "var(--radius-xs)",
+                                                    background: row.rep.role === "PARCEIRO" ? "rgba(147, 51, 234, 0.08)" : "var(--bg-tertiary)",
+                                                    color: row.rep.role === "PARCEIRO" ? "#7e22ce" : "var(--text-tertiary)",
+                                                    border: row.rep.role === "PARCEIRO" ? "1px solid rgba(147, 51, 234, 0.2)" : "1px solid var(--card-border)",
+                                                    width: "fit-content"
+                                                }}>
+                                                    {row.rep.role || "COMERCIAL"}
                                                 </span>
                                             </div>
                                         </td>
                                         {row.monthlyTotals.map((val, mIdx) => (
-                                            <td key={mIdx} style={{ padding: "0.875rem 0.6rem", fontSize: "0.8125rem", color: val > 0 ? "#60a5fa" : "var(--text-tertiary)", fontWeight: val > 0 ? 700 : 400 }}>
+                                            <td key={mIdx} style={{ padding: "0.75rem 0.5rem", fontSize: "0.8125rem", color: val > 0 ? "var(--text-primary)" : "var(--text-tertiary)", fontWeight: val > 0 ? 600 : 400 }}>
                                                 {val > 0 ? formatCurrency(val) : "-"}
                                             </td>
                                         ))}
-                                        <td style={{ padding: "0.875rem 1rem", fontSize: "0.875rem", fontWeight: 800, color: row.totalYear > 0 ? "var(--accent-primary)" : "var(--text-tertiary)", borderLeft: "1px dashed var(--glass-border)" }}>
+                                        <td style={{ padding: "0.75rem 0.75rem", fontSize: "0.8125rem", fontWeight: 700, color: row.totalYear > 0 ? "var(--accent-primary)" : "var(--text-tertiary)", borderLeft: "1px dashed var(--card-border)" }}>
                                             {formatCurrency(row.totalYear)}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                             <tfoot>
-                                <tr style={{ borderTop: "2px solid var(--card-border)", backgroundColor: "rgba(255, 255, 255, 0.02)", fontWeight: 700 }}>
-                                    <td style={{ padding: "1rem", textAlign: "left", color: "var(--text-primary)", fontSize: "0.875rem" }}>
+                                <tr style={{ borderTop: "2px solid var(--card-border)", fontWeight: 700 }}>
+                                    <td style={{ padding: "0.75rem 0.5rem", textAlign: "left", color: "var(--text-primary)", fontSize: "0.8125rem" }}>
                                         Total Geral
                                     </td>
                                     {monthlyMatrix.companyMonthlyTotals.map((sumVal, mIdx) => (
-                                        <td key={`tot-${mIdx}`} style={{ padding: "1rem 0.6rem", fontSize: "0.8125rem", color: sumVal > 0 ? "var(--text-primary)" : "var(--text-tertiary)" }}>
+                                        <td key={`tot-${mIdx}`} style={{ padding: "0.75rem 0.5rem", fontSize: "0.8125rem", color: sumVal > 0 ? "var(--text-primary)" : "var(--text-tertiary)" }}>
                                             {sumVal > 0 ? formatCurrency(sumVal) : "-"}
                                         </td>
                                     ))}
-                                    <td style={{ padding: "1rem", fontSize: "0.9375rem", color: "var(--accent-primary)", borderLeft: "1px dashed var(--glass-border)", fontWeight: 800 }}>
+                                    <td style={{ padding: "0.75rem 0.75rem", fontSize: "0.875rem", color: "var(--accent-primary)", borderLeft: "1px dashed var(--card-border)", fontWeight: 800 }}>
                                         {formatCurrency(monthlyMatrix.companyYearTotal)}
                                     </td>
                                 </tr>
@@ -332,7 +339,7 @@ export default function RepresentativeCommissionsSection({
                             <div key={`mob-mat-${row.rep.id}`} className="glass-card" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--card-border)", paddingBottom: "0.5rem" }}>
                                     <div>
-                                        <div style={{ fontWeight: 700, fontSize: "0.9375rem", color: "var(--text-primary)" }}>{row.rep.name}</div>
+                                        <div style={{ fontWeight: 700, fontSize: "0.875rem", color: "var(--text-primary)" }}>{row.rep.name}</div>
                                         <div style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>{row.rep.role}</div>
                                     </div>
                                     <div style={{ textAlign: "right" }}>
@@ -343,9 +350,9 @@ export default function RepresentativeCommissionsSection({
 
                                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.5rem" }}>
                                     {row.monthlyTotals.map((val, mIdx) => (
-                                        <div key={mIdx} style={{ padding: "0.4rem 0.5rem", backgroundColor: val > 0 ? "rgba(59, 130, 246, 0.08)" : "transparent", borderRadius: "4px", border: val > 0 ? "1px solid rgba(59, 130, 246, 0.2)" : "1px solid rgba(255, 255, 255, 0.03)" }}>
+                                        <div key={mIdx} style={{ padding: "0.4rem 0.5rem", backgroundColor: val > 0 ? "var(--bg-secondary)" : "transparent", borderRadius: "var(--radius-xs)", border: "1px solid var(--card-border)" }}>
                                             <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", display: "block" }}>{MONTH_NAMES_SHORT[mIdx]}</span>
-                                            <span style={{ fontSize: "0.75rem", fontWeight: val > 0 ? 700 : 400, color: val > 0 ? "#60a5fa" : "var(--text-tertiary)" }}>
+                                            <span style={{ fontSize: "0.75rem", fontWeight: val > 0 ? 600 : 400, color: val > 0 ? "var(--text-primary)" : "var(--text-tertiary)" }}>
                                                 {val > 0 ? formatCurrency(val) : "-"}
                                             </span>
                                         </div>
@@ -359,11 +366,11 @@ export default function RepresentativeCommissionsSection({
 
             {/* ABA 2: Resumo do Período & Operações Detalhadas */}
             {activeTab === "ranking" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                        <h3 style={{ fontSize: "0.875rem", fontWeight: 800, textTransform: "uppercase" }}>
                             Comissões do Período Selecionado por Representante
-                        </span>
+                        </h3>
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -378,29 +385,35 @@ export default function RepresentativeCommissionsSection({
                                             <div style={{
                                                 width: "36px",
                                                 height: "36px",
-                                                borderRadius: "50%",
-                                                backgroundColor: item.totalComissao > 0 ? "rgba(59, 130, 246, 0.15)" : "rgba(255, 255, 255, 0.05)",
+                                                borderRadius: "var(--radius-sm)",
+                                                backgroundColor: "var(--bg-tertiary)",
+                                                border: "1px solid var(--card-border)",
                                                 display: "flex",
                                                 alignItems: "center",
                                                 justifyContent: "center",
                                                 fontWeight: 800,
-                                                fontSize: "0.875rem",
-                                                color: item.totalComissao > 0 ? "#60a5fa" : "var(--text-tertiary)"
+                                                fontSize: "0.8125rem",
+                                                color: "var(--text-primary)"
                                             }}>
                                                 {idx + 1}º
                                             </div>
                                             <div>
-                                                <div style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                                                <div style={{ fontSize: "0.9375rem", fontWeight: 700, color: "var(--text-primary)" }}>
                                                     {item.rep.name}
                                                 </div>
                                                 <div style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.15rem" }}>
-                                                    {item.rep.role === "PARCEIRO" ? (
-                                                        <span style={{ fontSize: "0.625rem", padding: "0.1rem 0.35rem", borderRadius: "4px", backgroundColor: "rgba(168, 85, 247, 0.15)", color: "#c084fc", border: "1px solid rgba(168, 85, 247, 0.4)", fontWeight: 700 }}>
-                                                            PARCEIRO
-                                                        </span>
-                                                    ) : (
-                                                        <span>{item.rep.role}</span>
-                                                    )}
+                                                    <span style={{
+                                                        fontSize: "0.5625rem",
+                                                        padding: "0.1rem 0.35rem",
+                                                        borderRadius: "var(--radius-xs)",
+                                                        backgroundColor: item.rep.role === "PARCEIRO" ? "rgba(147, 51, 234, 0.08)" : "var(--bg-tertiary)",
+                                                        color: item.rep.role === "PARCEIRO" ? "#7e22ce" : "var(--text-tertiary)",
+                                                        border: item.rep.role === "PARCEIRO" ? "1px solid rgba(147, 51, 234, 0.2)" : "1px solid var(--card-border)",
+                                                        fontWeight: 700,
+                                                        textTransform: "uppercase"
+                                                    }}>
+                                                        {item.rep.role || "COMERCIAL"}
+                                                    </span>
                                                     <span>• {item.rep.email}</span>
                                                 </div>
                                             </div>
@@ -408,7 +421,7 @@ export default function RepresentativeCommissionsSection({
 
                                         <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
                                             <div>
-                                                <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", display: "block" }}>
+                                                <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", display: "block", fontWeight: 700 }}>
                                                     Volume Clientes
                                                 </span>
                                                 <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-secondary)" }}>
@@ -417,7 +430,7 @@ export default function RepresentativeCommissionsSection({
                                             </div>
 
                                             <div>
-                                                <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", display: "block" }}>
+                                                <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", display: "block", fontWeight: 700 }}>
                                                     Operações Comiss.
                                                 </span>
                                                 <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-secondary)" }}>
@@ -426,10 +439,10 @@ export default function RepresentativeCommissionsSection({
                                             </div>
 
                                             <div style={{ textAlign: "right" }}>
-                                                <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", display: "block" }}>
+                                                <span style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", textTransform: "uppercase", display: "block", fontWeight: 700 }}>
                                                     Comissão Total
                                                 </span>
-                                                <span style={{ fontSize: "1.125rem", fontWeight: 800, color: item.totalComissao > 0 ? "#60a5fa" : "var(--text-tertiary)" }}>
+                                                <span style={{ fontSize: "1.125rem", fontWeight: 800, color: item.totalComissao > 0 ? "var(--accent-primary)" : "var(--text-tertiary)" }}>
                                                     {formatCurrency(item.totalComissao)}
                                                 </span>
                                             </div>
@@ -439,17 +452,18 @@ export default function RepresentativeCommissionsSection({
                                                     type="button"
                                                     onClick={() => setExpandedRepId(isExpanded ? null : item.rep.id)}
                                                     style={{
-                                                        background: "rgba(255, 255, 255, 0.05)",
-                                                        border: "1px solid var(--glass-border)",
+                                                        background: "var(--bg-secondary)",
+                                                        border: "1px solid var(--card-border)",
                                                         color: "var(--text-secondary)",
-                                                        borderRadius: "var(--radius-sm)",
+                                                        borderRadius: "var(--radius-xs)",
                                                         padding: "0.35rem 0.6rem",
                                                         cursor: "pointer",
                                                         display: "flex",
                                                         alignItems: "center",
                                                         gap: "0.25rem",
-                                                        fontSize: "0.75rem",
-                                                        fontWeight: 600
+                                                        fontSize: "0.6875rem",
+                                                        fontWeight: 700,
+                                                        textTransform: "uppercase"
                                                     }}
                                                 >
                                                     {isExpanded ? "Ocultar" : "Ver Operações"}
@@ -461,23 +475,23 @@ export default function RepresentativeCommissionsSection({
 
                                     {/* Detalhamento de Operações Expansível */}
                                     {isExpanded && hasOps && (
-                                        <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px dashed var(--glass-border)" }}>
-                                            <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
+                                        <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px dashed var(--card-border)" }}>
+                                            <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: "0.5rem" }}>
                                                 Operações comissionadas no período:
                                             </div>
                                             <div style={{ overflowX: "auto" }}>
                                                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8125rem" }}>
                                                     <thead>
-                                                        <tr style={{ borderBottom: "1px solid var(--glass-border)", color: "var(--text-tertiary)", fontSize: "0.7rem", textTransform: "uppercase" }}>
-                                                            <th style={{ padding: "0.5rem", textAlign: "left" }}>Data</th>
-                                                            <th style={{ padding: "0.5rem", textAlign: "left" }}>Cedente</th>
-                                                            <th style={{ padding: "0.5rem", textAlign: "right" }}>Valor Bruto</th>
-                                                            <th style={{ padding: "0.5rem", textAlign: "right" }}>Comissão</th>
+                                                        <tr style={{ borderBottom: "1px solid var(--card-border)" }}>
+                                                            <th style={{ padding: "0.5rem", textAlign: "left", fontSize: "0.6875rem", color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase" }}>Data</th>
+                                                            <th style={{ padding: "0.5rem", textAlign: "left", fontSize: "0.6875rem", color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase" }}>Cedente</th>
+                                                            <th style={{ padding: "0.5rem", textAlign: "right", fontSize: "0.6875rem", color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase" }}>Valor Bruto</th>
+                                                            <th style={{ padding: "0.5rem", textAlign: "right", fontSize: "0.6875rem", color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase" }}>Comissão</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         {item.operations.map(op => (
-                                                            <tr key={op.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.03)" }}>
+                                                            <tr key={op.id} style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.04)" }}>
                                                                 <td style={{ padding: "0.5rem", color: "var(--text-secondary)" }}>
                                                                     {new Date(op.date).toLocaleDateString("pt-BR", { timeZone: "UTC" })}
                                                                 </td>
@@ -489,7 +503,7 @@ export default function RepresentativeCommissionsSection({
                                                                 <td style={{ padding: "0.5rem", textAlign: "right", color: "var(--text-secondary)" }}>
                                                                     {formatCurrency(op.valorBruto)}
                                                                 </td>
-                                                                <td style={{ padding: "0.5rem", textAlign: "right", fontWeight: 700, color: "#60a5fa" }}>
+                                                                <td style={{ padding: "0.5rem", textAlign: "right", fontWeight: 600, color: "var(--text-primary)" }}>
                                                                     {formatCurrency(op.comissaoRepresentante)}
                                                                 </td>
                                                             </tr>
@@ -504,7 +518,7 @@ export default function RepresentativeCommissionsSection({
                         })}
 
                         {repPeriodStats.every(r => r.totalComissao === 0) && (
-                            <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-tertiary)", fontSize: "0.875rem", fontStyle: "italic" }}>
+                            <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-tertiary)", fontSize: "0.875rem" }}>
                                 Nenhuma comissão registrada para os representantes no período selecionado.
                             </div>
                         )}
