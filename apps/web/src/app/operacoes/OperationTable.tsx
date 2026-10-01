@@ -1005,7 +1005,7 @@ export default function OperationTable({
                 </div>
                 <div className="glass-card" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Total Comissões</span>
-                    <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "#60a5fa" }}>{formatCurrency(sumColumn("comissaoRepresentante"))}</span>
+                    <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-primary)" }}>{formatCurrency(sumColumn("comissaoRepresentante"))}</span>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>
                         {operations.filter(op => (Number(op.comissaoRepresentante) || 0) > 0).length} comissionada(s)
                     </span>
@@ -1031,7 +1031,7 @@ export default function OperationTable({
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Ad Valorem</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>IOF</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>IOF Adic.</th>
-                            <th style={{ padding: "1rem", color: "#60a5fa", fontWeight: 500, borderLeft: "1px dashed var(--glass-border)" }}>Comissão</th>
+                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, borderLeft: "1px dashed var(--glass-border)" }}>Comissão</th>
                             <th style={{ padding: "1rem", color: "var(--accent-primary)", fontWeight: 500, borderLeft: "1px dashed var(--glass-border)" }}>Valor Líquido</th>
                             <th style={{ padding: "1rem", color: "var(--accent-red)", fontWeight: 500 }}>Recompra</th>
                             {isAdminOrManager && <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, textAlign: "right" }}>Ações</th>}
@@ -1047,11 +1047,6 @@ export default function OperationTable({
                                         {op.isRedesconto && (
                                             <span style={{ fontSize: "0.7rem", color: "#a78bfa", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "0.25rem", marginTop: "0.15rem" }}>
                                                 🟣 {op.partner?.name ? `Re-desconto: ${op.partner.name}` : "Re-desconto"}
-                                            </span>
-                                        )}
-                                        {op.comissaoRepresentante != null && op.comissaoRepresentante > 0 && (
-                                            <span style={{ fontSize: "0.7rem", color: "#60a5fa", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "0.25rem", marginTop: "0.15rem" }}>
-                                                👤 Comiss: {formatCurrency(op.comissaoRepresentante)} {op.representative?.name ? `(${op.representative.name})` : op.client.representative?.name ? `(${op.client.representative.name})` : ""}
                                             </span>
                                         )}
                                     </div>
@@ -1093,9 +1088,9 @@ export default function OperationTable({
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>
                                     {op.comissaoRepresentante != null && op.comissaoRepresentante > 0 ? (
                                         <div style={{ display: "flex", flexDirection: "column" }}>
-                                            <span style={{ fontWeight: 600, color: "#60a5fa" }}>{formatCurrency(op.comissaoRepresentante)}</span>
-                                            <span style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>
-                                                👤 {op.representative?.name || op.client?.representative?.name || "Parceiro"}
+                                            <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>{formatCurrency(op.comissaoRepresentante)}</span>
+                                            <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>
+                                                {op.representative?.name || op.client?.representative?.name || "Parceiro"}
                                             </span>
                                         </div>
                                     ) : (
@@ -1126,7 +1121,7 @@ export default function OperationTable({
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("adValorem"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("iof"))}</td>
                                 <td style={{ padding: "0.75rem 1rem" }}>{formatCurrency(sumColumn("iofAdicional"))}</td>
-                                <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "#60a5fa" }}>{formatCurrency(sumColumn("comissaoRepresentante"))}</td>
+                                <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)" }}>{formatCurrency(sumColumn("comissaoRepresentante"))}</td>
                                 <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("valorLiquido"))}</td>
                                 <td style={{ padding: "0.75rem 1rem", color: "var(--accent-red)" }}>{formatCurrency(sumColumn("recompra"))}</td>
                                 {isAdminOrManager && <td></td>}
@@ -1141,7 +1136,7 @@ export default function OperationTable({
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("adValorem", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("iof", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("iofAdicional", true))}</td>
-                                    <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "#60a5fa" }}>{formatCurrency(sumColumn("comissaoRepresentante", true))}</td>
+                                    <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--accent-primary)" }}>{formatCurrency(sumColumn("comissaoRepresentante", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", borderLeft: "1px dashed var(--glass-border)", color: "var(--text-primary)" }}>{formatCurrency(sumColumn("valorLiquido", true))}</td>
                                     <td style={{ padding: "0.75rem 1rem", color: "var(--accent-red)" }}>{formatCurrency(sumColumn("recompra", true))}</td>
                                     {isAdminOrManager && <td></td>}
@@ -1201,7 +1196,9 @@ export default function OperationTable({
                         </div>
                         {op.comissaoRepresentante != null && op.comissaoRepresentante > 0 && (
                             <div style={{ display: "flex", flexDirection: "column" }}>
-                                <span style={{ fontSize: "0.875rem", color: "#60a5fa", fontWeight: 600 }}>Comissão: {formatCurrency(op.comissaoRepresentante)} ({op.representative?.name || op.client.representative?.name || "Parceiro"})</span>
+                                <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
+                                    Comissão: <strong style={{ color: "var(--text-primary)", fontWeight: 600 }}>{formatCurrency(op.comissaoRepresentante)}</strong> ({op.representative?.name || op.client.representative?.name || "Parceiro"})
+                                </span>
                             </div>
                         )}
                     </div>
@@ -1912,7 +1909,7 @@ export default function OperationTable({
                                                             <>
                                                                 <span style={{ margin: "0 0.5rem", color: "var(--text-tertiary)" }}>|</span>
                                                                 <span style={{ color: "var(--text-secondary)" }}>Comissão: </span>
-                                                                <strong style={{ color: "#60a5fa" }}>{formatCurrency(comissao)}</strong>
+                                                                <strong style={{ color: "var(--text-primary)" }}>{formatCurrency(comissao)}</strong>
                                                             </>
                                                         )}
                                                     </div>
@@ -1954,32 +1951,27 @@ export default function OperationTable({
                                 return (
                                     <div style={{
                                         padding: "1.25rem",
-                                        backgroundColor: "rgba(59, 130, 246, 0.05)",
-                                        border: "1px solid rgba(59, 130, 246, 0.25)",
+                                        backgroundColor: "rgba(255, 255, 255, 0.02)",
+                                        border: "1px solid var(--glass-border)",
                                         borderRadius: "var(--radius-sm)",
                                         display: "flex",
                                         flexDirection: "column",
                                         gap: "1rem"
                                     }}>
                                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                                                <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "rgba(59, 130, 246, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#60a5fa", fontWeight: "bold", fontSize: "1rem" }}>
-                                                    👤
-                                                </div>
-                                                <div>
-                                                    <span style={{ fontSize: "0.9375rem", fontWeight: 700, color: "#93c5fd" }}>
-                                                        Comissão do Parceiro / Representante Comercial
-                                                    </span>
-                                                    <div style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-                                                        {clientRep ? (
-                                                            <>Cedente com vínculo padrão a: <strong style={{ color: "var(--text-primary)" }}>{clientRep.name} ({clientRep.role})</strong></>
-                                                        ) : (
-                                                            <>Defina um parceiro ou representante para creditar comissão nesta operação</>
-                                                        )}
-                                                    </div>
+                                            <div>
+                                                <span style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                                                    Comissão do Parceiro / Representante Comercial
+                                                </span>
+                                                <div style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
+                                                    {clientRep ? (
+                                                        <>Cedente com vínculo padrão a: <strong style={{ color: "var(--text-primary)" }}>{clientRep.name} ({clientRep.role})</strong></>
+                                                    ) : (
+                                                        <>Defina um parceiro ou representante para creditar comissão nesta operação</>
+                                                    )}
                                                 </div>
                                             </div>
-                                            <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(59, 130, 246, 0.2)", color: "#bfdbfe", padding: "0.25rem 0.65rem", borderRadius: "9999px", fontWeight: 700 }}>
+                                            <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(255, 255, 255, 0.05)", color: "var(--text-secondary)", padding: "0.25rem 0.65rem", borderRadius: "var(--radius-sm)", fontWeight: 500, border: "1px solid var(--glass-border)" }}>
                                                 Comissionamento
                                             </span>
                                         </div>
@@ -2029,8 +2021,8 @@ export default function OperationTable({
                                             {comissao > 0 && (
                                                 <div style={{
                                                     padding: "0.6rem 0.85rem",
-                                                    backgroundColor: "rgba(59, 130, 246, 0.12)",
-                                                    border: "1px solid rgba(59, 130, 246, 0.3)",
+                                                    backgroundColor: "rgba(255, 255, 255, 0.03)",
+                                                    border: "1px solid var(--glass-border)",
                                                     borderRadius: "var(--radius-sm)",
                                                     display: "flex",
                                                     flexDirection: "column",
@@ -2038,10 +2030,10 @@ export default function OperationTable({
                                                     fontSize: "0.75rem"
                                                 }}>
                                                     <span style={{ color: "var(--text-secondary)" }}>
-                                                        Beneficiário: <strong style={{ color: "#93c5fd" }}>{selectedRep?.name || "Parceiro Selecionado"}</strong>
+                                                        Beneficiário: <strong style={{ color: "var(--text-primary)" }}>{selectedRep?.name || "Parceiro Selecionado"}</strong>
                                                     </span>
                                                     <span style={{ color: "var(--text-secondary)" }}>
-                                                        Impacto na Receita: <strong style={{ color: "#60a5fa" }}>{percentComissao.toFixed(1)}% da receita bruta</strong>
+                                                        Impacto na Receita: <strong style={{ color: "var(--text-primary)" }}>{percentComissao.toFixed(1)}% da receita bruta</strong>
                                                     </span>
                                                 </div>
                                             )}
@@ -2075,7 +2067,7 @@ export default function OperationTable({
                                                         <>
                                                             <span style={{ margin: "0 0.4rem", color: "var(--text-tertiary)" }}>-</span>
                                                             <span style={{ color: "var(--text-secondary)" }}>Comissão Parceiro: </span>
-                                                            <strong style={{ color: "#60a5fa" }}>{formatCurrency(comissao)}</strong>
+                                                            <strong style={{ color: "var(--text-primary)" }}>{formatCurrency(comissao)}</strong>
                                                         </>
                                                     )}
                                                 </div>
