@@ -693,42 +693,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
           </div>
         </div>
 
-        {/* Resumo de Re-desconto */}
-        <div className="glass-panel" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", borderLeft: "4px solid #8b5cf6" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-            <div>
-              <h3 style={{ fontSize: "0.875rem", fontWeight: 700, color: "#c4b5fd", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                🟣 Operações com Re-desconto
-              </h3>
-              <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>Funding com Bancos, FIDCs e Securitizadoras no período</span>
-            </div>
-            <Link href="/redesconto" style={{ fontSize: "0.75rem", color: "#c4b5fd", fontWeight: 700, textDecoration: "underline" }}>
-              Ver Dashboard de Re-desconto →
-            </Link>
-          </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem" }}>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <span style={{ fontSize: "0.7rem", color: "var(--text-tertiary)", textTransform: "uppercase" }}>Volume Operado</span>
-              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(totalRedescontoVolume)}</span>
-              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{redescontoOps.length} operações</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <span style={{ fontSize: "0.7rem", color: "var(--accent-red)", textTransform: "uppercase" }}>Custo Parceiros</span>
-              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--accent-red)" }}>{formatCurrency(totalRedescontoCusto)}</span>
-              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Juros cobrados</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <span style={{ fontSize: "0.7rem", color: "var(--accent-primary)", textTransform: "uppercase" }}>Ganho Líquido</span>
-              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: totalRedescontoGanho >= 0 ? "var(--accent-primary)" : "var(--accent-red)" }}>
-                {formatCurrency(totalRedescontoGanho)}
-              </span>
-              <span style={{ fontSize: "0.75rem", color: "var(--accent-primary)", fontWeight: 600 }}>
-                Spread: {totalRedescontoVolume > 0 ? formatPercent((totalRedescontoGanho / totalRedescontoVolume) * 100) : "0,00%"}
-              </span>
-            </div>
-          </div>
-        </div>
 
 
         {/* Chart Section */}
@@ -845,6 +810,47 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
         {/* Projections & Client Rankings Section */}
         <div style={{ padding: "2rem 0", display: "flex", flexDirection: "column", gap: "2.5rem" }}>
           <ProjectionsSection monthlyData={monthlyData} currentMonthIdx={currentMonthIdx} />
+
+          {/* Resumo de Re-desconto */}
+          {!isComercial && (
+            <div className="glass-panel" style={{ padding: "2rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+                <div>
+                  <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--text-primary)", textTransform: "uppercase" }}>
+                    Operações com Re-desconto
+                  </h2>
+                  <p style={{ color: "var(--text-tertiary)", fontSize: "0.8125rem", marginTop: "0.25rem" }}>
+                    Funding com Bancos, FIDCs e Securitizadoras no período
+                  </p>
+                </div>
+                <Link href="/redesconto" style={{ fontSize: "0.75rem", color: "var(--accent-primary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.025em" }}>
+                  Ver Dashboard de Re-desconto →
+                </Link>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.5rem" }}>
+                <div className="glass-card" style={{ padding: "1.25rem" }}>
+                  <h4 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>Volume Operado</h4>
+                  <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", marginTop: "0.5rem" }}>{formatCurrency(totalRedescontoVolume)}</div>
+                  <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", marginTop: "0.25rem" }}>{redescontoOps.length} operação(ões)</p>
+                </div>
+                <div className="glass-card" style={{ padding: "1.25rem" }}>
+                  <h4 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>Custo Parceiros</h4>
+                  <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--accent-red)", marginTop: "0.5rem" }}>{formatCurrency(totalRedescontoCusto)}</div>
+                  <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", marginTop: "0.25rem" }}>Juros cobrados</p>
+                </div>
+                <div className="glass-card" style={{ padding: "1.25rem" }}>
+                  <h4 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>Ganho Líquido</h4>
+                  <div style={{ fontSize: "1.5rem", fontWeight: 800, color: totalRedescontoGanho >= 0 ? "var(--accent-primary)" : "var(--accent-red)", marginTop: "0.5rem" }}>
+                    {formatCurrency(totalRedescontoGanho)}
+                  </div>
+                  <p style={{ color: totalRedescontoGanho >= 0 ? "var(--accent-primary)" : "var(--accent-red)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.25rem" }}>
+                    Spread: {totalRedescontoVolume > 0 ? formatPercent((totalRedescontoGanho / totalRedescontoVolume) * 100) : "0,00%"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {!isComercial && (
             <RepresentativeCommissionsSection
