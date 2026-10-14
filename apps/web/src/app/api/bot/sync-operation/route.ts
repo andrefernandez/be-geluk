@@ -87,14 +87,15 @@ export async function POST(request: Request) {
     let client = null;
 
     if (cnpjNumeros) {
-      client = await prisma.client.findFirst({
-        where: {
-          OR: [
-            { cnpj: { contains: cnpjNumeros } },
-            { name: { equals: cedente.trim(), mode: 'insensitive' } }
-          ]
-        }
+      const allClients = await prisma.client.findMany();
+      client = allClients.find(c => {
+        const cDigits = cleanDigits(c.cnpj);
+        return Boolean(cDigits && cDigits === cnpjNumeros);
       });
+
+      if (!client) {
+        client = allClients.find(c => c.name.toLowerCase() === cedente.trim().toLowerCase());
+      }
     } else {
       client = await prisma.client.findFirst({
         where: {
