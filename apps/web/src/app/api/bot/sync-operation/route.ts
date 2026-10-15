@@ -301,3 +301,83 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+/**
+ * DELETE /api/bot/sync-operation
+ * Exclui uma operação pelo ID do Geluk, pelo nome do cedente ou operação mais recente.
+ */
+export async function DELETE(request: Request) {
+  if (!checkAuth(request)) {
+    return NextResponse.json({ error: 'Não autorizado. Chave de API inválida.' }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const body = await request.json().catch(() => ({}));
+
+    const id = searchParams.get('id') || body.id || body.operationId;
+    const clientId = searchParams.get('clientId') || body.clientId;
+    const cedente = searchParams.get('cedente') || body.cedente;
+
+    let opToDelete = null;
+
+    if (id) {
+      opToDelete = await prisma.operation.findUnique({
+        where: { id },
+        include: { client: true }
+      });
+    } else if (clientId) {
+      opToDelete = await prisma.operation.findFirst({
+        where: { clientId },
+        orderBy: { createdAt: 'desc' },
+        include: { client: true }
+      });
+    } else if (cedente) {
+      const client = await prisma.client.findFirst({
+        where: { name: { equals: String(cedente).trim(), mode: 'insensitive' } }
+      });
+      if (client) {
+        opToDelete = await prisma.operation.findFirst({
+          where: { clientId: client.id },
+          orderBy: { createdAt: 'desc' },
+          include: { client: true }
+        });
+      }
+    }
+
+    if (!opToDelete) {
+      return NextResponse.json({
+        success: false,
+        error: 'Nenhuma operação encontrada para exclusão com os parâmetros informados.'
+      }, { status: 404 });
+    }
+
+    // Exclui sacados e a operação
+    await prisma.sacado.deleteMany({ where: { operationId: opToDelete.id } });
+    await prisma.operation.delete({ where: { id: opToDelete.id } });
+
+    console.log(`[API Bot Delete] 🗑️ Operação ID ${opToDelete.id} (${opToDelete.client?.name || 'Cliente'}) excluída com sucesso.`);
+
+    // Revalidação de cache no Next.js
+    try {
+      revalidatePath('/operacoes');
+      revalidatePath('/em-aberto');
+      revalidatePath('/redesconto');
+      revalidatePath('/');
+    } catch (_) {}
+
+    return NextResponse.json({
+      success: true,
+      deletedOperationId: opToDelete.id,
+      client: opToDelete.client?.name,
+      message: `Operação de ${opToDelete.client?.name || 'Cedente'} excluída com sucesso do Sistema Geluk!`
+    });
+  } catch (error: any) {
+    console.error('[API Bot Delete Error]:', error);
+    return NextResponse.json({
+      success: false,
+      error: `Falha ao excluir operação: ${error.message}`
+    }, { status: 500 });
+  }
+}
+
