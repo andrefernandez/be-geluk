@@ -68,11 +68,14 @@ export async function POST(request: Request) {
       criticas = ''
     } = body;
 
-    if (!cedente) {
-      return NextResponse.json({ error: 'Campo "cedente" é obrigatório.' }, { status: 400 });
+    if (!cedente || typeof cedente !== 'string' || cedente.trim().toLowerCase().includes('atendimento')) {
+      return NextResponse.json({ error: 'Campo "cedente" é obrigatório e não pode ser genérico ou "Cliente em atendimento".' }, { status: 400 });
     }
 
     const valorBruto = parseNumber(rawValorBruto);
+    if (valorBruto <= 0 && (!status || status === 'CONFIRMACAO')) {
+      return NextResponse.json({ error: 'Operação com valor bruto zero ou não preenchida não pode ser criada.' }, { status: 400 });
+    }
     const fator = parseNumber(rawFator);
     const percentual = parseNumber(rawPercentual) || 9.5;
     const dias = parseNumber(rawDias) || 30;
