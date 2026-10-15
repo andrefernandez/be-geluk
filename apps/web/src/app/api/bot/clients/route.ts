@@ -36,24 +36,7 @@ export async function GET(request: Request) {
 
     const cnpjDigits = cleanDigits(cnpj || query);
 
-    let whereClause: any = {};
-
-    if (cnpjDigits && cnpjDigits.length >= 8) {
-      whereClause = {
-        OR: [
-          { cnpj: { contains: cnpjDigits } },
-          { name: { contains: query.trim(), mode: 'insensitive' } }
-        ]
-      };
-    } else if (query.trim()) {
-      whereClause = {
-        name: { contains: query.trim(), mode: 'insensitive' }
-      };
-    }
-
-    const clients = await prisma.client.findMany({
-      where: whereClause,
-      take: 10,
+    let allClients = await prisma.client.findMany({
       orderBy: { name: 'asc' },
       include: {
         representative: {
@@ -74,6 +57,28 @@ export async function GET(request: Request) {
         }
       }
     });
+
+    let clients = allClients;
+
+    if (cnpjDigits && cnpjDigits.length >= 8) {
+      const matchCnpj = allClients.filter(c => {
+        const cDigits = cleanDigits(c.cnpj);
+        return Boolean(cDigits && (cDigits === cnpjDigits || cDigits.includes(cnpjDigits)));
+      });
+
+      if (matchCnpj.length > 0) {
+        clients = matchCnpj;
+      } else if (query.trim()) {
+        const qLower = query.trim().toLowerCase();
+        clients = allClients.filter(c => c.name.toLowerCase().includes(qLower));
+      } else {
+        clients = [];
+      }
+    } else if (query.trim()) {
+      const qLower = query.trim().toLowerCase();
+      clients = allClients.filter(c => c.name.toLowerCase().includes(qLower));
+    }
+
 
     return NextResponse.json({
       success: true,
