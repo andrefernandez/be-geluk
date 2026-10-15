@@ -5,11 +5,14 @@ import { createClient, updateClient, deleteClient, updateClientStatus } from "./
 import { NumericFormat } from 'react-number-format';
 import Link from "next/link";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { Phone, Mail } from "lucide-react";
 
 type Client = {
     id: string;
     name: string;
     cnpj?: string | null;
+    telefone?: string | null;
+    email?: string | null;
     status: string;
     createdAt: Date;
     representativeId?: string | null;
@@ -35,6 +38,8 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
 
     const [name, setName] = useState("");
     const [cnpj, setCnpj] = useState("");
+    const [telefone, setTelefone] = useState("");
+    const [email, setEmail] = useState("");
     const [representativeId, setRepresentativeId] = useState("");
     const [taxaFator, setTaxaFator] = useState("");
     const [taxaAdValorem, setTaxaAdValorem] = useState("");
@@ -58,7 +63,9 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
 
     const filteredInitialClients = initialClients.filter(c => 
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.cnpj && c.cnpj.includes(searchTerm))
+        (c.cnpj && c.cnpj.includes(searchTerm)) ||
+        (c.telefone && c.telefone.includes(searchTerm)) ||
+        (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     const pendingClients = filteredInitialClients.filter(c => c.status === "PENDENTE");
@@ -70,6 +77,8 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
             setEditingClient(client);
             setName(client.name);
             setCnpj(client.cnpj || "");
+            setTelefone(client.telefone || "");
+            setEmail(client.email || "");
             setRepresentativeId(client.representativeId || "");
             setTaxaFator(client.taxaFator ? client.taxaFator.toString() : "");
             setTaxaAdValorem(client.taxaAdValorem ? client.taxaAdValorem.toString() : "");
@@ -80,6 +89,8 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
             setEditingClient(null);
             setName("");
             setCnpj("");
+            setTelefone("");
+            setEmail("");
             setRepresentativeId(isComercial ? currentUserId : "");
             setTaxaFator("");
             setTaxaAdValorem("");
@@ -111,6 +122,8 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
             res = await updateClient(editingClient.id, { 
                 name: name.trim(), 
                 cnpj: cnpj.trim() || null, 
+                telefone: telefone.trim() || null,
+                email: email.trim() || null,
                 status, 
                 representativeId: finalRepId, 
                 taxaFator: tFator, 
@@ -123,6 +136,8 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
             res = await createClient({ 
                 name: name.trim(), 
                 cnpj: cnpj.trim() || null, 
+                telefone: telefone.trim() || null,
+                email: email.trim() || null,
                 status, 
                 representativeId: finalRepId, 
                 taxaFator: tFator, 
@@ -267,6 +282,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                 <tr style={{ borderBottom: "1px solid var(--glass-border-light)" }}>
                                     <th style={{ padding: "0.75rem", color: "var(--text-secondary)", fontWeight: 500, fontSize: "0.875rem" }}>Empresa</th>
                                     <th style={{ padding: "0.75rem", color: "var(--text-secondary)", fontWeight: 500, fontSize: "0.875rem" }}>CNPJ</th>
+                                    <th style={{ padding: "0.75rem", color: "var(--text-secondary)", fontWeight: 500, fontSize: "0.875rem" }}>Contato</th>
                                     <th style={{ padding: "0.75rem", color: "var(--text-secondary)", fontWeight: 500, fontSize: "0.875rem", textAlign: "right" }}>Ações</th>
                                 </tr>
                             </thead>
@@ -279,6 +295,37 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                             </Link>
                                         </td>
                                         <td style={{ padding: "0.75rem", color: "var(--text-tertiary)", fontSize: "0.875rem" }}>{client.cnpj || "---"}</td>
+                                        <td style={{ padding: "0.75rem", fontSize: "0.8125rem" }}>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                                {client.telefone && (
+                                                    <a 
+                                                        href={`https://wa.me/55${client.telefone.replace(/\D/g, '')}`} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "#22c55e", textDecoration: "none", fontWeight: 500 }}
+                                                        title="Conversar no WhatsApp"
+                                                    >
+                                                        <Phone size={13} />
+                                                        <span>{client.telefone}</span>
+                                                    </a>
+                                                )}
+                                                {client.email && (
+                                                    <a 
+                                                        href={`mailto:${client.email}`}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "var(--text-secondary)", textDecoration: "none" }}
+                                                        title="Enviar e-mail"
+                                                    >
+                                                        <Mail size={13} />
+                                                        <span style={{ maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{client.email}</span>
+                                                    </a>
+                                                )}
+                                                {!client.telefone && !client.email && (
+                                                    <span style={{ color: "var(--text-tertiary)", fontStyle: "italic" }}>---</span>
+                                                )}
+                                            </div>
+                                        </td>
                                         <td style={{ padding: "0.75rem", textAlign: "right", display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
                                             <button 
                                                 type="button"
@@ -322,7 +369,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                         <input 
                             type="text" 
                             className="glass-input" 
-                            placeholder="Buscar por nome ou CNPJ..." 
+                            placeholder="Buscar por nome, CNPJ, telefone ou e-mail..." 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             style={{ paddingLeft: "1rem" }}
@@ -342,6 +389,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                         <tr style={{ borderBottom: "1px solid var(--glass-border-light)" }}>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Nome da Empresa</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>CNPJ</th>
+                            <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Contato</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Status</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>Representante / Parceiro</th>
                             <th style={{ padding: "1rem", color: "var(--text-secondary)", fontWeight: 500, textAlign: "right" }}>Volume Operado</th>
@@ -361,6 +409,37 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                         </Link>
                                     </td>
                                     <td style={{ padding: "1rem", color: "var(--text-tertiary)", fontSize: "0.875rem" }}>{client.cnpj || "---"}</td>
+                                    <td style={{ padding: "1rem", fontSize: "0.8125rem" }}>
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+                                            {client.telefone && (
+                                                <a 
+                                                    href={`https://wa.me/55${client.telefone.replace(/\D/g, '')}`} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "#22c55e", textDecoration: "none", fontWeight: 500 }}
+                                                    title="Conversar no WhatsApp"
+                                                >
+                                                    <Phone size={13} />
+                                                    <span>{client.telefone}</span>
+                                                </a>
+                                            )}
+                                            {client.email && (
+                                                <a 
+                                                    href={`mailto:${client.email}`}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "var(--text-secondary)", textDecoration: "none" }}
+                                                    title="Enviar e-mail (Boletos/Informações)"
+                                                >
+                                                    <Mail size={13} />
+                                                    <span style={{ maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{client.email}</span>
+                                                </a>
+                                            )}
+                                            {!client.telefone && !client.email && (
+                                                <span style={{ color: "var(--text-tertiary)", fontStyle: "italic" }}>---</span>
+                                            )}
+                                        </div>
+                                    </td>
                                     <td style={{ padding: "1rem" }}>
                                         <span style={{
                                             padding: "0.25rem 0.625rem",
@@ -432,7 +511,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
 
             {/* Mobile View */}
             <div className="mobile-only" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                {initialClients.map(client => {
+                {filteredInitialClients.map(client => {
                     const statusStyle = getStatusColor(client.status);
                     return (
                         <div key={client.id} className="glass-card" onClick={() => isAdminOrManager && handleOpenModal(client)} style={{ padding: "1.25rem", cursor: isAdminOrManager ? "pointer" : "default" }}>
@@ -456,6 +535,34 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                         </span>
                                     </div>
                                     <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>CNPJ: {client.cnpj || "---"}</span>
+                                    {(client.telefone || client.email) && (
+                                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", fontSize: "0.75rem", margin: "0.1rem 0" }}>
+                                            {client.telefone && (
+                                                <a 
+                                                    href={`https://wa.me/55${client.telefone.replace(/\D/g, '')}`} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", color: "#22c55e", textDecoration: "none", fontWeight: 500 }}
+                                                    title="Conversar no WhatsApp"
+                                                >
+                                                    <Phone size={12} />
+                                                    <span>{client.telefone}</span>
+                                                </a>
+                                            )}
+                                            {client.email && (
+                                                <a 
+                                                    href={`mailto:${client.email}`}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", color: "var(--text-secondary)", textDecoration: "none" }}
+                                                    title="Enviar e-mail (Boletos/Informações)"
+                                                >
+                                                    <Mail size={12} />
+                                                    <span>{client.email}</span>
+                                                </a>
+                                            )}
+                                        </div>
+                                    )}
                                     <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 500 }}>Rep/Parceiro: {client.representative?.name ? `${client.representative.name}${client.representative.role === "PARCEIRO" ? " (PARCEIRO)" : ""}` : "N/A"}</span>
                                     <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 600 }}>
                                         Vol: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
@@ -510,7 +617,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
             {/* Modal */}
             {isModalOpen && (
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10002 }}>
-                    <div className="glass-card" style={{ width: "100%", maxWidth: "450px", padding: "2rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                    <div className="glass-card" style={{ width: "100%", maxWidth: "480px", padding: "2rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                         <h3 style={{ fontSize: "1.25rem", fontWeight: 600 }}>{editingClient ? "Editar Cedente" : "Novo Cedente"}</h3>
 
                         {errorMsg && (
@@ -528,6 +635,28 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                 <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>CNPJ</label>
                                 <input className="glass-input" value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
+                            </div>
+
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Telefone (WhatsApp)</label>
+                                    <input 
+                                        className="glass-input" 
+                                        value={telefone} 
+                                        onChange={e => setTelefone(e.target.value)} 
+                                        placeholder="(00) 00000-0000" 
+                                    />
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>E-mail (Boletos / Info)</label>
+                                    <input 
+                                        type="email" 
+                                        className="glass-input" 
+                                        value={email} 
+                                        onChange={e => setEmail(e.target.value)} 
+                                        placeholder="financeiro@empresa.com.br" 
+                                    />
+                                </div>
                             </div>
 
                             <div style={{ display: "flex", gap: "1rem" }}>

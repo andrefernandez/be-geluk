@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function createClient(data: { name: string, cnpj?: string | null, status?: string, representativeId?: string | null, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number, taxaIof?: number, taxaIofAdicional?: number }) {
+export async function createClient(data: { name: string, cnpj?: string | null, telefone?: string | null, email?: string | null, status?: string, representativeId?: string | null, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number, taxaIof?: number, taxaIofAdicional?: number }) {
     try {
         const trimmedName = data.name?.trim();
         if (!trimmedName) {
@@ -19,6 +19,8 @@ export async function createClient(data: { name: string, cnpj?: string | null, s
             data: {
                 name: trimmedName,
                 cnpj: data.cnpj?.trim() || null,
+                telefone: data.telefone?.trim() || null,
+                email: data.email?.trim() || null,
                 status: data.status || "ATIVO",
                 representativeId: data.representativeId?.trim() ? data.representativeId.trim() : null,
                 taxaFator: data.taxaFator ?? null,
@@ -42,7 +44,7 @@ export async function createClient(data: { name: string, cnpj?: string | null, s
     }
 }
 
-export async function updateClient(id: string, data: { name: string, cnpj?: string | null, status?: string, representativeId?: string | null, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number, taxaIof?: number, taxaIofAdicional?: number }) {
+export async function updateClient(id: string, data: { name: string, cnpj?: string | null, telefone?: string | null, email?: string | null, status?: string, representativeId?: string | null, taxaFator?: number, taxaAdValorem?: number, taxaTarifa?: number, taxaIof?: number, taxaIofAdicional?: number }) {
     try {
         const trimmedName = data.name?.trim();
         if (!trimmedName) {
@@ -59,6 +61,8 @@ export async function updateClient(id: string, data: { name: string, cnpj?: stri
             data: {
                 name: trimmedName,
                 cnpj: data.cnpj?.trim() || null,
+                telefone: data.telefone?.trim() || null,
+                email: data.email?.trim() || null,
                 status: data.status,
                 representativeId: data.representativeId?.trim() ? data.representativeId.trim() : null,
                 taxaFator: data.taxaFator ?? null,

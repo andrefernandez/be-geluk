@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, DollarSign, TrendingUp, Percent, Clock, FileText, Users, Briefcase } from "lucide-react";
+import { ArrowLeft, DollarSign, TrendingUp, Percent, Clock, FileText, Users, Briefcase, Phone, Mail } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, ComposedChart, Line, Cell } from "recharts";
 
 type SacadoData = {
@@ -33,6 +33,8 @@ type ClientData = {
     id: string;
     name: string;
     cnpj?: string | null;
+    telefone?: string | null;
+    email?: string | null;
     status: string;
     createdAt: string;
     taxaFator?: number | null;
@@ -188,9 +190,39 @@ export default function ClientDetailsDashboard({ client, currentUserRole }: { cl
                             {client.status}
                         </span>
                     </div>
-                    <p style={{ color: "var(--text-tertiary)", fontSize: "0.875rem" }}>
-                        CNPJ: {client.cnpj || "Não cadastrado"} • Cadastro em {new Date(client.createdAt).toLocaleDateString("pt-BR", { timeZone: "UTC" })}
-                    </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.5rem 1rem", marginTop: "0.25rem", fontSize: "0.875rem" }}>
+                        <span style={{ color: "var(--text-tertiary)" }}>CNPJ: {client.cnpj || "Não cadastrado"}</span>
+                        <span style={{ color: "var(--text-tertiary)" }}>•</span>
+                        <span style={{ color: "var(--text-tertiary)" }}>Cadastro em {new Date(client.createdAt).toLocaleDateString("pt-BR", { timeZone: "UTC" })}</span>
+                        {client.telefone && (
+                            <>
+                                <span style={{ color: "var(--text-tertiary)" }}>•</span>
+                                <a 
+                                    href={`https://wa.me/55${client.telefone.replace(/\D/g, '')}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "#22c55e", textDecoration: "none", fontWeight: 500 }}
+                                    title="Conversar no WhatsApp"
+                                >
+                                    <Phone size={14} />
+                                    <span>{client.telefone}</span>
+                                </a>
+                            </>
+                        )}
+                        {client.email && (
+                            <>
+                                <span style={{ color: "var(--text-tertiary)" }}>•</span>
+                                <a 
+                                    href={`mailto:${client.email}`}
+                                    style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "var(--accent-primary)", textDecoration: "none", fontWeight: 500 }}
+                                    title="Enviar e-mail (Boletos / Informações)"
+                                >
+                                    <Mail size={14} />
+                                    <span>{client.email}</span>
+                                </a>
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 <div className="glass-card" style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1.25rem", background: "var(--bg-secondary)", borderRadius: "var(--radius-md)", border: "1px solid var(--card-border)" }}>

@@ -26,6 +26,8 @@ model Client {
   id               String      @id @default(cuid())
   name             String      @unique
   cnpj             String?
+  telefone         String?
+  email            String?
   status           String      @default("ATIVO")
   taxaFator        Float?
   taxaAdValorem    Float?
