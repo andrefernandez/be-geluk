@@ -61,6 +61,9 @@ export async function POST(request: Request) {
       adValorem: rawAdValorem,
       iof: rawIof,
       iofAdicional: rawIofAdicional,
+      recompra: rawRecompra,
+      pendencia: rawPendencia,
+      pendencias: rawPendencias,
       valorLiquido: rawValorLiquido,
       status = 'CONFIRMACAO',
       sacados = [],
@@ -83,28 +86,38 @@ export async function POST(request: Request) {
     const adValorem = parseNumber(rawAdValorem);
     const iof = parseNumber(rawIof);
     const iofAdicional = parseNumber(rawIofAdicional);
+    const recompra = parseNumber(rawRecompra ?? rawPendencia ?? rawPendencias);
     const valorLiquido = parseNumber(rawValorLiquido);
 
     // 1. Identificar ou Criar Cliente (Cedente)
     const cnpjNumeros = cleanDigits(cnpj);
     let client = null;
+    const allClients = await prisma.client.findMany();
 
     if (cnpjNumeros) {
-      const allClients = await prisma.client.findMany();
       client = allClients.find(c => {
         const cDigits = cleanDigits(c.cnpj);
         return Boolean(cDigits && cDigits === cnpjNumeros);
       });
+    }
 
+    if (!client) {
+      const cleanTarget = cedente.trim().toLowerCase();
+      // Match exato por nome
+      client = allClients.find(c => c.name.toLowerCase() === cleanTarget);
+
+      // Match aproximado / alias (ex: "HYNO" para "HYNOBABY CRIANCAS FELIZES LTDA", ou prefixos de marca)
       if (!client) {
-        client = allClients.find(c => c.name.toLowerCase() === cedente.trim().toLowerCase());
+        client = allClients.find(c => {
+          const cName = c.name.toLowerCase().trim();
+          if (cName.length >= 3 && cleanTarget.includes(cName)) return true;
+          if (cleanTarget.length >= 3 && cName.includes(cleanTarget)) return true;
+          const firstTokenC = cName.split(/[\s\-]/)[0];
+          const firstTokenT = cleanTarget.split(/[\s\-]/)[0];
+          if (firstTokenC.length >= 4 && (firstTokenT.startsWith(firstTokenC) || firstTokenC.startsWith(firstTokenT))) return true;
+          return false;
+        });
       }
-    } else {
-      client = await prisma.client.findFirst({
-        where: {
-          name: { equals: cedente.trim(), mode: 'insensitive' }
-        }
-      });
     }
 
     if (!client) {
@@ -171,6 +184,7 @@ export async function POST(request: Request) {
           adValorem,
           iof,
           iofAdicional,
+          recompra: recompra > 0 ? recompra : existingOp.recompra,
           valorLiquido,
           status: status || existingOp.status,
           updatedAt: new Date()
@@ -206,6 +220,7 @@ export async function POST(request: Request) {
           adValorem,
           iof,
           iofAdicional,
+          recompra: recompra > 0 ? recompra : null,
           valorLiquido,
           declarada: true,
           active: true,
@@ -251,6 +266,7 @@ export async function POST(request: Request) {
         adValorem,
         iof,
         iofAdicional,
+        recompra,
         valorLiquido,
         data: opDate.toISOString()
       },
