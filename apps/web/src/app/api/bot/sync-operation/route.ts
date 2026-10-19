@@ -380,21 +380,36 @@ export async function DELETE(request: Request) {
 
     let opToDelete = null;
 
-    if (id) {
+    if (id && id.length > 10) {
       opToDelete = await prisma.operation.findUnique({
         where: { id },
         include: { client: true }
       });
-    } else if (clientId) {
+    }
+
+    if (!opToDelete && clientId) {
       opToDelete = await prisma.operation.findFirst({
         where: { clientId },
         orderBy: { createdAt: 'desc' },
         include: { client: true }
       });
-    } else if (cedente) {
-      const client = await prisma.client.findFirst({
-        where: { name: { equals: String(cedente).trim(), mode: 'insensitive' } }
-      });
+    }
+
+    if (!opToDelete && cedente) {
+      const cleanTarget = String(cedente).trim().toLowerCase();
+      const allClients = await prisma.client.findMany();
+      let client = allClients.find(c => c.name.toLowerCase() === cleanTarget);
+      if (!client) {
+        client = allClients.find(c => {
+          const cName = c.name.toLowerCase().trim();
+          if (cName.length >= 2 && cleanTarget.includes(cName)) return true;
+          if (cleanTarget.length >= 2 && cName.includes(cleanTarget)) return true;
+          const firstTokenC = cName.split(/[\s\-]/)[0];
+          const firstTokenT = cleanTarget.split(/[\s\-]/)[0];
+          if (firstTokenC.length >= 4 && (firstTokenT.startsWith(firstTokenC) || firstTokenC.startsWith(firstTokenT))) return true;
+          return false;
+        });
+      }
       if (client) {
         opToDelete = await prisma.operation.findFirst({
           where: { clientId: client.id },
@@ -402,6 +417,13 @@ export async function DELETE(request: Request) {
           include: { client: true }
         });
       }
+    }
+
+    if (!opToDelete) {
+      opToDelete = await prisma.operation.findFirst({
+        orderBy: { createdAt: 'desc' },
+        include: { client: true }
+      });
     }
 
     if (!opToDelete) {
