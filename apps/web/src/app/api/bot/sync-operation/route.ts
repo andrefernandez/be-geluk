@@ -56,16 +56,20 @@ export async function POST(request: Request) {
       valorBruto: rawValorBruto,
       fator: rawFator,
       percentual: rawPercentual,
+      percentualPrazo: rawPercentualPrazo,
       dias: rawDias,
       tarifas: rawTarifas,
+      percentualTarifas: rawPercentualTarifas,
       adValorem: rawAdValorem,
+      percentualAdValorem: rawPercentualAdValorem,
+      irpj: rawIrpj,
       iof: rawIof,
       iofAdicional: rawIofAdicional,
       recompra: rawRecompra,
       pendencia: rawPendencia,
       pendencias: rawPendencias,
       valorLiquido: rawValorLiquido,
-      status = 'CONFIRMACAO',
+      status: rawStatus = 'CONFIRMACAO',
       sacados = [],
       observacoes = '',
       criticas = ''
@@ -75,15 +79,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Campo "cedente" é obrigatório e não pode ser genérico ou "Cliente em atendimento".' }, { status: 400 });
     }
 
+    const normalizeStatus = (st: any): string => {
+      const upper = String(st || '').toUpperCase().trim();
+      if (upper === 'PAGO' || upper === 'CONCLUIDA' || upper === 'CONCLUÍDA' || upper === 'FINALIZADA') return 'CONCLUIDA';
+      if (upper === 'ASSINATURA') return 'ASSINATURA';
+      if (upper === 'PAGAMENTO') return 'PAGAMENTO';
+      return 'CONFIRMACAO';
+    };
+
+    const status = normalizeStatus(rawStatus);
     const valorBruto = parseNumber(rawValorBruto);
     if (valorBruto <= 0 && (!status || status === 'CONFIRMACAO')) {
       return NextResponse.json({ error: 'Operação com valor bruto zero ou não preenchida não pode ser criada.' }, { status: 400 });
     }
     const fator = parseNumber(rawFator);
-    const percentual = parseNumber(rawPercentual) || 9.5;
     const dias = parseNumber(rawDias) || 30;
     const tarifas = parseNumber(rawTarifas);
     const adValorem = parseNumber(rawAdValorem);
+    const irpj = parseNumber(rawIrpj);
     const iof = parseNumber(rawIof);
     const iofAdicional = parseNumber(rawIofAdicional);
     const recompra = parseNumber(rawRecompra ?? rawPendencia ?? rawPendencias);
@@ -120,6 +133,8 @@ export async function POST(request: Request) {
       }
     }
 
+    const parsedPercentual = parseNumber(rawPercentual);
+
     if (!client) {
       // Cria o cliente se não existir
       console.log(`[API Bot Sync] ➕ Criando novo cliente no sistema: "${cedente}"`);
@@ -128,7 +143,7 @@ export async function POST(request: Request) {
           name: cedente.trim(),
           cnpj: cnpjNumeros || null,
           status: 'ATIVO',
-          taxaFator: percentual,
+          taxaFator: parsedPercentual || 9.5,
           taxaTarifa: tarifas > 0 ? tarifas : null
         }
       });
@@ -156,14 +171,20 @@ export async function POST(request: Request) {
     const startOfDay = new Date(Date.UTC(opDate.getUTCFullYear(), opDate.getUTCMonth(), opDate.getUTCDate(), 0, 0, 0, 0));
     const endOfDay = new Date(Date.UTC(opDate.getUTCFullYear(), opDate.getUTCMonth(), opDate.getUTCDate(), 23, 59, 59, 999));
 
-    // 3. Buscar se já existe operação deste cliente no mesmo dia ou com mesmo valor bruto
+    // 3. Buscar se já existe operação deste cliente no mesmo dia
     const existingOp = await prisma.operation.findFirst({
       where: {
         clientId: client.id,
         date: { gte: startOfDay, lte: endOfDay }
       },
+      orderBy: { createdAt: 'desc' },
       include: { sacados: true }
     });
+
+    const percentual = parsedPercentual || existingOp?.percentual || client.taxaFator || 9.5;
+    const percentualPrazo = parseNumber(rawPercentualPrazo) || (valorBruto > 0 && fator > 0 ? Number(((fator / valorBruto) * 100).toFixed(4)) : 0);
+    const percentualTarifas = parseNumber(rawPercentualTarifas) || (valorBruto > 0 && tarifas > 0 ? (tarifas / valorBruto) * 100 : null);
+    const percentualAdValorem = parseNumber(rawPercentualAdValorem) || (valorBruto > 0 && adValorem > 0 ? (adValorem / valorBruto) * 100 : null);
 
     let operationResult = null;
     let actionType = 'created';
@@ -172,6 +193,10 @@ export async function POST(request: Request) {
       actionType = 'updated';
       console.log(`[API Bot Sync] 🔄 Atualizando operação existente ID ${existingOp.id}...`);
 
+      const finalStatus = (existingOp.status === 'CONCLUIDA' && status === 'CONFIRMACAO')
+        ? 'CONCLUIDA'
+        : (status || existingOp.status);
+
       operationResult = await prisma.operation.update({
         where: { id: existingOp.id },
         data: {
@@ -179,14 +204,19 @@ export async function POST(request: Request) {
           valorBruto,
           fator,
           percentual,
+          percentualPrazo,
           dias,
           tarifas,
+          percentualTarifas,
           adValorem,
+          percentualAdValorem,
+          irpj: irpj > 0 ? irpj : null,
           iof,
           iofAdicional,
-          recompra: recompra > 0 ? recompra : existingOp.recompra,
+          recompra: recompra > 0 ? recompra : null,
           valorLiquido,
-          status: status || existingOp.status,
+          status: finalStatus,
+          representativeId: existingOp.representativeId || client.representativeId || null,
           updatedAt: new Date()
         },
         include: { sacados: true }
@@ -210,14 +240,18 @@ export async function POST(request: Request) {
       operationResult = await prisma.operation.create({
         data: {
           clientId: client.id,
+          representativeId: client.representativeId || null,
           date: opDate,
           valorBruto,
           fator,
           percentual,
-          percentualPrazo: 0,
+          percentualPrazo,
           dias,
           tarifas,
+          percentualTarifas,
           adValorem,
+          percentualAdValorem,
+          irpj: irpj > 0 ? irpj : null,
           iof,
           iofAdicional,
           recompra: recompra > 0 ? recompra : null,
@@ -261,13 +295,19 @@ export async function POST(request: Request) {
         valorBruto,
         fator,
         percentual,
+        percentualPrazo,
         dias,
         tarifas,
+        percentualTarifas,
         adValorem,
+        percentualAdValorem,
+        irpj,
         iof,
         iofAdicional,
         recompra,
         valorLiquido,
+        status: operationResult.status,
+        sacadosCount: Array.isArray(sacados) ? sacados.length : 0,
         data: opDate.toISOString()
       },
       message: actionType === 'updated'

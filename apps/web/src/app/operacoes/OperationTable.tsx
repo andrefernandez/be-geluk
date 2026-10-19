@@ -53,7 +53,8 @@ export default function OperationTable({
             CONFIRMACAO: { label: "1. Confirmação", bg: "rgba(245, 158, 11, 0.1)", color: "#f59e0b" },
             ASSINATURA: { label: "2. Assinatura", bg: "rgba(249, 115, 22, 0.1)", color: "#f97316" },
             PAGAMENTO: { label: "3. Envio $", bg: "rgba(59, 130, 246, 0.1)", color: "#3b82f6" },
-            CONCLUIDA: { label: "✔ Concluída", bg: "rgba(16, 185, 129, 0.1)", color: "#10b981" }
+            CONCLUIDA: { label: "✔ Concluída", bg: "rgba(16, 185, 129, 0.1)", color: "#10b981" },
+            PAGO: { label: "✔ Concluída", bg: "rgba(16, 185, 129, 0.1)", color: "#10b981" }
         };
         const style = statusStyles[status] || { label: "1. Confirmação", bg: "rgba(245, 158, 11, 0.1)", color: "#f59e0b" };
         return (
@@ -582,6 +583,7 @@ export default function OperationTable({
         setEditingId(op.id);
         setXmlWarning(null);
         const dateStr = new Date(op.date).toISOString().split("T")[0];
+        const normStatus = op.status === "PAGO" ? "CONCLUIDA" : (op.status || "CONFIRMACAO");
         setFormData({
             clientId: op.clientId,
             representativeId: op.representativeId || op.client?.representativeId || "",
@@ -597,9 +599,9 @@ export default function OperationTable({
             percentualAdValorem: op.percentualAdValorem?.toString() || "",
             irpj: op.irpj?.toString() || "",
             iof: op.iof?.toString() || "",
-            percentualIof: op.iof && op.valorBruto ? ((op.iof / op.valorBruto) * 100).toString() : "",
+            percentualIof: op.iof && op.valorBruto ? Number(((op.iof / op.valorBruto) * 100).toFixed(6)).toString() : "",
             iofAdicional: op.iofAdicional?.toString() || "",
-            percentualIofAdicional: op.iofAdicional && op.valorBruto ? ((op.iofAdicional / op.valorBruto) * 100).toString() : "",
+            percentualIofAdicional: op.iofAdicional && op.valorBruto ? Number(((op.iofAdicional / op.valorBruto) * 100).toFixed(6)).toString() : "",
             valorLiquido: op.valorLiquido?.toString() || "",
             recompra: op.recompra?.toString() || "",
             declarada: op.declarada ?? false,
@@ -610,7 +612,7 @@ export default function OperationTable({
             paga: op.paga ?? false,
             dataPagamento: op.dataPagamento ? new Date(op.dataPagamento).toISOString().split("T")[0] : "",
             comissaoRepresentante: op.comissaoRepresentante?.toString() || "",
-            status: op.status || "CONFIRMACAO",
+            status: normStatus,
             comprovanteConfirmacao: op.comprovanteConfirmacao || "",
             comprovanteAssinatura: op.comprovanteAssinatura || "",
             comprovantePagamento: op.comprovantePagamento || "",
@@ -624,7 +626,7 @@ export default function OperationTable({
                 { id: '6', nome: "Tarifa de contrato", valor: "200", active: false }
             ]
         });
-        setActiveStepTab(op.status || "CONFIRMACAO");
+        setActiveStepTab(normStatus);
         setFileUploadError("");
         setIsModalOpen(true);
     };
@@ -1537,7 +1539,8 @@ export default function OperationTable({
                             <div className="form-grid-2">
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Bruto Operação (R$)</label>
-                                    <NumericFormat required className="glass-input" value={formData.valorBruto} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
+                                    <NumericFormat required className="glass-input" value={formData.valorBruto} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any, sourceInfo: any) => {
+                                        if (sourceInfo?.source && sourceInfo.source !== "event") return;
                                         let newState = { ...formData, valorBruto: v.floatValue !== undefined ? String(v.floatValue) : "" };
                                         if (newState.clientId && newState.dias) newState = applyClientRates(newState.clientId, newState, false);
                                         setFormData(newState);
@@ -1545,7 +1548,7 @@ export default function OperationTable({
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Dias (Prazo Médio)</label>
-                                    <input required type="number" className="glass-input" value={formData.dias} onChange={e => {
+                                    <input required type="number" step="any" className="glass-input" value={formData.dias} onChange={e => {
                                         let newState = { ...formData, dias: e.target.value };
                                         if (newState.clientId && newState.valorBruto) newState = applyClientRates(newState.clientId, newState, false);
                                         setFormData(newState);
@@ -1556,7 +1559,8 @@ export default function OperationTable({
                             <div className="form-grid-2">
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Fator (%)</label>
-                                    <NumericFormat required className="glass-input" value={formData.percentual} thousandSeparator="." decimalSeparator="," decimalScale={4} onValueChange={(v: any) => {
+                                    <NumericFormat required className="glass-input" value={formData.percentual} thousandSeparator="." decimalSeparator="," decimalScale={4} onValueChange={(v: any, sourceInfo: any) => {
+                                        if (sourceInfo?.source && sourceInfo.source !== "event") return;
                                         const p = v.floatValue;
                                         let newState = { ...formData, percentual: p !== undefined ? String(p) : "" };
                                         if (p !== undefined && formData.valorBruto && formData.dias) {
@@ -1570,7 +1574,8 @@ export default function OperationTable({
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Fator (R$)</label>
-                                    <NumericFormat required className="glass-input" value={formData.fator} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
+                                    <NumericFormat required className="glass-input" value={formData.fator} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any, sourceInfo: any) => {
+                                        if (sourceInfo?.source && sourceInfo.source !== "event") return;
                                         const f = v.floatValue;
                                         let newState = { ...formData, fator: f !== undefined ? String(f) : "" };
                                         if (f !== undefined && formData.valorBruto && formData.dias) {
@@ -1578,7 +1583,7 @@ export default function OperationTable({
                                             const dias = parseFloat(formData.dias);
                                             if (bruto > 0 && dias > 0) {
                                                 const perc = (f / bruto / dias) * 30 * 100;
-                                                newState.percentual = perc.toString();
+                                                newState.percentual = Number(perc.toFixed(4)).toString();
                                             }
                                         }
                                         setFormData(newState);
@@ -1627,7 +1632,7 @@ export default function OperationTable({
                                         <div key={t.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                                             <input type="checkbox" checked={t.active} onChange={() => toggleTarifa(t.id)} style={{ accentColor: "var(--accent-primary)", cursor: "pointer" }} />
                                             <input type="text" className="glass-input" value={t.nome} onChange={(e) => setFormData(prev => ({ ...prev, tarifasList: prev.tarifasList.map((x:any) => x.id === t.id ? { ...x, nome: e.target.value } : x) }))} style={{ flex: 1, padding: "0.25rem 0.5rem", fontSize: "0.75rem" }} />
-                                            <NumericFormat className="glass-input" value={t.valor} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => updateTarifaValue(t.id, v.floatValue !== undefined ? String(v.floatValue) : "")} style={{ width: "100px", padding: "0.25rem 0.5rem", fontSize: "0.75rem" }} />
+                                            <NumericFormat className="glass-input" value={t.valor} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any, sourceInfo: any) => { if (sourceInfo?.source && sourceInfo.source !== "event") return; updateTarifaValue(t.id, v.floatValue !== undefined ? String(v.floatValue) : ""); }} style={{ width: "100px", padding: "0.25rem 0.5rem", fontSize: "0.75rem" }} />
                                         </div>
                                     ))}
                                 </div>
@@ -1636,7 +1641,8 @@ export default function OperationTable({
                             <div className="form-grid-1">
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Tarifas Consolidado (R$)</label>
-                                    <NumericFormat required className="glass-input" value={formData.tarifas} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
+                                    <NumericFormat required className="glass-input" value={formData.tarifas} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any, sourceInfo: any) => {
+                                        if (sourceInfo?.source && sourceInfo.source !== "event") return;
                                         const val = v.floatValue;
                                         setFormData(prev => {
                                             const bruto = parseFloat(prev.valorBruto) || 0;
@@ -1650,7 +1656,8 @@ export default function OperationTable({
                             <div className="form-grid-2">
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Ad Valorem (%)</label>
-                                    <NumericFormat className="glass-input" value={formData.percentualAdValorem} thousandSeparator="." decimalSeparator="," decimalScale={4} onValueChange={(v: any) => {
+                                    <NumericFormat className="glass-input" value={formData.percentualAdValorem} thousandSeparator="." decimalSeparator="," decimalScale={4} onValueChange={(v: any, sourceInfo: any) => {
+                                        if (sourceInfo?.source && sourceInfo.source !== "event") return;
                                         const p = v.floatValue;
                                         let newState = { ...formData, percentualAdValorem: p !== undefined ? String(p) : "" };
                                         if (p !== undefined && formData.valorBruto) {
@@ -1662,12 +1669,13 @@ export default function OperationTable({
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Ad Valorem (R$)</label>
-                                    <NumericFormat required className="glass-input" value={formData.adValorem} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
+                                    <NumericFormat required className="glass-input" value={formData.adValorem} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any, sourceInfo: any) => {
+                                        if (sourceInfo?.source && sourceInfo.source !== "event") return;
                                         const val = v.floatValue;
                                         let newState = { ...formData, adValorem: val !== undefined ? String(val) : "" };
                                         if (val !== undefined && formData.valorBruto) {
                                             const bruto = parseFloat(formData.valorBruto);
-                                            if (bruto > 0) newState.percentualAdValorem = ((val / bruto) * 100).toString();
+                                            if (bruto > 0) newState.percentualAdValorem = Number(((val / bruto) * 100).toFixed(4)).toString();
                                         }
                                         setFormData(newState);
                                     }} />
@@ -1677,7 +1685,8 @@ export default function OperationTable({
                             <div className="form-grid-2">
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IOF (%)</label>
-                                    <NumericFormat className="glass-input" value={formData.percentualIof} thousandSeparator="." decimalSeparator="," decimalScale={6} onValueChange={(v: any) => {
+                                    <NumericFormat className="glass-input" value={formData.percentualIof} thousandSeparator="." decimalSeparator="," decimalScale={6} onValueChange={(v: any, sourceInfo: any) => {
+                                        if (sourceInfo?.source && sourceInfo.source !== "event") return;
                                         const p = v.floatValue;
                                         let newState = { ...formData, percentualIof: p !== undefined ? String(p) : "" };
                                         if (p !== undefined && formData.valorBruto) {
@@ -1689,12 +1698,13 @@ export default function OperationTable({
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IOF (R$)</label>
-                                    <NumericFormat className="glass-input" value={formData.iof} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
+                                    <NumericFormat className="glass-input" value={formData.iof} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any, sourceInfo: any) => {
+                                        if (sourceInfo?.source && sourceInfo.source !== "event") return;
                                         const val = v.floatValue;
                                         let newState = { ...formData, iof: val !== undefined ? String(val) : "" };
                                         if (val !== undefined && formData.valorBruto) {
                                             const bruto = parseFloat(formData.valorBruto);
-                                            if (bruto > 0) newState.percentualIof = ((val / bruto) * 100).toString();
+                                            if (bruto > 0) newState.percentualIof = Number(((val / bruto) * 100).toFixed(6)).toString();
                                         }
                                         setFormData(newState);
                                     }} />
@@ -1704,7 +1714,8 @@ export default function OperationTable({
                             <div className="form-grid-2">
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IOF Adicional (%)</label>
-                                    <NumericFormat className="glass-input" value={formData.percentualIofAdicional} thousandSeparator="." decimalSeparator="," decimalScale={6} onValueChange={(v: any) => {
+                                    <NumericFormat className="glass-input" value={formData.percentualIofAdicional} thousandSeparator="." decimalSeparator="," decimalScale={6} onValueChange={(v: any, sourceInfo: any) => {
+                                        if (sourceInfo?.source && sourceInfo.source !== "event") return;
                                         const p = v.floatValue;
                                         let newState = { ...formData, percentualIofAdicional: p !== undefined ? String(p) : "" };
                                         if (p !== undefined && formData.valorBruto) {
@@ -1716,12 +1727,13 @@ export default function OperationTable({
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                     <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>IOF Adicional (R$)</label>
-                                    <NumericFormat className="glass-input" value={formData.iofAdicional} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any) => {
+                                    <NumericFormat className="glass-input" value={formData.iofAdicional} thousandSeparator="." decimalSeparator="," decimalScale={2} fixedDecimalScale={true} prefix="R$ " onValueChange={(v: any, sourceInfo: any) => {
+                                        if (sourceInfo?.source && sourceInfo.source !== "event") return;
                                         const val = v.floatValue;
                                         let newState = { ...formData, iofAdicional: val !== undefined ? String(val) : "" };
                                         if (val !== undefined && formData.valorBruto) {
                                             const bruto = parseFloat(formData.valorBruto);
-                                            if (bruto > 0) newState.percentualIofAdicional = ((val / bruto) * 100).toString();
+                                            if (bruto > 0) newState.percentualIofAdicional = Number(((val / bruto) * 100).toFixed(6)).toString();
                                         }
                                         setFormData(newState);
                                     }} />
