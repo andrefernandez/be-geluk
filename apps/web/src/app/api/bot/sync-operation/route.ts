@@ -88,8 +88,16 @@ export async function POST(request: Request) {
     };
 
     const status = normalizeStatus(rawStatus);
+    if (status !== 'CONCLUIDA') {
+      console.log(`[API Bot Sync] 🛑 Operação de "${cedente}" recusada: status="${status}" (ainda não finalizada no SmartFactor).`);
+      return NextResponse.json({
+        success: false,
+        blocked: true,
+        error: 'Operação ainda não está FINALIZADA no SmartFactor. O lançamento no Sistema Geluk só é permitido quando a operação estiver CONCLUIDA.'
+      }, { status: 400 });
+    }
     const valorBruto = parseNumber(rawValorBruto);
-    if (valorBruto <= 0 && (!status || status === 'CONFIRMACAO')) {
+    if (valorBruto <= 0) {
       return NextResponse.json({ error: 'Operação com valor bruto zero ou não preenchida não pode ser criada.' }, { status: 400 });
     }
     const fator = parseNumber(rawFator);
