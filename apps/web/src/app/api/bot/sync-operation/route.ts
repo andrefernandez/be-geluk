@@ -201,9 +201,7 @@ export async function POST(request: Request) {
       actionType = 'updated';
       console.log(`[API Bot Sync] 🔄 Atualizando operação existente ID ${existingOp.id}...`);
 
-      const finalStatus = (existingOp.status === 'CONCLUIDA' && status === 'CONFIRMACAO')
-        ? 'CONCLUIDA'
-        : (status || existingOp.status);
+      const finalStatus = status || existingOp.status || 'CONCLUIDA';
 
       operationResult = await prisma.operation.update({
         where: { id: existingOp.id },
