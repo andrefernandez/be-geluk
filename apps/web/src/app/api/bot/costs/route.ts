@@ -275,21 +275,47 @@ export async function POST(request: Request) {
       const paidVal = normalizePaid(item.paid ?? item.pago ?? item.status);
       const paid = paidVal !== undefined ? paidVal : false;
 
-      const created = await prisma.cost.create({
-        data: {
-          name,
-          amount,
-          date,
-          category,
-          type,
-          barcode,
-          paymentMethod,
-          pixKey,
-          paid
+      // Upsert inteligente no mesmo mês: se já existir custo com o mesmo nome no mês, atualiza em vez de duplicar
+      const startOfMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1, 0, 0, 0, 0));
+      const endOfMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1, 0, 0, 0, 0));
+      endOfMonth.setUTCMilliseconds(endOfMonth.getUTCMilliseconds() - 1);
+
+      const existingSameMonth = await prisma.cost.findFirst({
+        where: {
+          name: { equals: name, mode: 'insensitive' },
+          date: { gte: startOfMonth, lte: endOfMonth }
         }
       });
 
-      createdItems.push(formatCostItem(created));
+      const saved = existingSameMonth
+        ? await prisma.cost.update({
+            where: { id: existingSameMonth.id },
+            data: {
+              name,
+              amount,
+              date,
+              category,
+              ...(barcode ? { barcode } : {}),
+              ...(pixKey ? { pixKey } : {}),
+              ...(item.paymentMethod || item.formaPagamento || item.forma_pagamento ? { paymentMethod } : {}),
+              ...(paidVal !== undefined ? { paid } : {})
+            }
+          })
+        : await prisma.cost.create({
+            data: {
+              name,
+              amount,
+              date,
+              category,
+              type,
+              barcode,
+              paymentMethod,
+              pixKey,
+              paid
+            }
+          });
+
+      createdItems.push(formatCostItem(saved));
     }
 
     try {
@@ -381,6 +407,45 @@ export async function PATCH(request: Request) {
     }
 
     if (!targetCost) {
+      // Se informou nome e valor positivo, faz upsert (cria automaticamente caso não exista no mês)
+      const fallbackAmount = parseAmount(body.novo_valor ?? body.amount ?? body.valor);
+      const fallbackName = String(body.newName || body.novo_nome || searchName || '').trim();
+      if (fallbackName && fallbackAmount > 0) {
+        const date = parseCostDate(body.nova_data || body.date || body.data || body.vencimento || body.data_vencimento);
+        const category = normalizeCategory(body.category || body.categoria);
+        const type = String(body.type || body.tipo || 'GERAL').toUpperCase().trim();
+        const barcode = String(body.barcode ?? body.codigoBarras ?? body.codigo_barras ?? '').trim() || null;
+        const pixKey = String(body.pixKey ?? body.chavePix ?? body.chave_pix ?? '').trim() || null;
+        const paymentMethod = normalizePaymentMethod(body.paymentMethod || body.formaPagamento || body.forma_pagamento, pixKey, barcode);
+        const paidVal = normalizePaid(body.paid ?? body.pago ?? body.status);
+        const created = await prisma.cost.create({
+          data: {
+            name: fallbackName,
+            amount: fallbackAmount,
+            date,
+            category,
+            type,
+            barcode,
+            paymentMethod,
+            pixKey,
+            paid: paidVal !== undefined ? paidVal : false
+          }
+        });
+        try {
+          revalidatePath('/custos');
+          revalidatePath('/');
+        } catch (_) {}
+        const formatted = formatCostItem(created);
+        return NextResponse.json({
+          success: true,
+          action: 'created',
+          custo: formatted,
+          cost: formatted,
+          mensagem: `Custo "${formatted.nome}" não existia no mês e foi criado com sucesso! Valor: R$ ${formatted.valor.toFixed(2)} | Vencimento: ${formatted.vencimento}.`,
+          message: `Custo "${formatted.nome}" criado com sucesso!`
+        });
+      }
+
       return NextResponse.json({
         success: false,
         error: `Nenhum custo encontrado para atualizar (${id ? 'ID: ' + id : 'Busca: ' + searchName}).`
