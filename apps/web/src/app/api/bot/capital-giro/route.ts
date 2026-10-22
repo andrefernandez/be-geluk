@@ -24,20 +24,17 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const month = searchParams.get('month') || 'current';
 
-    const settingKey = `capital_giro_${month}`;
-    const setting = await prisma.todo.findFirst({
-      where: { title: settingKey },
-      orderBy: { updatedAt: 'desc' }
-    });
+    const settings = await prisma.globalSettings.findFirst();
+    const config = (settings?.defaultTarifas as any) || {};
+    const data = config[`capital_giro_${month}`] || config['capital_giro_current'];
 
-    if (!setting || !setting.description) {
+    if (!data) {
       return NextResponse.json({
         success: false,
         message: 'Nenhum dado de capital a girar registrado ainda para este período.'
       });
     }
 
-    const data = JSON.parse(setting.description);
     return NextResponse.json({
       success: true,
       data
@@ -49,7 +46,7 @@ export async function GET(request: Request) {
 
 /**
  * POST /api/bot/capital-giro
- * Salva ou atualiza a projeção de capital a girar no sistema
+ * Salva ou atualiza a projeção de capital a girar no sistema em GlobalSettings
  */
 export async function POST(request: Request) {
   if (!checkAuth(request)) {
@@ -64,7 +61,11 @@ export async function POST(request: Request) {
       capitalDoDia = 0,
       dataInicial,
       dataFinal,
+      dataReferencia,
+      dataLimiteGiro,
+      dataUltimoDiaUtil,
       rentabilidadeAtual = 0,
+      rentabilidadeProjetada = 0,
       lucroLiquidoAtual = 0,
       lucroProjetadoComGiro = 0,
       lucroLiquidoProjetadoFinal = 0,
@@ -75,9 +76,13 @@ export async function POST(request: Request) {
       month,
       capitalAGirar: Number(capitalAGirar) || 0,
       capitalDoDia: Number(capitalDoDia) || 0,
-      dataInicial,
-      dataFinal,
-      rentabilidadeAtual: Number(rentabilidadeAtual) || 0,
+      dataInicial: dataInicial || dataReferencia,
+      dataFinal: dataFinal || dataLimiteGiro,
+      dataReferencia,
+      dataLimiteGiro,
+      dataUltimoDiaUtil,
+      rentabilidadeAtual: Number(rentabilidadeAtual || rentabilidadeProjetada) || 0,
+      rentabilidadeProjetada: Number(rentabilidadeProjetada || rentabilidadeAtual) || 0,
       lucroLiquidoAtual: Number(lucroLiquidoAtual) || 0,
       lucroProjetadoComGiro: Number(lucroProjetadoComGiro) || 0,
       lucroLiquidoProjetadoFinal: Number(lucroLiquidoProjetadoFinal) || 0,
@@ -85,43 +90,38 @@ export async function POST(request: Request) {
       updatedBy
     };
 
-    const settingKey = `capital_giro_${month}`;
-
-    const existing = await prisma.todo.findFirst({
-      where: { title: settingKey }
-    });
-
-    if (existing) {
-      await prisma.todo.update({
-        where: { id: existing.id },
-        data: {
-          description: JSON.stringify(payload),
-          status: 'OPEN',
-          updatedAt: new Date()
-        }
-      });
-    } else {
-      await prisma.todo.create({
-        data: {
-          title: settingKey,
-          description: JSON.stringify(payload),
-          status: 'OPEN'
-        }
+    let settings = await prisma.globalSettings.findFirst();
+    if (!settings) {
+      settings = await prisma.globalSettings.create({
+        data: {}
       });
     }
 
+    const currentTarifas = (settings.defaultTarifas as any) || {};
+    const updatedTarifas = {
+      ...currentTarifas,
+      [`capital_giro_${month}`]: payload,
+      capital_giro_current: payload
+    };
+
+    await prisma.globalSettings.update({
+      where: { id: settings.id },
+      data: {
+        defaultTarifas: updatedTarifas
+      }
+    });
+
     try {
       revalidatePath('/');
-      revalidatePath('/custos');
+      revalidatePath('/projecao');
     } catch (_) {}
 
     return NextResponse.json({
       success: true,
       data: payload,
-      message: 'Capital a girar e lucro projetado registrados com sucesso!'
+      message: 'Capital a girar e lucro projetado registrados com sucesso no GlobalSettings!'
     });
   } catch (error: any) {
-    console.error('[API Capital Giro POST Error]:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

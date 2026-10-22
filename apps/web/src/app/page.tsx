@@ -159,20 +159,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
 
   const todayRevenue = todayYield + todayIof; // Receita Bruta de hoje
 
-  // Busca dados de Capital a Girar e Lucro Projetado do mês atual (alimentado pelo robô SmartFactor)
+  // Busca dados de Capital a Girar e Lucro Projetado do mês atual (alimentado pelo robô SmartFactor via GlobalSettings)
   let capitalGiroData: any = null;
   try {
-    const capitalSetting = await prisma.todo.findFirst({
-      where: {
-        title: {
-          in: [`capital_giro_${monthParam}`, 'capital_giro_current']
-        }
-      },
-      orderBy: { updatedAt: 'desc' }
-    });
-    if (capitalSetting?.description) {
-      capitalGiroData = JSON.parse(capitalSetting.description);
-    }
+    const globalSettings = await prisma.globalSettings.findFirst();
+    const config = (globalSettings?.defaultTarifas as any) || {};
+    capitalGiroData = config[`capital_giro_${monthParam}`] || config['capital_giro_current'] || null;
   } catch (_) {}
 
   // ---- FUNÇÃO DE SOMA SEGURA ----
