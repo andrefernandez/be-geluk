@@ -592,28 +592,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
             <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(totalOperado)}</div>
           </div>
 
-          <div className="glass-panel" style={{ borderLeft: "4px solid #10b981" }}>
-            <h3 style={{ color: "#10b981", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Capital a Girar (SmartFactor)</h3>
-            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "#10b981" }}>
-              {capitalGiroData?.capitalAGirar ? formatCurrency(capitalGiroData.capitalAGirar) : "R$ 0,00"}
-            </div>
-            <div style={{ color: "var(--text-secondary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
-              <span>Hoje: {capitalGiroData?.capitalDoDia ? formatCurrency(capitalGiroData.capitalDoDia) : "R$ 0,00"}</span>
-              <span>{capitalGiroData?.dataInicial && capitalGiroData?.dataFinal ? `${capitalGiroData.dataInicial} até ${capitalGiroData.dataFinal}` : "Período atual"}</span>
-            </div>
-          </div>
-
-          <div className="glass-panel" style={{ borderLeft: "4px solid #8b5cf6" }}>
-            <h3 style={{ color: "#8b5cf6", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Lucro Líquido Projetado</h3>
-            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: (capitalGiroData?.lucroLiquidoProjetadoFinal ?? lucroLiquido) >= 0 ? "#8b5cf6" : "var(--accent-red)" }}>
-              {capitalGiroData?.lucroLiquidoProjetadoFinal !== undefined ? formatCurrency(capitalGiroData.lucroLiquidoProjetadoFinal) : formatCurrency(lucroLiquido)}
-            </div>
-            <div style={{ color: "var(--text-secondary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
-              <span>Giro adiciona: +{capitalGiroData?.lucroProjetadoComGiro ? formatCurrency(capitalGiroData.lucroProjetadoComGiro) : "R$ 0,00"}</span>
-              <span>Rent.: {capitalGiroData?.rentabilidadeAtual ? capitalGiroData.rentabilidadeAtual.toFixed(2) + "%" : formatPercent(rentabilidade)}</span>
-            </div>
-          </div>
-
           <div className="glass-panel">
             <h3 style={{ color: "var(--text-tertiary)", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Receita Bruta</h3>
             <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(receitaBruta)}</div>
@@ -674,6 +652,32 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
                     : `DIAS ÚTEIS: ${businessDays}d`}
                 </span>
                 <span>META MÊS: {taxaRetorno > 0 ? formatCurrency(volumeNecessarioTotal) : "R$ 0,00"}</span>
+              </div>
+            </div>
+          )}
+
+          {!isComercial && (
+            <div className="glass-panel" style={{ borderLeft: "4px solid #10b981" }}>
+              <h3 style={{ color: "#10b981", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Capital a Girar (SmartFactor)</h3>
+              <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "#10b981" }}>
+                {capitalGiroData?.capitalAGirar ? formatCurrency(capitalGiroData.capitalAGirar) : "R$ 0,00"}
+              </div>
+              <div style={{ color: "var(--text-secondary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
+                <span>Hoje: {capitalGiroData?.capitalDoDia ? formatCurrency(capitalGiroData.capitalDoDia) : "R$ 0,00"}</span>
+                <span>{capitalGiroData?.dataLimiteGiro ? `Até ${capitalGiroData.dataLimiteGiro}` : (capitalGiroData?.dataFinal ? `Até ${capitalGiroData.dataFinal}` : "Restante do mês")}</span>
+              </div>
+            </div>
+          )}
+
+          {!isComercial && (
+            <div className="glass-panel" style={{ borderLeft: "4px solid #8b5cf6" }}>
+              <h3 style={{ color: "#8b5cf6", fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>Lucro Líquido Projetado</h3>
+              <div style={{ fontSize: "1.75rem", fontWeight: 700, color: (capitalGiroData?.lucroLiquidoProjetadoFinal ?? lucroLiquido) >= 0 ? "#8b5cf6" : "var(--accent-red)" }}>
+                {capitalGiroData?.lucroLiquidoProjetadoFinal !== undefined ? formatCurrency(capitalGiroData.lucroLiquidoProjetadoFinal) : formatCurrency(lucroLiquido)}
+              </div>
+              <div style={{ color: "var(--text-secondary)", fontSize: "0.75rem", fontWeight: 600, marginTop: "0.5rem", display: "flex", justifyContent: "space-between" }}>
+                <span>Giro adiciona: +{capitalGiroData?.lucroProjetadoComGiro ? formatCurrency(capitalGiroData.lucroProjetadoComGiro) : "R$ 0,00"}</span>
+                <span>Rent.: {capitalGiroData?.rentabilidadeProjetada ? capitalGiroData.rentabilidadeProjetada.toFixed(2) + "%" : (capitalGiroData?.rentabilidadeAtual ? capitalGiroData.rentabilidadeAtual.toFixed(2) + "%" : formatPercent(rentabilidade))}</span>
               </div>
             </div>
           )}
