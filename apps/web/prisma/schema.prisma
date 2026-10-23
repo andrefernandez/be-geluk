@@ -28,6 +28,7 @@ model Client {
   cnpj             String?
   telefone         String?
   email            String?
+  representanteNome String?
   status           String      @default("ATIVO")
   taxaFator        Float?
   taxaAdValorem    Float?

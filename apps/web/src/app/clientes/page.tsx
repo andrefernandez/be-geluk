@@ -24,6 +24,7 @@ export default async function ClientesPage() {
             cnpj: true,
             telefone: true,
             email: true,
+            representanteNome: true,
             status: true,
             createdAt: true,
             representativeId: true,

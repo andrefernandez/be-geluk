@@ -35,6 +35,7 @@ type ClientData = {
     cnpj?: string | null;
     telefone?: string | null;
     email?: string | null;
+    representanteNome?: string | null;
     status: string;
     createdAt: string;
     taxaFator?: number | null;
@@ -192,6 +193,15 @@ export default function ClientDetailsDashboard({ client, currentUserRole }: { cl
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.5rem 1rem", marginTop: "0.25rem", fontSize: "0.875rem" }}>
                         <span style={{ color: "var(--text-tertiary)" }}>CNPJ: {client.cnpj || "Não cadastrado"}</span>
+                        {client.representanteNome && (
+                            <>
+                                <span style={{ color: "var(--text-tertiary)" }}>•</span>
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "var(--text-primary)", fontWeight: 600 }}>
+                                    <Users size={14} style={{ color: "var(--accent-primary)" }} />
+                                    <span>Representante: {client.representanteNome}</span>
+                                </span>
+                            </>
+                        )}
                         <span style={{ color: "var(--text-tertiary)" }}>•</span>
                         <span style={{ color: "var(--text-tertiary)" }}>Cadastro em {new Date(client.createdAt).toLocaleDateString("pt-BR", { timeZone: "UTC" })}</span>
                         {client.telefone && (

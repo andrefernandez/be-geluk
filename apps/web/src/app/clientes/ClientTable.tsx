@@ -5,7 +5,7 @@ import { createClient, updateClient, deleteClient, updateClientStatus } from "./
 import { NumericFormat } from 'react-number-format';
 import Link from "next/link";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { Phone, Mail } from "lucide-react";
+import { Phone, Mail, User } from "lucide-react";
 
 type Client = {
     id: string;
@@ -13,6 +13,7 @@ type Client = {
     cnpj?: string | null;
     telefone?: string | null;
     email?: string | null;
+    representanteNome?: string | null;
     status: string;
     createdAt: Date;
     representativeId?: string | null;
@@ -40,6 +41,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
     const [cnpj, setCnpj] = useState("");
     const [telefone, setTelefone] = useState("");
     const [email, setEmail] = useState("");
+    const [representanteNome, setRepresentanteNome] = useState("");
     const [representativeId, setRepresentativeId] = useState("");
     const [taxaFator, setTaxaFator] = useState("");
     const [taxaAdValorem, setTaxaAdValorem] = useState("");
@@ -65,6 +67,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (c.cnpj && c.cnpj.includes(searchTerm)) ||
         (c.telefone && c.telefone.includes(searchTerm)) ||
+        (c.representanteNome && c.representanteNome.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
@@ -79,6 +82,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
             setCnpj(client.cnpj || "");
             setTelefone(client.telefone || "");
             setEmail(client.email || "");
+            setRepresentanteNome(client.representanteNome || "");
             setRepresentativeId(client.representativeId || "");
             setTaxaFator(client.taxaFator ? client.taxaFator.toString() : "");
             setTaxaAdValorem(client.taxaAdValorem ? client.taxaAdValorem.toString() : "");
@@ -91,6 +95,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
             setCnpj("");
             setTelefone("");
             setEmail("");
+            setRepresentanteNome("");
             setRepresentativeId(isComercial ? currentUserId : "");
             setTaxaFator("");
             setTaxaAdValorem("");
@@ -124,6 +129,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                 cnpj: cnpj.trim() || null, 
                 telefone: telefone.trim() || null,
                 email: email.trim() || null,
+                representanteNome: representanteNome.trim() || null,
                 status, 
                 representativeId: finalRepId, 
                 taxaFator: tFator, 
@@ -138,6 +144,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                 cnpj: cnpj.trim() || null, 
                 telefone: telefone.trim() || null,
                 email: email.trim() || null,
+                representanteNome: representanteNome.trim() || null,
                 status, 
                 representativeId: finalRepId, 
                 taxaFator: tFator, 
@@ -297,6 +304,12 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                         <td style={{ padding: "0.75rem", color: "var(--text-tertiary)", fontSize: "0.875rem" }}>{client.cnpj || "---"}</td>
                                         <td style={{ padding: "0.75rem", fontSize: "0.8125rem" }}>
                                             <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                                {client.representanteNome && (
+                                                    <div style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                                                        <User size={13} style={{ color: "var(--accent-primary)" }} />
+                                                        <span>{client.representanteNome}</span>
+                                                    </div>
+                                                )}
                                                 {client.telefone && (
                                                     <a 
                                                         href={`https://wa.me/55${client.telefone.replace(/\D/g, '')}`} 
@@ -535,8 +548,15 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                         </span>
                                     </div>
                                     <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>CNPJ: {client.cnpj || "---"}</span>
-                                    {(client.telefone || client.email) && (
-                                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", fontSize: "0.75rem", margin: "0.1rem 0" }}>
+                                    {(client.representanteNome || client.telefone || client.email) && (
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", margin: "0.2rem 0" }}>
+                                            {client.representanteNome && (
+                                                <div style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8125rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                                                    <User size={12} style={{ color: "var(--accent-primary)" }} />
+                                                    <span>{client.representanteNome}</span>
+                                                </div>
+                                            )}
+                                            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", fontSize: "0.75rem" }}>
                                             {client.telefone && (
                                                 <a 
                                                     href={`https://wa.me/55${client.telefone.replace(/\D/g, '')}`} 
@@ -561,6 +581,7 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                                                     <span>{client.email}</span>
                                                 </a>
                                             )}
+                                            </div>
                                         </div>
                                     )}
                                     <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 500 }}>Rep/Parceiro: {client.representative?.name ? `${client.representative.name}${client.representative.role === "PARCEIRO" ? " (PARCEIRO)" : ""}` : "N/A"}</span>
@@ -635,6 +656,16 @@ export default function ClientTable({ initialClients, currentUserRole, currentUs
                             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                 <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>CNPJ</label>
                                 <input className="glass-input" value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                <label style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Nome do Representante / Contato</label>
+                                <input 
+                                    className="glass-input" 
+                                    value={representanteNome} 
+                                    onChange={e => setRepresentanteNome(e.target.value)} 
+                                    placeholder="Nome de quem fala no WhatsApp (Ex: Carlos Silva)" 
+                                />
                             </div>
 
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>

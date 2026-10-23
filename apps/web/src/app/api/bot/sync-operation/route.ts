@@ -72,7 +72,9 @@ export async function POST(request: Request) {
       status: rawStatus = 'CONFIRMACAO',
       sacados = [],
       observacoes = '',
-      criticas = ''
+      criticas = '',
+      representanteNome,
+      telefone
     } = body;
 
     if (!cedente || typeof cedente !== 'string' || cedente.trim().toLowerCase().includes('atendimento')) {
@@ -150,17 +152,24 @@ export async function POST(request: Request) {
         data: {
           name: cedente.trim(),
           cnpj: cnpjNumeros || null,
+          representanteNome: representanteNome?.trim() || null,
+          telefone: telefone?.trim() || null,
           status: 'ATIVO',
           taxaFator: parsedPercentual || 9.5,
           taxaTarifa: tarifas > 0 ? tarifas : null
         }
       });
-    } else if (cnpjNumeros && !client.cnpj) {
-      // Atualiza CNPJ caso não estivesse cadastrado
-      await prisma.client.update({
-        where: { id: client.id },
-        data: { cnpj: cnpjNumeros }
-      });
+    } else {
+      const updateData: any = {};
+      if (cnpjNumeros && !client.cnpj) updateData.cnpj = cnpjNumeros;
+      if (representanteNome && !client.representanteNome) updateData.representanteNome = representanteNome.trim();
+      if (telefone && !client.telefone) updateData.telefone = telefone.trim();
+      if (Object.keys(updateData).length > 0) {
+        await prisma.client.update({
+          where: { id: client.id },
+          data: updateData
+        });
+      }
     }
 
     // 2. Tratar Data da Operação
