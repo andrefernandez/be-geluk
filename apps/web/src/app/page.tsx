@@ -843,7 +843,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
 
         {/* Projections & Client Rankings Section */}
         <div style={{ padding: "2rem 0", display: "flex", flexDirection: "column", gap: "2.5rem" }}>
-          <ProjectionsSection monthlyData={monthlyData} currentMonthIdx={currentMonthIdx} />
+          <ProjectionsSection monthlyData={monthlyData} currentMonthIdx={currentMonthIdx} capitalGiroData={capitalGiroData} />
 
           {/* Resumo de Re-desconto */}
           {!isComercial && (

@@ -24,10 +24,21 @@ export interface MonthData {
   hasActivity?: boolean;
 }
 
+interface CapitalGiroInfo {
+  capitalAGirar?: number;
+  capitalDoDia?: number;
+  rentabilidadeProjetada?: number;
+  lucroProjetadoComGiro?: number;
+  lucroLiquidoProjetadoFinal?: number;
+  dataReferencia?: string;
+  dataLimiteGiro?: string;
+}
+
 interface ProjectionsSectionProps {
   monthlyData?: MonthData[];
   completedMonths?: MonthData[];
   currentMonthIdx: number;
+  capitalGiroData?: CapitalGiroInfo | null;
 }
 
 const monthNames = [
@@ -59,11 +70,24 @@ function calculateWorkingDays(startDate: Date, endDate: Date): number {
 export default function ProjectionsSection({
   monthlyData,
   completedMonths,
-  currentMonthIdx
+  currentMonthIdx,
+  capitalGiroData
 }: ProjectionsSectionProps) {
   const [scenario, setScenario] = useState<"conservador" | "moderado" | "otimista">("conservador");
 
   const data = monthlyData || completedMonths || [];
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const endOfYear = new Date(currentYear, 11, 31);
+  const remainingWorkingDaysYear = calculateWorkingDays(now, endOfYear);
+
+  // Mês corrente e seus dias úteis
+  const startOfMonth = new Date(currentYear, currentMonthIdx, 1);
+  const endOfMonth = new Date(currentYear, currentMonthIdx + 1, 0);
+  const totalWorkingDaysMonth = calculateWorkingDays(startOfMonth, endOfMonth);
+  const workingDaysMonthElapsed = calculateWorkingDays(startOfMonth, now);
+  const remainingWorkingDaysMonth = calculateWorkingDays(now, endOfMonth);
 
   // Meses anteriores já fechados (m < currentMonthIdx) com atividade financeira registrada
   const closedMonthsWithActivity = data.filter(
@@ -90,6 +114,7 @@ export default function ProjectionsSection({
     costGrowth = 0.02;
   }
 
+  // Montagem da projeção dos 12 meses com cálculo dinâmico baseado no dia a dia
   const fullYearProjections = useMemo(() => {
     const list = [];
     for (let m = 0; m < 12; m++) {
@@ -100,7 +125,7 @@ export default function ProjectionsSection({
       const realLucro = realReceita - realCusto;
 
       if (m < currentMonthIdx) {
-        // Mês encerrado
+        // Mês encerrado: 100% histórico realizado
         list.push({
           m,
           name: monthNames[m],
@@ -109,22 +134,57 @@ export default function ProjectionsSection({
           receita: realReceita,
           custo: realCusto,
           lucroLiquido: realLucro,
-          rentabilidade: realOperado > 0 ? (realLucro / realOperado) * 100 : 0
+          rentabilidade: realOperado > 0 ? (realLucro / realOperado) * 100 : 0,
+          realizadoAteAgora: realOperado,
+          lucroRealizadoAteAgora: realLucro
         });
       } else if (m === currentMonthIdx) {
-        // Mês corrente em andamento: atualiza a cada operação ou custo cadastrado
+        // MÊS CORRENTE EM ANDAMENTO:
+        // Projeta o mês COMPLETO somando o realizado até hoje + projeção do giro dos títulos em aberto no SmartFactor
+        let estimatedMonthOperado = realOperado;
+        let estimatedMonthLucro = realLucro;
+        let estimatedMonthReceita = realReceita;
+        let estimatedMonthCusto = realCusto;
+
+        const hasGiroFinal = capitalGiroData?.lucroLiquidoProjetadoFinal !== undefined &&
+                              capitalGiroData.lucroLiquidoProjetadoFinal > realLucro;
+
+        if (hasGiroFinal) {
+          // Usa os dados precisos do SmartFactor (títulos em aberto até penúltimo dia útil)
+          estimatedMonthLucro = Number(capitalGiroData?.lucroLiquidoProjetadoFinal);
+          const giroAdd = Number(capitalGiroData?.capitalAGirar) || 0;
+          estimatedMonthOperado = realOperado + giroAdd;
+          // Estima receita e custo finais proporcionais
+          const propRatio = realOperado > 0 ? estimatedMonthOperado / realOperado : 1;
+          estimatedMonthReceita = realReceita * propRatio;
+          estimatedMonthCusto = realCusto * (1 + (propRatio - 1) * 0.1); // custos fixos sobem pouco
+        } else {
+          // Fallback dinâmico por Run-Rate Diário: (Valor até hoje / dias úteis passados) * dias úteis totais
+          const dailyPaceOperado = workingDaysMonthElapsed > 0 ? realOperado / workingDaysMonthElapsed : 0;
+          const dailyPaceLucro = workingDaysMonthElapsed > 0 ? realLucro / workingDaysMonthElapsed : 0;
+          const dailyPaceReceita = workingDaysMonthElapsed > 0 ? realReceita / workingDaysMonthElapsed : 0;
+          const dailyPaceCusto = workingDaysMonthElapsed > 0 ? realCusto / workingDaysMonthElapsed : 0;
+
+          estimatedMonthOperado = realOperado + (dailyPaceOperado * remainingWorkingDaysMonth);
+          estimatedMonthLucro = realLucro + (dailyPaceLucro * remainingWorkingDaysMonth);
+          estimatedMonthReceita = realReceita + (dailyPaceReceita * remainingWorkingDaysMonth);
+          estimatedMonthCusto = realCusto + (dailyPaceCusto * remainingWorkingDaysMonth);
+        }
+
         list.push({
           m,
           name: monthNames[m],
           status: "EM ANDAMENTO" as const,
-          totalOperado: realOperado,
-          receita: realReceita,
-          custo: realCusto,
-          lucroLiquido: realLucro,
-          rentabilidade: realOperado > 0 ? (realLucro / realOperado) * 100 : 0
+          totalOperado: estimatedMonthOperado,
+          receita: estimatedMonthReceita,
+          custo: estimatedMonthCusto,
+          lucroLiquido: estimatedMonthLucro,
+          rentabilidade: estimatedMonthOperado > 0 ? (estimatedMonthLucro / estimatedMonthOperado) * 100 : 0,
+          realizadoAteAgora: realOperado,
+          lucroRealizadoAteAgora: realLucro
         });
       } else {
-        // Mês futuro: projeção baseada na média dos meses fechados e taxa do cenário
+        // Mês futuro (Dezembro): Projeção com base na média consolidada recente + cenário
         const steps = m - currentMonthIdx;
         const factor = Math.pow(1 + monthlyGrowth, steps);
         const costFactor = Math.pow(1 + costGrowth, steps);
@@ -146,52 +206,53 @@ export default function ProjectionsSection({
           receita: finalReceita,
           custo: finalCusto,
           lucroLiquido: finalLucro,
-          rentabilidade: finalOperado > 0 ? (finalLucro / finalOperado) * 100 : 0
+          rentabilidade: finalOperado > 0 ? (finalLucro / finalOperado) * 100 : 0,
+          realizadoAteAgora: 0,
+          lucroRealizadoAteAgora: 0
         });
       }
     }
     return list;
-  }, [data, currentMonthIdx, avgOperado, avgReceita, avgCusto, monthlyGrowth, costGrowth]);
+  }, [
+    data,
+    currentMonthIdx,
+    capitalGiroData,
+    avgOperado,
+    avgReceita,
+    avgCusto,
+    monthlyGrowth,
+    costGrowth,
+    workingDaysMonthElapsed,
+    remainingWorkingDaysMonth
+  ]);
 
-  // Métricas do ano completo (realizado + em andamento + projetado)
+  // Totais do ano completo (realizado + mês corrente projetado completo + meses futuros projetados)
   const totalVolumeAnoProj = fullYearProjections.reduce((sum, x) => sum + x.totalOperado, 0);
   const totalLucroAnoProj = fullYearProjections.reduce((sum, x) => sum + x.lucroLiquido, 0);
   const rentabilidadeMediaAnoProj = totalVolumeAnoProj > 0 ? (totalLucroAnoProj / totalVolumeAnoProj) * 100 : 0;
 
-  // Realizado acumulado até o momento (inclui meses encerrados e mês corrente em andamento)
-  const activeMonths = fullYearProjections.filter(x => x.m <= currentMonthIdx);
-  const totalVolumeRealizadoProj = activeMonths.reduce((sum, x) => sum + x.totalOperado, 0);
-  const totalLucroRealizadoProj = activeMonths.reduce((sum, x) => sum + x.lucroLiquido, 0);
-  const rentabilidadeRealizadaProj = totalVolumeRealizadoProj > 0
-    ? (totalLucroRealizadoProj / totalVolumeRealizadoProj) * 100
+  // Realizado efetivo em caixa até o dia de hoje (meses anteriores + realizado até hoje no mês atual)
+  const totalVolumeRealizadoAteHoje = fullYearProjections.reduce((sum, x) => sum + (x.realizadoAteAgora ?? 0), 0);
+  const totalLucroRealizadoAteHoje = fullYearProjections.reduce((sum, x) => sum + (x.lucroRealizadoAteAgora ?? 0), 0);
+  const rentabilidadeRealizadaAteHoje = totalVolumeRealizadoAteHoje > 0
+    ? (totalLucroRealizadoAteHoje / totalVolumeRealizadoAteHoje) * 100
     : 0;
 
   // Cálculos de Progresso (%)
   const progressoVolume = totalVolumeAnoProj > 0
-    ? Math.min((totalVolumeRealizadoProj / totalVolumeAnoProj) * 100, 100)
+    ? Math.min((totalVolumeRealizadoAteHoje / totalVolumeAnoProj) * 100, 100)
     : 0;
-  const gapVolume = Math.max(totalVolumeAnoProj - totalVolumeRealizadoProj, 0);
+  const gapVolume = Math.max(totalVolumeAnoProj - totalVolumeRealizadoAteHoje, 0);
 
   const progressoLucro = totalLucroAnoProj > 0
-    ? Math.min((totalLucroRealizadoProj / totalLucroAnoProj) * 100, 100)
+    ? Math.min((totalLucroRealizadoAteHoje / totalLucroAnoProj) * 100, 100)
     : 0;
-  const gapLucro = Math.max(totalLucroAnoProj - totalLucroRealizadoProj, 0);
+  const gapLucro = Math.max(totalLucroAnoProj - totalLucroRealizadoAteHoje, 0);
 
   // Pacing & Meta Diária da Mesa
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const endOfYear = new Date(currentYear, 11, 31);
-  const remainingWorkingDaysYear = calculateWorkingDays(now, endOfYear);
-
-  // Mês corrente
-  const startOfMonth = new Date(currentYear, currentMonthIdx, 1);
-  const endOfMonth = new Date(currentYear, currentMonthIdx + 1, 0);
-  const workingDaysMonthElapsed = calculateWorkingDays(startOfMonth, now);
-  const remainingWorkingDaysMonth = calculateWorkingDays(now, endOfMonth);
-
-  const currentMonthData = fullYearProjections.find(x => x.m === currentMonthIdx);
-  const currentMonthVolume = currentMonthData ? currentMonthData.totalOperado : 0;
-  const currentMonthDailyPace = workingDaysMonthElapsed > 0 ? currentMonthVolume / workingDaysMonthElapsed : 0;
+  const currentMonthObj = fullYearProjections[currentMonthIdx];
+  const currentMonthRealOperado = currentMonthObj?.realizadoAteAgora || 0;
+  const currentMonthDailyPace = workingDaysMonthElapsed > 0 ? currentMonthRealOperado / workingDaysMonthElapsed : 0;
 
   const requiredDailyPaceYear = remainingWorkingDaysYear > 0 ? gapVolume / remainingWorkingDaysYear : 0;
   const isPaceAhead = currentMonthDailyPace >= requiredDailyPaceYear && requiredDailyPaceYear > 0;
@@ -222,14 +283,14 @@ export default function ProjectionsSection({
             </h2>
           </div>
           <p style={{ color: "var(--text-tertiary)", fontSize: "0.8125rem", marginTop: "0.35rem" }}>
-            Acompanhamento contínuo em tempo real (dados acumulados até agora + projeção estimada para o encerramento em Dez/{currentYear})
+            Acompanhamento contínuo em tempo real (dados acumulados até hoje + projeção dinâmica do giro da carteira até Dez/{currentYear})
           </p>
         </div>
 
         {/* Scenario Selector */}
         <div style={{ display: "flex", background: "var(--bg-tertiary)", padding: "0.25rem", borderRadius: "10px", gap: "0.25rem", border: "1px solid var(--card-border)" }}>
           {[
-            { id: "conservador" as const, label: "Conservador", hint: "Piso de Carteira (Média)" },
+            { id: "conservador" as const, label: "Conservador", hint: "Piso de Carteira (Giro Real)" },
             { id: "moderado" as const, label: "Moderado (+5%)", hint: "Crescimento Sustentado" },
             { id: "otimista" as const, label: "Otimista (+10%)", hint: "Pico Sazonal de Fim de Ano" }
           ].map(s => {
@@ -304,7 +365,7 @@ export default function ProjectionsSection({
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem", paddingTop: "0.75rem", borderTop: "1px solid rgba(0,0,0,0.05)", fontSize: "0.75rem" }}>
             <span style={{ color: "var(--text-tertiary)" }}>
-              Realizado: <strong style={{ color: "var(--text-secondary)" }}>{formatCurrency(totalVolumeRealizadoProj)}</strong>
+              Realizado: <strong style={{ color: "var(--text-secondary)" }}>{formatCurrency(totalVolumeRealizadoAteHoje)}</strong>
             </span>
             <span style={{ color: "var(--text-tertiary)" }}>
               Faltam: <strong style={{ color: "var(--accent-secondary)" }}>{formatCurrency(gapVolume)}</strong>
@@ -351,7 +412,7 @@ export default function ProjectionsSection({
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem", paddingTop: "0.75rem", borderTop: "1px solid rgba(0,0,0,0.05)", fontSize: "0.75rem" }}>
             <span style={{ color: "var(--text-tertiary)" }}>
-              Realizado: <strong style={{ color: "var(--text-secondary)" }}>{formatCurrency(totalLucroRealizadoProj)}</strong>
+              Realizado: <strong style={{ color: "var(--text-secondary)" }}>{formatCurrency(totalLucroRealizadoAteHoje)}</strong>
             </span>
             <span style={{ color: "var(--text-tertiary)" }}>
               Faltam: <strong style={{ color: "var(--accent-primary)" }}>{formatCurrency(gapLucro)}</strong>
@@ -371,11 +432,11 @@ export default function ProjectionsSection({
                 fontWeight: 800,
                 padding: "0.2rem 0.5rem",
                 borderRadius: "6px",
-                background: rentabilidadeMediaAnoProj >= rentabilidadeRealizadaProj ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                color: rentabilidadeMediaAnoProj >= rentabilidadeRealizadaProj ? "var(--accent-primary)" : "#ef4444"
+                background: rentabilidadeMediaAnoProj >= rentabilidadeRealizadaAteHoje ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                color: rentabilidadeMediaAnoProj >= rentabilidadeRealizadaAteHoje ? "var(--accent-primary)" : "#ef4444"
               }}>
-                {rentabilidadeMediaAnoProj >= rentabilidadeRealizadaProj ? "+ " : "- "}
-                {Math.abs(rentabilidadeMediaAnoProj - rentabilidadeRealizadaProj).toFixed(2)}% vs Real
+                {rentabilidadeMediaAnoProj >= rentabilidadeRealizadaAteHoje ? "+ " : "- "}
+                {Math.abs(rentabilidadeMediaAnoProj - rentabilidadeRealizadaAteHoje).toFixed(2)}% vs Real
               </span>
             </div>
 
@@ -390,7 +451,7 @@ export default function ProjectionsSection({
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem", paddingTop: "0.75rem", borderTop: "1px solid rgba(0,0,0,0.05)", fontSize: "0.75rem" }}>
             <span style={{ color: "var(--text-tertiary)" }}>
-              Realizada até agora: <strong style={{ color: "var(--text-secondary)" }}>{formatPercent(rentabilidadeRealizadaProj)}</strong>
+              Realizada até hoje: <strong style={{ color: "var(--text-secondary)" }}>{formatPercent(rentabilidadeRealizadaAteHoje)}</strong>
             </span>
             <span style={{ color: "var(--text-tertiary)", fontWeight: 600 }}>
               Spread Estável
@@ -398,7 +459,7 @@ export default function ProjectionsSection({
           </div>
         </div>
 
-        {/* CARD 4: RITMO & META DIÁRIA DA MESA (PACING) - EXCLUSIVO */}
+        {/* CARD 4: RITMO & META DIÁRIA DA MESA (PACING) */}
         <div className="glass-card" style={{ padding: "1.35rem", display: "flex", flexDirection: "column", justifyContent: "space-between", background: "linear-gradient(180deg, #ffffff 0%, #fafafa 100%)", border: "1px solid rgba(16, 185, 129, 0.25)" }}>
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -445,9 +506,9 @@ export default function ProjectionsSection({
 
       </div>
 
-      {/* Horizontes de Fechamento (Mês Atual vs. Carrego de Fim de Ano) */}
+      {/* Horizontes de Fechamento (Mês Atual Dinâmico vs. Carrego de Fim de Ano) */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1rem" }}>
-        {/* Bloco Mês Atual */}
+        {/* Bloco Mês Atual com Realizado vs Projetado */}
         <div style={{
           background: "var(--bg-secondary)",
           border: "1px solid var(--card-border)",
@@ -461,13 +522,19 @@ export default function ProjectionsSection({
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#2563eb", boxShadow: "0 0 6px #2563eb" }} />
               <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", color: "var(--text-secondary)" }}>
-                Horizonte {monthNames[currentMonthIdx]}/{currentYear} (Mês Atual)
+                Fechamento {monthNames[currentMonthIdx]}/{currentYear} (Mês Atual)
               </span>
             </div>
             <div style={{ fontSize: "1.125rem", fontWeight: 800, color: "var(--text-primary)", marginTop: "0.35rem" }}>
-              {formatCurrency(currentMonthVolume)}
+              {formatCurrency(currentMonthObj?.totalOperado || 0)}
               <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--text-tertiary)", marginLeft: "0.4rem" }}>
-                operados em {workingDaysMonthElapsed} dias úteis
+                (Realizado até hoje: {formatCurrency(currentMonthRealOperado)})
+              </span>
+            </div>
+            <div style={{ fontSize: "0.75rem", color: "var(--accent-primary)", fontWeight: 700, marginTop: "0.2rem" }}>
+              Lucro est.: {formatCurrency(currentMonthObj?.lucroLiquido || 0)}
+              <span style={{ color: "var(--text-tertiary)", fontWeight: 500, marginLeft: "0.3rem" }}>
+                (já realizado: {formatCurrency(currentMonthObj?.lucroRealizadoAteAgora || 0)})
               </span>
             </div>
           </div>
@@ -499,9 +566,12 @@ export default function ProjectionsSection({
                 estimativa de pico
               </span>
             </div>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", fontWeight: 600, marginTop: "0.2rem" }}>
+              Lucro projetado: <strong style={{ color: "var(--accent-primary)" }}>{formatCurrency(fullYearProjections[11]?.lucroLiquido || 0)}</strong>
+            </div>
           </div>
           <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textAlign: "right" }}>
-            Lucro est.: <strong>{formatCurrency(fullYearProjections[11]?.lucroLiquido || 0)}</strong>
+            Pico de compras
           </span>
         </div>
       </div>
@@ -585,7 +655,12 @@ export default function ProjectionsSection({
                       </span>
                     </td>
                     <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.8125rem", textAlign: "right", fontWeight: 600 }}>
-                      {formatCurrency(m.totalOperado)}
+                      <div>{formatCurrency(m.totalOperado)}</div>
+                      {isOngoing && m.realizadoAteAgora > 0 && (
+                        <div style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", fontWeight: 500 }}>
+                          (Real: {formatCurrency(m.realizadoAteAgora)})
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.8125rem", textAlign: "right", color: "var(--text-secondary)" }}>
                       {formatCurrency(m.receita)}
@@ -594,7 +669,12 @@ export default function ProjectionsSection({
                       {formatCurrency(m.custo)}
                     </td>
                     <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.8125rem", textAlign: "right", fontWeight: 700, color: m.lucroLiquido >= 0 ? "var(--accent-primary)" : "var(--accent-red)" }}>
-                      {formatCurrency(m.lucroLiquido)}
+                      <div>{formatCurrency(m.lucroLiquido)}</div>
+                      {isOngoing && m.lucroRealizadoAteAgora > 0 && (
+                        <div style={{ fontSize: "0.6875rem", color: "var(--text-tertiary)", fontWeight: 500 }}>
+                          (Real: {formatCurrency(m.lucroRealizadoAteAgora)})
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.8125rem", textAlign: "right", fontWeight: 600, color: "var(--text-secondary)" }}>
                       {formatPercent(m.rentabilidade)}
