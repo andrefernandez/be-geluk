@@ -821,7 +821,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
               {[...operations].reverse().slice(0, 8).map(op => (
                 <div key={`mob-${op.id}`} className="glass-card" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "0.5rem" }}>
                   <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: "0.875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Cedente: {op.client.name}</span>
+                    <span style={{ fontSize: "0.875rem", color: "var(--text-tertiary)", fontWeight: 700 }}>Cedente: {op.client.name}</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Data: {new Date(op.date).toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</span>

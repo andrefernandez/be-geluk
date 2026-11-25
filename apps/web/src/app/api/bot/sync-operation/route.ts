@@ -1,3 +1,4 @@
+import { formatCapitalLetter } from "@/lib/formatters";
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
@@ -150,7 +151,7 @@ export async function POST(request: Request) {
       console.log(`[API Bot Sync] ➕ Criando novo cliente no sistema: "${cedente}"`);
       client = await prisma.client.create({
         data: {
-          name: cedente.trim(),
+          name: formatCapitalLetter(cedente),
           cnpj: cnpjNumeros || null,
           representanteNome: representanteNome?.trim() || null,
           telefone: telefone?.trim() || null,

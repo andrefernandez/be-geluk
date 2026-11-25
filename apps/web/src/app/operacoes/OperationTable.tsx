@@ -1154,7 +1154,7 @@ export default function OperationTable({
                     <div key={op.id} className="glass-card" onClick={() => isAdminOrManager && handleEdit(op)} style={{ padding: "1.25rem", cursor: isAdminOrManager ? "pointer" : "default", display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "0.5rem" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <div style={{ display: "flex", flexDirection: "column" }}>
-                                <span style={{ fontSize: "0.875rem", color: "var(--text-tertiary)", textTransform: "uppercase", fontWeight: 700 }}>Cedente: {op.client.name}</span>
+                                <span style={{ fontSize: "0.875rem", color: "var(--text-tertiary)", fontWeight: 700 }}>Cedente: {op.client.name}</span>
                                 {op.isRedesconto && (
                                     <span style={{ fontSize: "0.7rem", color: "#a78bfa", fontWeight: 600 }}>
                                         🟣 {op.partner?.name ? `Re-desconto: ${op.partner.name}` : "Re-desconto"}

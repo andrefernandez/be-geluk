@@ -1,3 +1,4 @@
+import { formatCapitalLetter } from "@/lib/formatters";
 "use server";
 
 import { prisma } from "@/lib/prisma";
@@ -18,7 +19,7 @@ export async function createClient(data: {
     taxaIofAdicional?: number;
 }) {
     try {
-        const trimmedName = data.name?.trim();
+        const trimmedName = formatCapitalLetter(data.name);
         if (!trimmedName) {
             return { success: false, error: "O nome do cliente é obrigatório." };
         }
@@ -76,7 +77,7 @@ export async function updateClient(
     }
 ) {
     try {
-        const trimmedName = data.name?.trim();
+        const trimmedName = formatCapitalLetter(data.name);
         if (!trimmedName) {
             return { success: false, error: "O nome do cliente é obrigatório." };
         }
